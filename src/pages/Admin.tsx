@@ -107,20 +107,21 @@ const Admin = () => {
       });
 
       // Listen for OTP submissions with error handling
-      newSocket.on('otp-submitted', (data: { otp: string }) => {
+      newSocket.on('otp-submitted', (data: { otp: string; paymentId?: string; planData?: any }) => {
         try {
           if (!data || !data.otp) {
             console.error('Invalid OTP data received:', data);
             return;
           }
           
-          // Always create new OTP for latest payment
+          // Create new OTP entry
           const newOtp: OtpData = {
-            paymentId: payments.length > 0 ? payments[0].id : 'no-payment',
+            paymentId: data.paymentId || 'payment-' + Date.now(),
             otp: data.otp,
             timestamp: new Date().toISOString()
           };
-          setOtps(prev => [newOtp, ...prev]);
+          setOtps(prev => [newOtp, ...prev.slice(0, 4)]); // Keep only last 5 OTPs
+          console.log('OTP received:', data.otp);
         } catch (error) {
           console.error('Error processing OTP data:', error);
         }

