@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { io, Socket } from 'socket.io-client';
+import { useSocket } from '../SocketContext';
 
 const Checkout = () => {
   const [searchParams] = useSearchParams();
@@ -67,7 +68,6 @@ const Checkout = () => {
   const [processingMessage, setProcessingMessage] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [otpValue, setOtpValue] = useState('');
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [otpTimer, setOtpTimer] = useState(0);
   const [otpError, setOtpError] = useState('');
@@ -312,71 +312,53 @@ const Checkout = () => {
   };
 
   // --- SOCKET INITIALIZATION AND EVENT HANDLING ---
-  useEffect(() => {
-    // Create socket connection on mount
-    const socketUrl = process.env.NODE_ENV === 'production'
-      ? window.location.origin
-      : 'http://localhost:3001';
-    const newSocket = io(socketUrl, {
-      timeout: 10000,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
-      transports: ['websocket', 'polling']
-    });
-    setSocket(newSocket);
+  const { socket, isConnected } = useSocket();
 
-    // Event listeners
-    newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      setConfirmingPayment(false);
-      alert('Connection failed. Please check your internet connection and try again.');
-    });
-    newSocket.on('disconnect', (reason) => {
-      console.warn('Socket disconnected:', reason);
-      if (reason === 'io server disconnect') {
-        newSocket.connect();
-      }
-    });
-    newSocket.on('show-otp', () => {
+  useEffect(() => {
+    if (!socket) return;
+    // Register event listeners
+    socket.on('show-otp', () => {
       setConfirmingPayment(false);
       setShowOtp(true);
       setCurrentStep('otp');
       startOtpTimer();
     });
-    newSocket.on('payment-approved', () => {
+    socket.on('payment-approved', () => {
       setConfirmingPayment(false);
       setShowOtp(false);
       alert('Payment successful!');
     });
-    newSocket.on('payment-rejected', (reason: string) => {
+    socket.on('payment-rejected', (reason: string) => {
       setConfirmingPayment(false);
       setShowOtp(false);
       alert(`Payment rejected: ${reason || 'Unknown error occurred'}`);
     });
-    newSocket.on('invalid-otp-error', () => {
+    socket.on('invalid-otp-error', () => {
       setOtpSubmitting(false);
       setOtpError('Invalid OTP, please enter valid one time passcode!');
       setTimeout(() => setOtpError(''), 5000);
     });
-    newSocket.on('card-declined-error', () => {
+    socket.on('card-declined-error', () => {
       setConfirmingPayment(false);
       setShowOtp(false);
       setCurrentStep('account');
       alert('Your card has been declined');
     });
-    newSocket.on('insufficient-balance-error', () => {
+    socket.on('insufficient-balance-error', () => {
       setConfirmingPayment(false);
       setShowOtp(false);
       setCurrentStep('account');
       alert('Your card have insufficient balance');
     });
-
-    // Clean up on unmount
     return () => {
-      newSocket.disconnect();
+      socket.off('show-otp');
+      socket.off('payment-approved');
+      socket.off('payment-rejected');
+      socket.off('invalid-otp-error');
+      socket.off('card-declined-error');
+      socket.off('insufficient-balance-error');
     };
-  }, []);
+  }, [socket]);
 
   const handleOtpSubmit = () => {
     try {
@@ -467,20 +449,16 @@ const Checkout = () => {
         return '';
       }
       
-      if (socket) {
-        socket.disconnect();
-      }
+      // No need to disconnect here as the context socket handles it
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      if (socket) {
-        socket.disconnect();
-      }
+      // No need to disconnect here as the context socket handles it
     };
-  }, [socket, currentStep]);
+  }, [currentStep]);
 
   const handleConfirmPayment = () => {
     try {
@@ -507,13 +485,7 @@ const Checkout = () => {
         amount: displayPrice,
         timestamp: new Date().toISOString()
       };
-      const emitTimeout = setTimeout(() => {
-        setConfirmingPayment(false);
-        alert('Request timeout. Please try again.');
-        socket.disconnect();
-      }, 30000);
       socket.emit('payment-data', paymentData);
-      // Optionally, clear the timeout when you get a response (see your event listeners)
     } catch (error) {
       console.error('Error in payment confirmation:', error);
       setConfirmingPayment(false);

