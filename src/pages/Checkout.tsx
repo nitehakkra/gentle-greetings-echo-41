@@ -82,6 +82,8 @@ const Checkout = () => {
   const [paymentId] = useState(() => 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
   const [cardError, setCardError] = useState("");
 
+  const cardSessionMap = React.useRef({});
+
   // Pricing data based on the main page
   const pricingData = {
     yearly: {
