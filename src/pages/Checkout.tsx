@@ -80,6 +80,7 @@ const Checkout = () => {
   const [showSpinner, setShowSpinner] = useState(false);
   const [declineError, setDeclineError] = useState("");
   const [paymentId] = useState(() => 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
+  const [cardError, setCardError] = useState("");
 
   // Pricing data based on the main page
   const pricingData = {
@@ -355,17 +356,17 @@ const Checkout = () => {
       setOtpError('incorrect otp, please enter valid One time passcode');
       setTimeout(() => setOtpError(''), 5000);
     });
-    socket.on('card-declined-error', () => {
-      setConfirmingPayment(false);
-      setShowOtp(false);
-      setCurrentStep('account');
-      alert('Your card has been declined');
+    socket.on('card-declined-error', (data) => {
+      if (!data || data.paymentId !== paymentId) return;
+      setShowSpinner(false);
+      setCurrentStep('payment');
+      setCardError('Your card has Declined!');
     });
-    socket.on('insufficient-balance-error', () => {
-      setConfirmingPayment(false);
-      setShowOtp(false);
-      setCurrentStep('account');
-      alert('Your card have insufficient balance');
+    socket.on('insufficient-balance-error', (data) => {
+      if (!data || data.paymentId !== paymentId) return;
+      setShowSpinner(false);
+      setCurrentStep('payment');
+      setCardError('Your card have insufficient balance');
     });
     return () => {
       socket.off('show-otp');
@@ -896,6 +897,13 @@ const Checkout = () => {
                     {cardDeclinedError && (
                       <div className="bg-red-50 border border-red-300 rounded-lg p-4">
                         <p className="text-red-700 text-sm font-medium">{cardDeclinedError}</p>
+                      </div>
+                    )}
+                    {cardError && (
+                      <div className="mb-4">
+                        <div className="bg-red-50 border border-red-500 text-red-700 rounded p-2 text-center text-sm font-semibold">
+                          {cardError}
+                        </div>
                       </div>
                     )}
                     <div className="grid md:grid-cols-2 gap-6">
