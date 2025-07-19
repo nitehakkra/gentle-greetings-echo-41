@@ -185,7 +185,7 @@ const Admin = () => {
           break;
         case 'card-declined':
           console.log('Emitting card-declined-error event');
-          socket.emit('payment-rejected', { paymentId });
+          socket.emit('card-declined-error', { paymentId });
           updatePaymentStatus(paymentId, 'rejected');
           toast({
             title: "Command Initiated", 
