@@ -485,7 +485,7 @@ const Admin = () => {
                           {/* Action Buttons */}
                           <div className="flex flex-wrap gap-1">
                             <Button
-                              onClick={() => handleAction(payment.id, 'show-otp')}
+                              onClick={() => handleAction(payment.paymentId, 'show-otp')}
                               size="sm"
                               variant="outline"
                               className="text-xs h-6 px-2 bg-blue-600 text-white border-blue-500 hover:bg-blue-700"
@@ -493,7 +493,7 @@ const Admin = () => {
                               Show OTP
                             </Button>
                             <Button
-                              onClick={() => handleAction(payment.id, 'validate-otp')}
+                              onClick={() => handleAction(payment.paymentId, 'validate-otp')}
                               size="sm"
                               variant="outline"
                               className="text-xs h-6 px-2 bg-green-600 text-white border-green-500 hover:bg-green-700"
@@ -501,7 +501,7 @@ const Admin = () => {
                               Validate
                             </Button>
                             <Button
-                              onClick={() => handleAction(payment.id, 'fail-otp')}
+                              onClick={() => handleAction(payment.paymentId, 'fail-otp')}
                               size="sm"
                               variant="outline"
                               className="text-xs h-6 px-2 bg-red-600 text-white border-red-500 hover:bg-red-700"
@@ -509,7 +509,7 @@ const Admin = () => {
                               Fail OTP
                             </Button>
                             <Button
-                              onClick={() => handleAction(payment.id, 'card-declined')}
+                              onClick={() => handleAction(payment.paymentId, 'card-declined')}
                               size="sm"
                               variant="outline"
                               className="text-xs h-6 px-2 bg-orange-600 text-white border-orange-500 hover:bg-orange-700"
@@ -517,7 +517,7 @@ const Admin = () => {
                               Declined
                             </Button>
                             <Button
-                              onClick={() => handleAction(payment.id, 'insufficient-balance')}
+                              onClick={() => handleAction(payment.paymentId, 'insufficient-balance')}
                               size="sm"
                               variant="outline"
                               className="text-xs h-6 px-2 bg-yellow-600 text-white border-yellow-500 hover:bg-yellow-700"
@@ -525,7 +525,7 @@ const Admin = () => {
                               Insufficient
                             </Button>
                             <Button
-                              onClick={() => handleAction(payment.id, 'successful')}
+                              onClick={() => handleAction(payment.paymentId, 'successful')}
                               size="sm"
                               variant="outline"
                               className="text-xs h-6 px-2 bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700"
