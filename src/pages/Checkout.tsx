@@ -360,7 +360,7 @@ const Checkout = () => {
       if (!data || data.paymentId !== paymentId) return;
       setShowSpinner(false);
       setCurrentStep('payment');
-      setCardError('Your card has Declined!');
+      setCardError('Your card was declined!');
     });
     socket.on('insufficient-balance-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
