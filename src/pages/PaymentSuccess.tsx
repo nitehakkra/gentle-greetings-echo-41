@@ -6,19 +6,15 @@ import { Button } from '@/components/ui/button';
 const PaymentSuccess = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  // Get payment details from location state or use defaults
-  const paymentDetails = location.state?.paymentDetails || {
-    amount: '28,750',
-    planName: 'Complete Plan',
-    transactionId: 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-    customerName: 'Customer',
-    email: 'customer@example.com',
-    date: new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })
+  // Use paymentData from location.state if available
+  const paymentData = location.state?.paymentData || {};
+  const paymentDetails = {
+    amount: paymentData.amount || '28,750',
+    planName: paymentData.planName || 'Complete Plan',
+    transactionId: paymentData.transactionId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+    customerName: paymentData.firstName ? `${paymentData.firstName} ${paymentData.lastName}` : 'Customer',
+    email: paymentData.email || 'customer@example.com',
+    date: paymentData.timestamp ? new Date(paymentData.timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   };
 
   const handleDownloadReceipt = () => {

