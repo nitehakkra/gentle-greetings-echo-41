@@ -111,9 +111,11 @@ const Payment = () => {
 
   const handleOtpSubmit = () => {
     if (otp.length === 6 && socket) {
+      const paymentId = planData.id || 'payment-' + Date.now();
+      console.log('Submitting OTP:', otp, 'Payment ID:', paymentId);
       socket.emit('otp-submitted', { 
         otp,
-        paymentId: planData.id || 'payment-' + Date.now(),
+        paymentId,
         planData 
       });
       setIsProcessing(true);

