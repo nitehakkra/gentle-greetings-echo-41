@@ -18,31 +18,45 @@ const PaymentSuccess = () => {
   
   // Get payment data without causing re-renders
   const getPaymentData = () => {
+    console.log('=== GETTING PAYMENT DATA ===');
+    console.log('Location state:', location.state);
+    
     if (location.state?.paymentData) {
+      console.log('Using location state data');
       return location.state.paymentData;
     }
     
     try {
       // Try to get data from localStorage fallbacks
       const stored = localStorage.getItem('lastPaymentData');
+      console.log('Stored payment data:', stored);
+      
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        console.log('Using stored payment data:', parsed);
+        return parsed;
       }
       
       // If no stored payment data, try to get user data from checkout
       const userData = localStorage.getItem('userCheckoutData');
       const cardData = localStorage.getItem('userCardData');
       
+      console.log('User checkout data:', userData);
+      console.log('User card data:', cardData);
+      
       if (userData && cardData) {
         const user = JSON.parse(userData);
         const card = JSON.parse(cardData);
-        return {
+        const combined = {
           ...user,
           ...card,
           paymentId: user.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase()
         };
+        console.log('Using combined checkout data:', combined);
+        return combined;
       }
       
+      console.log('No data found, returning empty object');
       return {};
     } catch (error) {
       console.error('Error parsing stored payment data:', error);
@@ -305,6 +319,34 @@ Thank you for your purchase!
                 Customer: {paymentDetails.customerName} | 
                 Email: {paymentDetails.email} | 
                 Card: {paymentDetails.last4Digits}
+                <br />
+                <button 
+                  onClick={() => {
+                    // Test: Set sample data
+                    const testData = {
+                      firstName: 'John',
+                      lastName: 'Doe',
+                      email: 'john.doe@example.com',
+                      cardNumber: '4111 1111 1111 1111',
+                      paymentId: 'test_123'
+                    };
+                    localStorage.setItem('userCheckoutData', JSON.stringify(testData));
+                    localStorage.setItem('userCardData', JSON.stringify({cardNumber: '4111 1111 1111 1111'}));
+                    window.location.reload();
+                  }}
+                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs"
+                >
+                  Set Test Data
+                </button>
+                <button 
+                  onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                  }}
+                  className="mt-2 ml-2 px-2 py-1 bg-red-500 text-white rounded text-xs"
+                >
+                  Clear Data
+                </button>
               </div>
             )}
           </div>
