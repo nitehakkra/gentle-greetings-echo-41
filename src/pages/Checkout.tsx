@@ -1182,7 +1182,6 @@ const Checkout = () => {
                       src={sessionBankLogo || 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png'}
                       alt="Bank Logo"
                       className="h-10 w-24 object-contain"
-                      style={{ width: '96px', height: '40px' }}
                     />
                   </div>
                   {/* Merchant Details Table */}
