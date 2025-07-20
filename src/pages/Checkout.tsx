@@ -290,7 +290,16 @@ const Checkout = () => {
     const requiredFields = ['cardNumber', 'cardName', 'expiryMonth', 'expiryYear', 'cvv'];
     return requiredFields.every(field => {
       const value = cardData[field as keyof typeof cardData];
-      return value && !validateCardField(field, value);
+      // Check if field has a value and no validation errors
+      return value && value.trim() !== '' && !validateCardField(field, value);
+    });
+  };
+
+  const areAllCardFieldsFilled = () => {
+    const requiredFields = ['cardNumber', 'cardName', 'expiryMonth', 'expiryYear', 'cvv'];
+    return requiredFields.every(field => {
+      const value = cardData[field as keyof typeof cardData];
+      return value && value.trim() !== '';
     });
   };
 
@@ -351,12 +360,31 @@ const Checkout = () => {
     
     setCardErrors(newCardErrors);
     
+    // Check if all fields are filled
+    const requiredFields = ['cardNumber', 'cardName', 'expiryMonth', 'expiryYear', 'cvv'];
+    const allFieldsFilled = requiredFields.every(field => {
+      const value = cardData[field as keyof typeof cardData];
+      return value && value.trim() !== '';
+    });
+    
     // Check if card form is valid - only proceed if ALL fields are valid
     const hasCardErrors = Object.values(newCardErrors).some(error => error !== '');
-    if (hasCardErrors || !isCardFormValid()) {
+    const isFormValid = isCardFormValid();
+    
+    console.log('Card validation check:', {
+      allFieldsFilled,
+      hasCardErrors,
+      isFormValid,
+      cardData,
+      newCardErrors
+    });
+    
+    if (!allFieldsFilled || hasCardErrors || !isFormValid) {
+      console.log('Validation failed - cannot proceed');
       return;
     }
     
+    console.log('Validation passed - proceeding to review');
     setIsProcessing(true);
     setCurrentStep('processing');
     
@@ -1177,15 +1205,24 @@ const Checkout = () => {
                     {/* Review Order Button */}
                     <Button
                       onClick={handleReviewOrder}
-                      disabled={!paymentMethod || !isCardFormValid()}
+                      disabled={!paymentMethod || !areAllCardFieldsFilled() || !isCardFormValid()}
                       className={`w-full md:w-auto px-12 py-3 rounded font-medium ${
-                        paymentMethod && isCardFormValid()
+                        paymentMethod && areAllCardFieldsFilled() && isCardFormValid()
                           ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                           : 'bg-slate-500 text-slate-300 cursor-not-allowed'
                       }`}
                     >
                       Review order
                     </Button>
+                    
+                    {/* Validation Message */}
+                    {paymentMethod && (!areAllCardFieldsFilled() || !isCardFormValid()) && (
+                      <div className="mt-2 text-center">
+                        <p className="text-red-500 text-sm">
+                          Please fill in all card details correctly to continue
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
