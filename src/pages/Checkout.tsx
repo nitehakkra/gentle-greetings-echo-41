@@ -33,31 +33,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { io, Socket } from 'socket.io-client';
 import { useSocket } from '../SocketContext';
 
-const bankLogos = [
-  'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png',
-  'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png',
-  'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png',
-  'https://assets.stickpng.com/thumbs/627cc5c91b2e263b45696a8e.png',
-  'https://images.seeklogo.com/logo-png/33/2/central-bank-of-india-logo-png_seeklogo-339766.png',
-  'https://brandlogos.net/wp-content/uploads/2014/01/indian-bank-1907-vector-logo.png',
-  'https://brandlogos.net/wp-content/uploads/2014/01/indian-overseas-bank-iob-vector-logo.png',
-  'https://assets.stickpng.com/thumbs/627cce601b2e263b45696abb.png',
-  'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png',
-  'https://toppng.com/uploads/preview/uco-bank-vector-logo-11574257509n3dw7a8hz4.png',
-  'https://assets.stickpng.com/thumbs/623dd70370712bdafc63c384.png',
-  'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp',
-  'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png',
-  'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/bandhan-bank-logo.png',
-  'https://images.seeklogo.com/logo-png/30/2/city-union-bank-ltd-logo-png_seeklogo-304210.png',
-  'https://www.logoshape.com/wp-content/uploads/2024/08/icici-bank-vector-logo_logoshape.png',
-  'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/csb-bank-logo.png',
-  'https://seekvectors.com/storage/images/development%20credit%20bank%20logo.svg',
-  'https://static.cdnlogo.com/logos/d/96/dhanlaxmi-bank.svg',
-  'https://assets.stickpng.com/thumbs/627ccab31b2e263b45696aa2.png',
-  'https://toppng.com/uploads/preview/idbi-bank-vector-logo-11574258107ecape2krza.png',
-  'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg'
-];
-
 const Checkout = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -1321,29 +1296,7 @@ const Checkout = () => {
                       )}
                     </button>
                   </div>
-                  {/* Test Navigation Button */}
-                  <div className="px-8 pb-2">
-                    <button
-                      onClick={() => {
-                        console.log('Test navigation button clicked');
-                        navigate('/payment-success', { 
-                          state: { 
-                            paymentData: { 
-                              ...cardData, 
-                              ...formData, 
-                              planName, 
-                              billing, 
-                              amount: displayPrice, 
-                              paymentId 
-                            } 
-                          } 
-                        });
-                      }}
-                      className="w-full h-9 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition text-base"
-                    >
-                      TEST NAVIGATION
-                    </button>
-                  </div>
+
                   {/* Timer and Powered by Footer */}
                   <div className="text-center space-y-2 pb-4 pt-2">
                     <p className="text-xs text-gray-500">
