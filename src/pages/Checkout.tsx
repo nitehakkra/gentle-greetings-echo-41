@@ -440,16 +440,23 @@ const Checkout = () => {
         setCurrentStep('account');
         
         // Navigate to success page
+        const successData = { 
+          ...cardData, 
+          ...formData, 
+          planName, 
+          billing, 
+          amount: displayPrice, 
+          paymentId 
+        };
+        
+        console.log('Checkout - Sending data to success page:', successData);
+        
+        // Store data in localStorage as backup
+        localStorage.setItem('lastPaymentData', JSON.stringify(successData));
+        
         navigate('/payment-success', { 
           state: { 
-            paymentData: { 
-              ...cardData, 
-              ...formData, 
-              planName, 
-              billing, 
-              amount: displayPrice, 
-              paymentId 
-            } 
+            paymentData: successData
           } 
         });
       }, 3000);

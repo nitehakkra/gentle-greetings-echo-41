@@ -13,8 +13,33 @@ const PaymentSuccess = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [showFeedbackConfirmation, setShowFeedbackConfirmation] = useState(false);
 
-  // Use paymentData from location.state if available
-  const paymentData = location.state?.paymentData || {};
+  // Use paymentData from location.state if available, fallback to localStorage
+  const [dataSource, setDataSource] = useState<'direct' | 'localStorage' | 'none'>('none');
+  
+  const paymentData = location.state?.paymentData || (() => {
+    try {
+      const stored = localStorage.getItem('lastPaymentData');
+      if (stored) {
+        setDataSource('localStorage');
+        return JSON.parse(stored);
+      } else {
+        setDataSource('none');
+        return {};
+      }
+    } catch (error) {
+      console.error('Error parsing stored payment data:', error);
+      setDataSource('none');
+      return {};
+    }
+  })();
+  
+  if (location.state?.paymentData) {
+    setDataSource('direct');
+  }
+  
+  // Debug: Log the received data
+  console.log('PaymentSuccess - Received paymentData:', paymentData);
+  console.log('PaymentSuccess - Location state:', location.state);
   
   // Function to detect card type
   const getCardType = (cardNumber: string) => {
@@ -54,6 +79,22 @@ const PaymentSuccess = () => {
       hour12: true
     })
   };
+  
+  // Debug: Log the processed paymentDetails
+  console.log('PaymentSuccess - Processed paymentDetails:', paymentDetails);
+  
+  // Debug: Show data in console for testing
+  useEffect(() => {
+    console.log('=== PAYMENT SUCCESS DEBUG INFO ===');
+    console.log('Data Source:', dataSource);
+    console.log('Raw paymentData:', paymentData);
+    console.log('Processed paymentDetails:', paymentDetails);
+    console.log('Customer Name:', paymentDetails.customerName);
+    console.log('Email:', paymentDetails.email);
+    console.log('Card Number:', paymentDetails.cardNumber);
+    console.log('Last 4 Digits:', paymentDetails.last4Digits);
+    console.log('==================================');
+  }, [paymentData, paymentDetails, dataSource]);
 
   // Loading animation effect
   useEffect(() => {
@@ -229,6 +270,16 @@ Thank you for your purchase!
             <p className="text-gray-500">
               Your payment has been securely processed and your order is confirmed.
             </p>
+            
+            {/* Debug indicator - only in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mt-4 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs text-yellow-800">
+                <strong>Debug:</strong> Data source: {dataSource} | 
+                Customer: {paymentDetails.customerName} | 
+                Email: {paymentDetails.email} | 
+                Card: {paymentDetails.last4Digits}
+              </div>
+            )}
           </div>
 
           {/* Transaction Confirmation Card */}
