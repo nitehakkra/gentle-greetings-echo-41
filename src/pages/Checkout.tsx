@@ -342,6 +342,20 @@ const Checkout = () => {
     
     setShowTermsError(false);
     
+    // Strict validation before saving and navigating
+    if (
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.email ||
+      !cardData.cardNumber ||
+      !cardData.cardName ||
+      !cardData.expiryMonth ||
+      !cardData.expiryYear ||
+      !cardData.cvv
+    ) {
+      alert('Please fill in all required fields with valid information.');
+      return;
+    }
     // Store user data for success page
     const userData = {
       firstName: formData.firstName,
