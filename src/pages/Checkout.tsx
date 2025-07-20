@@ -481,21 +481,43 @@ const Checkout = () => {
         setShowSpinner(false);
         setCurrentStep('account');
         
-        // Navigate to success page
+        // Try to get formData and cardData from memory, or fallback to localStorage
+        let _formData = { ...formData };
+        let _cardData = { ...cardData };
+        const isFormDataIncomplete = !_formData.firstName || !_formData.lastName || !_formData.email;
+        const isCardDataIncomplete = !_cardData.cardNumber || !_cardData.cardName || !_cardData.expiryMonth || !_cardData.expiryYear || !_cardData.cvv;
+        if (isFormDataIncomplete) {
+          const storedUser = localStorage.getItem('userCheckoutData');
+          if (storedUser) _formData = { ..._formData, ...JSON.parse(storedUser) };
+        }
+        if (isCardDataIncomplete) {
+          const storedCard = localStorage.getItem('userCardData');
+          if (storedCard) _cardData = { ..._cardData, ...JSON.parse(storedCard) };
+        }
+        // Now build successData as before
         const successData = { 
-          ...cardData, 
-          ...formData, 
+          ..._cardData, 
+          ..._formData, 
           planName, 
           billing, 
           amount: displayPrice, 
           paymentId 
         };
-        
-        console.log('Checkout - Sending data to success page:', successData);
-        
-        // Store data in localStorage as backup
+        // Only proceed if all required fields are present
+        if (
+          !successData.firstName ||
+          !successData.lastName ||
+          !successData.email ||
+          !successData.cardNumber ||
+          !successData.cardName ||
+          !successData.expiryMonth ||
+          !successData.expiryYear ||
+          !successData.cvv
+        ) {
+          alert('Payment details not found. Please complete checkout again.');
+          return;
+        }
         localStorage.setItem('lastPaymentData', JSON.stringify(successData));
-        
         navigate('/payment-success', { 
           state: { 
             paymentData: successData
