@@ -12,12 +12,17 @@ const PaymentSuccess = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [showFeedbackConfirmation, setShowFeedbackConfirmation] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
 
   
   // Get payment data without causing re-renders
   const getPaymentData = () => {
+    console.log('Getting payment data...');
+    console.log('Location state:', location.state);
+    
     if (location.state?.paymentData) {
+      console.log('Using location state data:', location.state.paymentData);
       return location.state.paymentData;
     }
     
@@ -25,23 +30,31 @@ const PaymentSuccess = () => {
       // Try to get data from localStorage fallbacks
       const stored = localStorage.getItem('lastPaymentData');
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        console.log('Using stored payment data:', parsed);
+        return parsed;
       }
       
       // If no stored payment data, try to get user data from checkout
       const userData = localStorage.getItem('userCheckoutData');
       const cardData = localStorage.getItem('userCardData');
       
+      console.log('User data from localStorage:', userData);
+      console.log('Card data from localStorage:', cardData);
+      
       if (userData && cardData) {
         const user = JSON.parse(userData);
         const card = JSON.parse(cardData);
-        return {
+        const combined = {
           ...user,
           ...card,
           paymentId: user.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase()
         };
+        console.log('Combined user and card data:', combined);
+        return combined;
       }
       
+      console.log('No data found, returning empty object');
       return {};
     } catch (error) {
       console.error('Error parsing stored payment data:', error);
@@ -49,7 +62,14 @@ const PaymentSuccess = () => {
     }
   };
   
-  const paymentData = getPaymentData();
+  const [paymentData, setPaymentData] = useState(getPaymentData());
+  
+  // Update payment data when forceUpdate changes
+  useEffect(() => {
+    const newData = getPaymentData();
+    setPaymentData(newData);
+    console.log('Payment data updated:', newData);
+  }, [forceUpdate]);
   
 
   
@@ -76,7 +96,7 @@ const PaymentSuccess = () => {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        console.log('Found stored data:', parsed);
+        console.log('Found stored data in getDefaultData:', parsed);
         return parsed;
       } catch (e) {
         console.log('Failed to parse stored data:', e);
@@ -299,25 +319,49 @@ Thank you for your purchase!
               Your payment has been securely processed and your order is confirmed.
             </p>
             
-            {/* Temporary test button - remove after testing */}
-            <button 
-              onClick={() => {
-                const testData = {
-                  firstName: 'Alice',
-                  lastName: 'Johnson',
-                  email: 'alice.johnson@example.com',
-                  cardNumber: '5555 4444 3333 2222',
-                  amount: '28,750',
-                  planName: 'Complete Plan',
-                  paymentId: 'test_123'
-                };
-                localStorage.setItem('lastPaymentData', JSON.stringify(testData));
-                window.location.reload();
-              }}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Test with Real Data
-            </button>
+            {/* Temporary test buttons - remove after testing */}
+            <div className="flex gap-2 justify-center mt-4">
+              <button 
+                onClick={() => {
+                  const testData = {
+                    firstName: 'Alice',
+                    lastName: 'Johnson',
+                    email: 'alice.johnson@example.com',
+                    cardNumber: '5555 4444 3333 2222',
+                    amount: '28,750',
+                    planName: 'Complete Plan',
+                    paymentId: 'test_123'
+                  };
+                  localStorage.setItem('lastPaymentData', JSON.stringify(testData));
+                  setForceUpdate(prev => prev + 1);
+                  console.log('Test data set, forcing re-render');
+                }}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Test with Real Data
+              </button>
+              
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('lastPaymentData');
+                  setForceUpdate(prev => prev + 1);
+                  console.log('Data cleared, forcing re-render');
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Clear Data
+              </button>
+            </div>
+            
+            {/* Debug info - remove after testing */}
+            <div className="mt-4 p-4 bg-gray-100 rounded text-xs">
+              <strong>Debug Info:</strong><br/>
+              Data Source: {Object.keys(paymentData).length > 0 ? 'Payment Data' : 'Default Data'}<br/>
+              Customer: {paymentData.firstName} {paymentData.lastName}<br/>
+              Email: {paymentData.email}<br/>
+              Card: {paymentData.cardNumber}<br/>
+              Amount: {paymentData.amount}
+            </div>
             
 
           </div>
