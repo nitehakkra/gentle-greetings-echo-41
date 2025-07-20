@@ -342,18 +342,15 @@ const Checkout = () => {
     
     setShowTermsError(false);
     
-    // Strict validation before saving and navigating
+    // Only validate contact fields here (not card fields)
     if (
       !formData.firstName ||
       !formData.lastName ||
       !formData.email ||
-      !cardData.cardNumber ||
-      !cardData.cardName ||
-      !cardData.expiryMonth ||
-      !cardData.expiryYear ||
-      !cardData.cvv
+      !formData.confirmEmail ||
+      !formData.country
     ) {
-      alert('Please fill in all required fields with valid information.');
+      alert('Please fill in all required contact fields.');
       return;
     }
     // Store user data for success page
