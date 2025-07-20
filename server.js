@@ -91,6 +91,7 @@ io.on('connection', (socket) => {
 
   socket.on('payment-approved', (data) => {
     console.log('Admin approved payment:', data);
+    console.log('Broadcasting payment-approved to all clients');
     socket.broadcast.emit('payment-approved', data);
   });
 

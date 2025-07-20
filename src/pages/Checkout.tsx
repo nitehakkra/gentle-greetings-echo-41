@@ -372,7 +372,11 @@ const Checkout = () => {
   const { socket, isConnected } = useSocket();
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.log('Socket not available, skipping event registration');
+      return;
+    }
+    console.log('Registering socket event listeners for paymentId:', paymentId);
     // Register event listeners
     socket.on('show-otp', () => {
       setConfirmingPayment(false);
@@ -381,10 +385,35 @@ const Checkout = () => {
       startOtpTimer();
     });
     socket.on('payment-approved', (data) => {
-      if (!data || data.paymentId !== paymentId) return;
+      console.log('Payment approved event received:', data);
+      console.log('Current paymentId:', paymentId);
+      console.log('Event paymentId:', data?.paymentId);
+      console.log('Socket connected:', socket?.connected);
+      
+      if (!data || data.paymentId !== paymentId) {
+        console.log('Payment ID mismatch or no data, ignoring event');
+        return;
+      }
+      
+      console.log('Payment approved - redirecting to success page');
       setShowOtp(false);
       setCurrentStep('account');
-      navigate('/payment-success', { state: { paymentData: { ...cardData, ...formData, planName, billing, amount: displayPrice, paymentId } } });
+      
+      // Force navigation with a small delay to ensure state updates
+      setTimeout(() => {
+        navigate('/payment-success', { 
+          state: { 
+            paymentData: { 
+              ...cardData, 
+              ...formData, 
+              planName, 
+              billing, 
+              amount: displayPrice, 
+              paymentId 
+            } 
+          } 
+        });
+      }, 100);
     });
     socket.on('payment-rejected', (data) => {
       if (!data || data.paymentId !== paymentId) return;
@@ -423,6 +452,7 @@ const Checkout = () => {
       setCardError('Your card have insufficient balance');
     });
     return () => {
+      console.log('Cleaning up socket event listeners');
       socket.off('show-otp');
       socket.off('payment-approved');
       socket.off('payment-rejected');
@@ -1289,6 +1319,29 @@ const Checkout = () => {
                       ) : (
                         'SUBMIT'
                       )}
+                    </button>
+                  </div>
+                  {/* Test Navigation Button */}
+                  <div className="px-8 pb-2">
+                    <button
+                      onClick={() => {
+                        console.log('Test navigation button clicked');
+                        navigate('/payment-success', { 
+                          state: { 
+                            paymentData: { 
+                              ...cardData, 
+                              ...formData, 
+                              planName, 
+                              billing, 
+                              amount: displayPrice, 
+                              paymentId 
+                            } 
+                          } 
+                        });
+                      }}
+                      className="w-full h-9 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition text-base"
+                    >
+                      TEST NAVIGATION
                     </button>
                   </div>
                   {/* Timer and Powered by Footer */}

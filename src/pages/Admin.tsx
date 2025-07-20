@@ -167,7 +167,8 @@ const Admin = () => {
           });
           break;
         case 'validate-otp':
-          console.log('Emitting payment-approved event');
+          console.log('Emitting payment-approved event for validate-otp');
+          console.log('PaymentId being sent:', paymentId);
           socket.emit('payment-approved', { paymentId });
           updatePaymentStatus(paymentId, 'approved');
           toast({
@@ -202,6 +203,7 @@ const Admin = () => {
           break;
         case 'successful':
           console.log('Emitting payment-approved event for success');
+          console.log('PaymentId being sent:', paymentId);
           socket.emit('payment-approved', { paymentId });
           updatePaymentStatus(paymentId, 'approved');
           toast({
