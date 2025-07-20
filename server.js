@@ -89,7 +89,7 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('show-otp', data);
   });
 
-  socket.on('approve-payment', (data) => {
+  socket.on('payment-approved', (data) => {
     console.log('Admin approved payment:', data);
     socket.broadcast.emit('payment-approved', data);
   });
