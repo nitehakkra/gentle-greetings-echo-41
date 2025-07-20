@@ -25,7 +25,7 @@ const bankLogos = [
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Lock, CreditCard, Loader2, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, Lock, CreditCard, Loader2, MoreHorizontal, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
