@@ -16,30 +16,39 @@ const PaymentSuccess = () => {
   // Use paymentData from location.state if available, fallback to localStorage
   const [dataSource, setDataSource] = useState<'direct' | 'localStorage' | 'none'>('none');
   
-  const paymentData = location.state?.paymentData || (() => {
+  // Get payment data without causing re-renders
+  const getPaymentData = () => {
+    if (location.state?.paymentData) {
+      return location.state.paymentData;
+    }
+    
     try {
       const stored = localStorage.getItem('lastPaymentData');
-      if (stored) {
-        setDataSource('localStorage');
-        return JSON.parse(stored);
-      } else {
-        setDataSource('none');
-        return {};
-      }
+      return stored ? JSON.parse(stored) : {};
     } catch (error) {
       console.error('Error parsing stored payment data:', error);
-      setDataSource('none');
       return {};
     }
-  })();
+  };
   
-  if (location.state?.paymentData) {
-    setDataSource('direct');
-  }
+  const paymentData = getPaymentData();
   
-  // Debug: Log the received data
-  console.log('PaymentSuccess - Received paymentData:', paymentData);
-  console.log('PaymentSuccess - Location state:', location.state);
+  // Set data source in useEffect to avoid re-render loops
+  useEffect(() => {
+    if (location.state?.paymentData) {
+      setDataSource('direct');
+    } else if (localStorage.getItem('lastPaymentData')) {
+      setDataSource('localStorage');
+    } else {
+      setDataSource('none');
+    }
+  }, [location.state]);
+  
+  // Debug: Log the received data in useEffect to avoid re-renders
+  useEffect(() => {
+    console.log('PaymentSuccess - Received paymentData:', paymentData);
+    console.log('PaymentSuccess - Location state:', location.state);
+  }, [paymentData, location.state]);
   
   // Function to detect card type
   const getCardType = (cardNumber: string) => {
@@ -79,9 +88,6 @@ const PaymentSuccess = () => {
       hour12: true
     })
   };
-  
-  // Debug: Log the processed paymentDetails
-  console.log('PaymentSuccess - Processed paymentDetails:', paymentDetails);
   
   // Debug: Show data in console for testing
   useEffect(() => {
