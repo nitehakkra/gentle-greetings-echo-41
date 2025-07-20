@@ -36,7 +36,9 @@ const PaymentSuccess = () => {
     amount: paymentData.amount || '28,750',
     planName: paymentData.planName || 'Complete Plan',
     transactionId: paymentData.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-    customerName: paymentData.firstName ? `${paymentData.firstName} ${paymentData.lastName}` : 'Customer',
+    customerName: paymentData.firstName && paymentData.lastName ? `${paymentData.firstName} ${paymentData.lastName}` : 
+                  paymentData.firstName ? paymentData.firstName : 
+                  paymentData.lastName ? paymentData.lastName : 'Customer',
     email: paymentData.email || 'customer@example.com',
     cardNumber: paymentData.cardNumber || '1234 5678 9012 3456',
     cardType: getCardType(paymentData.cardNumber || '1234 5678 9012 3456'),
@@ -120,8 +122,10 @@ Thank you for your purchase!
         <div className="text-center">
           {/* Animated Success Icon */}
           <div className="relative mb-8">
-            <div className="w-24 h-24 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
-              <CheckCircle className="h-12 w-12 text-white animate-bounce" />
+            <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto animate-pulse shadow-lg">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+              </svg>
             </div>
             {/* Progress Ring */}
             <svg className="absolute inset-0 w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
@@ -177,8 +181,10 @@ Thank you for your purchase!
       {!showContent && (
         <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="text-center">
-            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-              <CheckCircle className="h-8 w-8 text-white" />
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+              </svg>
             </div>
             <p className="text-lg font-semibold text-gray-800">Payment Successful!</p>
           </div>
@@ -190,29 +196,29 @@ Thank you for your purchase!
         {/* Header with Brand */}
         <div className="bg-white shadow-sm border-b">
           <div className="max-w-4xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">P</span>
+                          <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src="https://www.pluralsight.com/content/dam/pluralsight2/general/logo/PS_New_logo_F-01.png" 
+                    alt="PluralSight" 
+                    className="h-8 w-auto"
+                  />
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-800">PluralSight</h1>
-                  <p className="text-sm text-gray-500">Technology Skills Platform</p>
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="text-sm font-medium">SSL Secured</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-5 w-5" />
-                <span className="text-sm font-medium">SSL Secured</span>
-              </div>
-            </div>
           </div>
         </div>
 
         <div className="max-w-4xl mx-auto px-6 py-8">
           {/* Hero Section */}
           <div className="text-center mb-12">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="h-10 w-10 text-white" />
+            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+              </svg>
             </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-4">
               Payment Successful!
