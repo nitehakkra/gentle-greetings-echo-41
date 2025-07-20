@@ -58,7 +58,7 @@ const PaymentSuccess = () => {
             <div className="relative w-20 h-20 flex items-center justify-center">
               <div className="absolute inset-0 animate-ping rounded-full bg-green-200 opacity-60"></div>
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-12 h-12 text-white animate-bounce" />
+                <CheckCircle className="w-12 h-12 text-white" />
               </div>
             </div>
           </div>
