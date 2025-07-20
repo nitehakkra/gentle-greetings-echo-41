@@ -6,43 +6,81 @@ import { Button } from '@/components/ui/button';
 const PaymentSuccess = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // State declarations
+  const [paymentData, setPaymentData] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
   const [showContent, setShowContent] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [showLoading, setShowLoading] = useState(true);
+  const [dataSource, setDataSource] = useState<'direct' | 'localStorage' | 'checkout-fallback' | 'none'>('none');
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [showFeedbackConfirmation, setShowFeedbackConfirmation] = useState(false);
   const [forceUpdate, setForceUpdate] = useState(0);
-
-
   
-  // Get payment data without causing re-renders
+  // Function to detect card type
+  const getCardType = (cardNumber: string) => {
+    if (!cardNumber) return 'Credit Card';
+    const cleaned = cardNumber.replace(/\s/g, '');
+    if (cleaned.startsWith('4')) return 'Visa';
+    if (cleaned.match(/^5[1-5]/)) return 'Mastercard';
+    if (cleaned.match(/^3[47]/)) return 'American Express';
+    if (cleaned.match(/^6(?:011|5)/)) return 'Discover';
+    if (cleaned.match(/^3(?:0[0-5]|[68][0-9])/)) return 'JCB';
+    if (cleaned.match(/^6/)) return 'RuPay';
+    return 'Credit Card';
+  };
+
+  // Get last 4 digits of card number
+  const getLast4Digits = (cardNumber: string) => {
+    if (!cardNumber) return '3456';
+    const cleaned = cardNumber.replace(/\D/g, '');
+    return cleaned.slice(-4);
+  };
+
+  // Get payment data from location state or localStorage
   const getPaymentData = () => {
     console.log('Getting payment data...');
     console.log('Location state:', location.state);
     
+    // Try to get from location state first (passed from Checkout)
     if (location.state?.paymentData) {
-      console.log('Using location state data:', location.state.paymentData);
+      console.log('Using payment data from location state:', location.state.paymentData);
       return location.state.paymentData;
     }
     
-    try {
-      // Try to get data from localStorage fallbacks
-      const stored = localStorage.getItem('lastPaymentData');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        console.log('Using stored payment data:', parsed);
-        return parsed;
+    // Check if form data and card data are passed separately
+    if (location.state?.formData && location.state?.cardData) {
+      const combinedData = {
+        ...location.state.formData,
+        ...location.state.cardData,
+        amount: location.state.amount || '28,750',
+        planName: location.state.planName || 'Complete Plan',
+        paymentId: location.state.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase()
+      };
+      console.log('Combined payment data from separate state objects:', combinedData);
+      return combinedData;
+    }
+    
+    // Try to get from localStorage as fallback
+    const lastPaymentData = localStorage.getItem('lastPaymentData');
+    if (lastPaymentData) {
+      try {
+        const parsedData = JSON.parse(lastPaymentData);
+        console.log('Using payment data from localStorage:', parsedData);
+        return parsedData;
+      } catch (error) {
+        console.error('Error parsing payment data from localStorage:', error);
       }
-      
-      // If no stored payment data, try to get user data from checkout
-      const userData = localStorage.getItem('userCheckoutData');
-      const cardData = localStorage.getItem('userCardData');
-      
-      console.log('User data from localStorage:', userData);
-      console.log('Card data from localStorage:', cardData);
-      
-      if (userData && cardData) {
+    }
+    
+    // Try to get user data from checkout
+    const userData = localStorage.getItem('userCheckoutData');
+    const cardData = localStorage.getItem('userCardData');
+    
+    if (userData && cardData) {
+      try {
         const user = JSON.parse(userData);
         const card = JSON.parse(cardData);
         const combined = {
@@ -50,19 +88,24 @@ const PaymentSuccess = () => {
           ...card,
           paymentId: user.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase()
         };
-        console.log('Combined user and card data:', combined);
+        console.log('Using combined checkout data from localStorage:', combined);
         return combined;
+      } catch (error) {
+        console.error('Error parsing user or card data from localStorage:', error);
       }
-      
-      console.log('No data found, returning empty object');
-      return {};
-    } catch (error) {
-      console.error('Error parsing stored payment data:', error);
-      return {};
     }
+    
+    // Fallback to default values if no data found
+    console.log('No payment data found in location state or localStorage');
+    return {
+      firstName: 'Customer',
+      email: 'customer@example.com',
+      cardNumber: '4111 1111 1111 1111',
+      amount: '28,750',
+      planName: 'Complete Plan',
+      paymentId: 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase()
+    };
   };
-  
-  const [paymentData, setPaymentData] = useState(getPaymentData());
   
   // Update payment data when forceUpdate changes
   useEffect(() => {
@@ -70,80 +113,120 @@ const PaymentSuccess = () => {
     setPaymentData(newData);
     console.log('Payment data updated:', newData);
   }, [forceUpdate]);
-  
 
-  
-  // Function to detect card type
-  const getCardType = (cardNumber: string) => {
-    const cleaned = cardNumber.replace(/\s/g, '');
-    if (cleaned.startsWith('4')) return 'Visa';
-    if (cleaned.match(/^5[1-5]/)) return 'Mastercard';
-    if (cleaned.match(/^6(?:011|5)/)) return 'Discover';
-    if (cleaned.match(/^6/)) return 'RuPay';
-    return 'Visa';
-  };
-
-  // Get actual last 4 digits from card number
-  const getLast4Digits = (cardNumber: string) => {
-    const cleaned = cardNumber.replace(/\s/g, '');
-    return cleaned.slice(-4);
-  };
-
-  // For testing purposes, let's use some realistic data when no data is available
-  const getDefaultData = () => {
-    // Check if we have any stored data first
-    const stored = localStorage.getItem('lastPaymentData');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        console.log('Found stored data in getDefaultData:', parsed);
-        return parsed;
-      } catch (e) {
-        console.log('Failed to parse stored data:', e);
-      }
+  // Process and normalize payment data
+  const processPaymentData = (data: any) => {
+    if (!data) return {};
+    
+    // Extract first name and last name
+    let firstName = data.firstName || '';
+    let lastName = data.lastName || '';
+    
+    // If we have a full name in one field, split it
+    if ((!firstName || !lastName) && data.cardName) {
+      const nameParts = data.cardName.split(' ');
+      if (!firstName) firstName = nameParts[0] || '';
+      if (!lastName) lastName = nameParts.slice(1).join(' ') || '';
     }
     
-    console.log('No stored data found, using defaults');
-    // If no stored data, use some realistic defaults for demonstration
+    // Process card data
+    const cardNumber = data.cardNumber || '';
+    const last4Digits = getLast4Digits(cardNumber);
+    const cardType = getCardType(cardNumber);
+    
     return {
-      firstName: 'John',
-      lastName: 'Smith',
-      email: 'john.smith@email.com',
-      cardNumber: '4111 1111 1111 1111',
-      amount: '28,750',
-      planName: 'Complete Plan',
-      paymentId: 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase()
+      firstName,
+      lastName,
+      email: data.email || 'customer@example.com',
+      cardNumber,
+      last4Digits,
+      cardType,
+      amount: data.amount || '28,750',
+      planName: data.planName || 'Complete Plan',
+      paymentId: data.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      date: new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }),
+      time: new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
     };
   };
 
-  const finalData = Object.keys(paymentData).length > 0 ? paymentData : getDefaultData();
-  console.log('Final data being used:', finalData);
-
+  // Load and process payment data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = getPaymentData();
+        console.log('Raw payment data:', data);
+        
+        // Set data source
+        if (location.state?.paymentData) {
+          setDataSource('direct');
+        } else if (location.state?.formData && location.state?.cardData) {
+          setDataSource('direct');
+        } else if (localStorage.getItem('lastPaymentData')) {
+          setDataSource('localStorage');
+        } else if (localStorage.getItem('userCheckoutData') && localStorage.getItem('userCardData')) {
+          setDataSource('checkout-fallback');
+        } else {
+          setDataSource('none');
+        }
+        
+        const processedData = processPaymentData(data);
+        console.log('Processed payment data:', processedData);
+        
+        setPaymentData(processedData);
+        setIsLoading(false);
+        
+        // Debug log
+        console.log('=== PAYMENT SUCCESS DEBUG INFO ===');
+        console.log('Data Source:', dataSource);
+        console.log('Processed payment data:', processedData);
+        console.log('Customer Name:', `${processedData.firstName} ${processedData.lastName}`.trim() || 'Customer');
+        console.log('Email:', processedData.email);
+        console.log('Card Type:', processedData.cardType);
+        console.log('Last 4 Digits:', processedData.last4Digits);
+        console.log('==================================');
+        
+      } catch (error) {
+        console.error('Error loading payment data:', error);
+        setIsLoading(false);
+      }
+    };
+    
+    const timer = setTimeout(loadData, 500);
+    return () => clearTimeout(timer);
+  }, [location.state]);
+  
+  // Prepare payment details for display
   const paymentDetails = {
-    amount: finalData.amount || '28,750',
-    planName: finalData.planName || 'Complete Plan',
-    transactionId: finalData.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-    customerName: finalData.firstName && finalData.lastName ? `${finalData.firstName} ${finalData.lastName}` : 
-                  finalData.firstName ? finalData.firstName : 
-                  finalData.lastName ? finalData.lastName : 'John Smith',
-    email: finalData.email || 'john.smith@email.com',
-    cardNumber: finalData.cardNumber || '4111 1111 1111 1111',
-    cardType: getCardType(finalData.cardNumber || '4111 1111 1111 1111'),
-    last4Digits: getLast4Digits(finalData.cardNumber || '4111 1111 1111 1111'),
-    date: new Date().toLocaleDateString('en-US', { 
+    amount: paymentData.amount || '28,750',
+    planName: paymentData.planName || 'Complete Plan',
+    transactionId: paymentData.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+    customerName: paymentData.firstName || paymentData.lastName ? 
+      [paymentData.firstName, paymentData.lastName].filter(Boolean).join(' ') : 
+      'Customer',
+    email: paymentData.email || 'customer@example.com',
+    cardNumber: paymentData.cardNumber ? '•••• •••• •••• ' + paymentData.last4Digits : '•••• •••• •••• 3456',
+    cardType: paymentData.cardType || 'Credit Card',
+    last4Digits: paymentData.last4Digits || '3456',
+    date: paymentData.date || new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     }),
-    time: new Date().toLocaleTimeString('en-US', {
+    time: paymentData.time || new Date().toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
     })
   };
   
-
-
   // Loading animation effect
   useEffect(() => {
     const timer = setInterval(() => {
@@ -163,30 +246,54 @@ const PaymentSuccess = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Handle download receipt
   const handleDownloadReceipt = () => {
-    const receiptText = `
-PAYMENT RECEIPT
-===============
-
-Transaction ID: ${paymentDetails.transactionId}
-Date: ${paymentDetails.date} at ${paymentDetails.time}
-Customer: ${paymentDetails.customerName}
-Email: ${paymentDetails.email}
-Plan: ${paymentDetails.planName}
-Amount: ₹${paymentDetails.amount}
-Payment Method: ${paymentDetails.cardType} ending in ${paymentDetails.last4Digits}
-Status: SUCCESS
-
+    // Generate receipt content
+    const receiptContent = `
+=================================
+      PAYMENT RECEIPT
+=================================
+      
 Thank you for your purchase!
-    `;
+      
+Order Details:
+- Plan: ${paymentDetails.planName}
+- Amount: ₹${paymentDetails.amount}
+- Transaction ID: ${paymentDetails.transactionId}
+- Date: ${paymentDetails.date}
+- Time: ${paymentDetails.time}
+      
+Billed to:
+${paymentDetails.customerName}
+${paymentDetails.email}
+      
+Payment Method:
+${paymentDetails.cardType} ending in ${paymentDetails.last4Digits}
+      
+=================================
+Thank you for choosing our service!
+=================================
+`;
     
-    const element = document.createElement('a');
-    const file = new Blob([receiptText], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `receipt-${paymentDetails.transactionId}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    // Create a blob with the receipt content
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a temporary link to download the file
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `receipt-${paymentDetails.transactionId}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 0);
+    
+    // Show a success message
+    alert('Receipt downloaded successfully!');
   };
 
   const copyToClipboard = (text: string) => {
