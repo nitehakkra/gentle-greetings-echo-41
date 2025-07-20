@@ -1,12 +1,17 @@
 
-import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// Use require instead of import for better compatibility
+const express = require('express');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+const { fileURLToPath } = require('url');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Fix for path-to-regexp issue
+const pathToRegexp = require('path-to-regexp');
+const { match } = require('path-to-regexp');
 
 const app = express();
 const server = createServer(app);
@@ -139,7 +144,14 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
+// Error handling for server startup
+server.on('error', (error) => {
+  console.error('Server error:', error);
+  process.exit(1);
+});
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('Node.js version:', process.version);
 });
