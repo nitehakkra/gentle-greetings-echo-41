@@ -75,12 +75,15 @@ const PaymentSuccess = () => {
     const stored = localStorage.getItem('lastPaymentData');
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        console.log('Found stored data:', parsed);
+        return parsed;
       } catch (e) {
-        // If parsing fails, continue to defaults
+        console.log('Failed to parse stored data:', e);
       }
     }
     
+    console.log('No stored data found, using defaults');
     // If no stored data, use some realistic defaults for demonstration
     return {
       firstName: 'John',
@@ -94,6 +97,7 @@ const PaymentSuccess = () => {
   };
 
   const finalData = Object.keys(paymentData).length > 0 ? paymentData : getDefaultData();
+  console.log('Final data being used:', finalData);
 
   const paymentDetails = {
     amount: finalData.amount || '28,750',
@@ -294,6 +298,26 @@ Thank you for your purchase!
             <p className="text-gray-500">
               Your payment has been securely processed and your order is confirmed.
             </p>
+            
+            {/* Temporary test button - remove after testing */}
+            <button 
+              onClick={() => {
+                const testData = {
+                  firstName: 'Alice',
+                  lastName: 'Johnson',
+                  email: 'alice.johnson@example.com',
+                  cardNumber: '5555 4444 3333 2222',
+                  amount: '28,750',
+                  planName: 'Complete Plan',
+                  paymentId: 'test_123'
+                };
+                localStorage.setItem('lastPaymentData', JSON.stringify(testData));
+                window.location.reload();
+              }}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Test with Real Data
+            </button>
             
 
           </div>
