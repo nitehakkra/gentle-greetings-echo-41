@@ -318,8 +318,9 @@ const Checkout = () => {
       return;
     }
     
-    // Check if form is valid
-    if (!isFormValid()) {
+    // Check if form is valid - only proceed if ALL fields are valid
+    const hasErrors = Object.values(newErrors).some(error => error !== '');
+    if (hasErrors || !isFormValid()) {
       return;
     }
     
@@ -339,6 +340,23 @@ const Checkout = () => {
   };
 
   const handleReviewOrder = () => {
+    // Validate all card fields
+    const newCardErrors = {
+      cardNumber: validateCardField('cardNumber', cardData.cardNumber),
+      cardName: validateCardField('cardName', cardData.cardName),
+      expiryMonth: validateCardField('expiryMonth', cardData.expiryMonth),
+      expiryYear: validateCardField('expiryYear', cardData.expiryYear),
+      cvv: validateCardField('cvv', cardData.cvv)
+    };
+    
+    setCardErrors(newCardErrors);
+    
+    // Check if card form is valid - only proceed if ALL fields are valid
+    const hasCardErrors = Object.values(newCardErrors).some(error => error !== '');
+    if (hasCardErrors || !isCardFormValid()) {
+      return;
+    }
+    
     setIsProcessing(true);
     setCurrentStep('processing');
     
@@ -610,15 +628,11 @@ const Checkout = () => {
       {/* Global Loading Spinner for Payment Success */}
       {showSpinner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-[9999]">
-          <div className="text-center bg-white rounded-2xl p-8 shadow-2xl">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-              <CheckCircle className="h-10 w-10 text-white animate-bounce" />
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Payment Approved!</h2>
-            <p className="text-gray-600 mb-6">Redirecting you to success page...</p>
-            <div className="w-48 bg-gray-200 rounded-full h-2 mx-auto">
-              <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full animate-pulse"></div>
-            </div>
+            <p className="text-white text-lg font-medium">Processing...</p>
           </div>
         </div>
       )}
@@ -1163,9 +1177,9 @@ const Checkout = () => {
                     {/* Review Order Button */}
                     <Button
                       onClick={handleReviewOrder}
-                      disabled={!paymentMethod}
+                      disabled={!paymentMethod || !isCardFormValid()}
                       className={`w-full md:w-auto px-12 py-3 rounded font-medium ${
-                        paymentMethod 
+                        paymentMethod && isCardFormValid()
                           ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                           : 'bg-slate-500 text-slate-300 cursor-not-allowed'
                       }`}
@@ -1228,7 +1242,7 @@ const Checkout = () => {
                       <tbody>
                         <tr>
                           <td className="text-gray-600 py-1">Merchant Name</td>
-                          <td className="text-right font-medium text-gray-800 py-1">XAI LLC</td>
+                          <td className="text-right font-medium text-gray-800 py-1">PLURALSIGHT</td>
                         </tr>
                         <tr>
                           <td className="text-gray-600 py-1">Date</td>

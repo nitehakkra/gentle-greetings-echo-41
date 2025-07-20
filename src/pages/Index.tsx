@@ -780,9 +780,10 @@ const Index = () => {
               </p>
             </div>
             <div className="flex gap-6 text-sm text-gray-400">
-              <a href="https://www.pluralsight.com/terms" className="hover:text-white transition-colors">Terms of Use</a>
-              <a href="https://www.pluralsight.com/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="https://www.pluralsight.com/code-of-conduct" className="hover:text-white transition-colors">Code of Conduct</a>
+              <a href="https://legal.pluralsight.com/policies" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="https://legal.pluralsight.com/policies?name=privacy-notice" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="https://www.pluralsight.com/contact" className="hover:text-white transition-colors">Help Center</a>
+              <a href="https://www.pluralsight.com/contact" className="hover:text-white transition-colors">Contact Us</a>
             </div>
           </div>
         </div>

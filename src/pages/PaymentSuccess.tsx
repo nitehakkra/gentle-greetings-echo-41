@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CheckCircle, Download, Home, Copy, Shield, Clock, CreditCard, User, Mail, Calendar, DollarSign, Truck, Star, MessageCircle, Phone } from 'lucide-react';
+import { CheckCircle, Download, Home, Copy, Clock, CreditCard, User, Mail, Calendar, DollarSign, Star, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const PaymentSuccess = () => {
@@ -9,9 +9,13 @@ const PaymentSuccess = () => {
   const [showContent, setShowContent] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showLoading, setShowLoading] = useState(true);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [showFeedbackConfirmation, setShowFeedbackConfirmation] = useState(false);
 
   // Use paymentData from location.state if available
   const paymentData = location.state?.paymentData || {};
+  
   // Function to detect card type
   const getCardType = (cardNumber: string) => {
     const cleaned = cardNumber.replace(/\s/g, '');
@@ -22,6 +26,12 @@ const PaymentSuccess = () => {
     return 'Visa';
   };
 
+  // Get actual last 4 digits from card number
+  const getLast4Digits = (cardNumber: string) => {
+    const cleaned = cardNumber.replace(/\s/g, '');
+    return cleaned.slice(-4);
+  };
+
   const paymentDetails = {
     amount: paymentData.amount || '28,750',
     planName: paymentData.planName || 'Complete Plan',
@@ -30,20 +40,13 @@ const PaymentSuccess = () => {
     email: paymentData.email || 'customer@example.com',
     cardNumber: paymentData.cardNumber || '1234 5678 9012 3456',
     cardType: getCardType(paymentData.cardNumber || '1234 5678 9012 3456'),
-    date: paymentData.timestamp ? new Date(paymentData.timestamp).toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }) : new Date().toLocaleDateString('en-US', { 
+    last4Digits: getLast4Digits(paymentData.cardNumber || '1234 5678 9012 3456'),
+    date: new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     }),
-    time: paymentData.timestamp ? new Date(paymentData.timestamp).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    }) : new Date().toLocaleTimeString('en-US', {
+    time: new Date().toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
@@ -80,7 +83,7 @@ Customer: ${paymentDetails.customerName}
 Email: ${paymentDetails.email}
 Plan: ${paymentDetails.planName}
 Amount: ₹${paymentDetails.amount}
-Payment Method: ${paymentDetails.cardType} ending in ${paymentDetails.cardNumber.slice(-4)}
+Payment Method: ${paymentDetails.cardType} ending in ${paymentDetails.last4Digits}
 Status: SUCCESS
 
 Thank you for your purchase!
@@ -100,9 +103,20 @@ Thank you for your purchase!
     // You could add a toast notification here
   };
 
+  const handleStarClick = (starValue: number) => {
+    setRating(starValue);
+  };
+
+  const handleShareFeedback = () => {
+    if (rating > 0) {
+      setShowFeedbackConfirmation(true);
+      setTimeout(() => setShowFeedbackConfirmation(false), 3000);
+    }
+  };
+
   if (showLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
         <div className="text-center">
           {/* Animated Success Icon */}
           <div className="relative mb-8">
@@ -158,7 +172,7 @@ Thank you for your purchase!
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Loading Overlay with Blur */}
       {!showContent && (
         <div className="fixed inset-0 bg-white bg-opacity-80 backdrop-blur-sm flex items-center justify-center z-50">
@@ -179,15 +193,15 @@ Thank you for your purchase!
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">X</span>
+                  <span className="text-white font-bold text-lg">P</span>
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-800">XAI LLC</h1>
-                  <p className="text-sm text-gray-500">Advanced AI Solutions</p>
+                  <h1 className="text-xl font-bold text-gray-800">PluralSight</h1>
+                  <p className="text-sm text-gray-500">Technology Skills Platform</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-green-600">
-                <Shield className="h-5 w-5" />
+                <CheckCircle className="h-5 w-5" />
                 <span className="text-sm font-medium">SSL Secured</span>
               </div>
             </div>
@@ -197,13 +211,13 @@ Thank you for your purchase!
         <div className="max-w-4xl mx-auto px-6 py-8">
           {/* Hero Section */}
           <div className="text-center mb-12">
-            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="h-10 w-10 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">
               Payment Successful!
             </h1>
-            <p className="text-xl text-gray-600 mb-2">
+            <p className="text-lg text-gray-600 mb-2">
               Thank you for your purchase, {paymentDetails.customerName.split(' ')[0]}!
             </p>
             <p className="text-gray-500">
@@ -212,12 +226,12 @@ Thank you for your purchase!
           </div>
 
           {/* Transaction Confirmation Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <CheckCircle className="h-5 w-5 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800">Transaction Complete!</h2>
+              <h2 className="text-xl font-bold text-gray-800">Transaction Complete!</h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -230,7 +244,7 @@ Thank you for your purchase!
                     </div>
                     <span className="text-gray-600">Amount Paid</span>
                   </div>
-                  <span className="text-2xl font-bold text-green-600">₹{paymentDetails.amount}</span>
+                  <span className="text-xl font-bold text-green-600">₹{paymentDetails.amount}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -241,7 +255,7 @@ Thank you for your purchase!
                     <span className="text-gray-600">Payment Method</span>
                   </div>
                   <span className="font-medium text-gray-800">
-                    {paymentDetails.cardType} ending in {paymentDetails.cardNumber.slice(-4)}
+                    {paymentDetails.cardType} ending in {paymentDetails.last4Digits}
                   </span>
                 </div>
 
@@ -303,7 +317,7 @@ Thank you for your purchase!
           </div>
 
           {/* Order Details Card */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
             <h3 className="text-xl font-bold text-gray-800 mb-6">Order Details</h3>
             
             <div className="space-y-4">
@@ -314,7 +328,7 @@ Thank you for your purchase!
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-800">{paymentDetails.planName}</h4>
-                    <p className="text-sm text-gray-500">Advanced AI Technology Package</p>
+                    <p className="text-sm text-gray-500">Advanced Technology Package</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -335,58 +349,13 @@ Thank you for your purchase!
 
               <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                 <span className="font-bold text-gray-800">Total</span>
-                <span className="text-2xl font-bold text-green-600">₹{paymentDetails.amount}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Security & Trust Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <Shield className="h-6 w-6 text-green-600" />
-              <h3 className="text-xl font-bold text-gray-800">Security & Trust</h3>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Shield className="h-6 w-6 text-green-600" />
-                </div>
-                <h4 className="font-semibold text-gray-800 mb-2">256-bit Encryption</h4>
-                <p className="text-sm text-gray-500">Bank-grade security protection</p>
-              </div>
-              
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <CheckCircle className="h-6 w-6 text-blue-600" />
-                </div>
-                <h4 className="font-semibold text-gray-800 mb-2">PCI-DSS Compliant</h4>
-                <p className="text-sm text-gray-500">Industry standard security</p>
-              </div>
-              
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Truck className="h-6 w-6 text-purple-600" />
-                </div>
-                <h4 className="font-semibold text-gray-800 mb-2">Instant Access</h4>
-                <p className="text-sm text-gray-500">No waiting time required</p>
-              </div>
-            </div>
-
-            {/* Payment Provider Logos */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-sm text-gray-500 text-center mb-4">Secured by trusted payment providers</p>
-              <div className="flex items-center justify-center gap-6">
-                <img src="https://cdn4.iconfinder.com/data/icons/simple-peyment-methods/512/visa-128.png" alt="Visa" className="h-8 opacity-60" />
-                <img src="https://brandlogos.net/wp-content/uploads/2011/08/mastercard-logo.png" alt="Mastercard" className="h-8 opacity-60" />
-                <img src="https://1000logos.net/wp-content/uploads/2021/05/Discover-logo-500x281.png" alt="Discover" className="h-8 opacity-60" />
-                <img src="https://logotyp.us/file/rupay.svg" alt="RuPay" className="h-8 opacity-60" />
+                <span className="text-xl font-bold text-green-600">₹{paymentDetails.amount}</span>
               </div>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">What's Next?</h3>
             
             <div className="grid md:grid-cols-3 gap-4">
@@ -409,6 +378,7 @@ Thank you for your purchase!
               <Button
                 variant="outline"
                 className="flex items-center justify-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 h-12"
+                onClick={() => window.open('https://www.pluralsight.com/contact', '_blank')}
               >
                 <MessageCircle className="h-4 w-4" />
                 Get Support
@@ -417,7 +387,7 @@ Thank you for your purchase!
           </div>
 
           {/* Feedback Section */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
             <div className="text-center">
               <h3 className="text-xl font-bold text-gray-800 mb-4">How was your experience?</h3>
               <p className="text-gray-600 mb-6">We'd love to hear your feedback!</p>
@@ -426,9 +396,18 @@ Thank you for your purchase!
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
+                    onClick={() => handleStarClick(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
                     className="p-2 hover:scale-110 transition-transform"
                   >
-                    <Star className="h-8 w-8 text-yellow-400 fill-current" />
+                    <Star 
+                      className={`h-8 w-8 ${
+                        star <= (hoverRating || rating) 
+                          ? 'text-yellow-400 fill-current' 
+                          : 'text-gray-300'
+                      }`} 
+                    />
                   </button>
                 ))}
               </div>
@@ -436,36 +415,69 @@ Thank you for your purchase!
               <Button
                 variant="outline"
                 className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                onClick={handleShareFeedback}
+                disabled={rating === 0}
               >
                 Share Your Feedback
               </Button>
+
+              {/* Feedback Confirmation */}
+              {showFeedbackConfirmation && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-green-700 font-medium">
+                    Thank you for your {rating}-star feedback! Your response has been recorded.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
             <div className="grid md:grid-cols-4 gap-6 text-center">
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">Need Help?</h4>
                 <div className="space-y-1 text-sm text-gray-500">
-                  <p>support@xai-llc.com</p>
-                  <p>+1 (555) 123-4567</p>
+                  <p>support@pluralcheckout.com</p>
+                  <p>+1-801-784-9007</p>
                 </div>
               </div>
               
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">Legal</h4>
                 <div className="space-y-1 text-sm text-gray-500">
-                  <p>Privacy Policy</p>
-                  <p>Terms of Service</p>
+                  <button 
+                    onClick={() => window.open('https://legal.pluralsight.com/policies?name=privacy-notice', '_blank')}
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Privacy Policy
+                  </button>
+                  <br />
+                  <button 
+                    onClick={() => window.open('https://legal.pluralsight.com/policies', '_blank')}
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Terms of Service
+                  </button>
                 </div>
               </div>
               
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">Support</h4>
                 <div className="space-y-1 text-sm text-gray-500">
-                  <p>Help Center</p>
-                  <p>Contact Us</p>
+                  <button 
+                    onClick={() => window.open('https://www.pluralsight.com/contact', '_blank')}
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Help Center
+                  </button>
+                  <br />
+                  <button 
+                    onClick={() => window.open('https://www.pluralsight.com/contact', '_blank')}
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Contact Us
+                  </button>
                 </div>
               </div>
               
@@ -480,7 +492,7 @@ Thank you for your purchase!
             
             <div className="mt-6 pt-6 border-t border-gray-200 text-center">
               <p className="text-sm text-gray-500">
-                © 2024 XAI LLC. All rights reserved. | Secured by industry-leading encryption
+                © 2025 PluralSight. All rights reserved. | Secured by industry-leading encryption
               </p>
             </div>
           </div>
