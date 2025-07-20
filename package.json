@@ -9,7 +9,7 @@
     "dev:frontend": "vite",
     "dev:backend": "node server.js",
     "build": "vite build",
-    "build:all": "vite build && npm install --omit=dev",
+    "build:all": "npm install --legacy-peer-deps && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
