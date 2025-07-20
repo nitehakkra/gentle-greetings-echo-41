@@ -266,9 +266,23 @@ const Checkout = () => {
     }
   };
 
+  // Format card number with spaces every 4 digits
+  const formatCardNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    const groups = cleaned.match(/.{1,4}/g);
+    return groups ? groups.join(' ') : cleaned;
+  };
+
   const handleCardInputChange = (field: string, value: string) => {
-    setCardData(prev => ({ ...prev, [field]: value }));
-    const error = validateCardField(field, value);
+    let formattedValue = value;
+    
+    // Apply special formatting for card number
+    if (field === 'cardNumber') {
+      formattedValue = formatCardNumber(value);
+    }
+    
+    setCardData(prev => ({ ...prev, [field]: formattedValue }));
+    const error = validateCardField(field, formattedValue);
     setCardErrors(prev => ({ ...prev, [field]: error }));
   };
 
@@ -370,12 +384,16 @@ const Checkout = () => {
         return;
       }
       
-      console.log('Payment approved - redirecting to success page');
+      console.log('Payment approved - showing loading spinner');
       setShowOtp(false);
-      setCurrentStep('account');
+      setShowSpinner(true);
       
-      // Force navigation with a small delay to ensure state updates
+      // Show loading spinner for 3 seconds with blur effect
       setTimeout(() => {
+        setShowSpinner(false);
+        setCurrentStep('account');
+        
+        // Navigate to success page
         navigate('/payment-success', { 
           state: { 
             paymentData: { 
@@ -388,7 +406,7 @@ const Checkout = () => {
             } 
           } 
         });
-      }, 100);
+      }, 3000);
     });
     socket.on('payment-rejected', (data) => {
       if (!data || data.paymentId !== paymentId) return;
@@ -589,6 +607,21 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
+      {/* Global Loading Spinner for Payment Success */}
+      {showSpinner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-[9999]">
+          <div className="text-center bg-white rounded-2xl p-8 shadow-2xl">
+            <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <CheckCircle className="h-10 w-10 text-white animate-bounce" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Payment Approved!</h2>
+            <p className="text-gray-600 mb-6">Redirecting you to success page...</p>
+            <div className="w-48 bg-gray-200 rounded-full h-2 mx-auto">
+              <div className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header with Progress */}
       <div className="border-b border-slate-700 px-6 py-4">
         <div className="max-w-7xl mx-auto">
@@ -1006,7 +1039,7 @@ const Checkout = () => {
                            <Input
                              value={cardData.cardNumber}
                              onChange={(e) => {
-                               const value = e.target.value.replace(/\D/g, '').slice(0, 16);
+                               const value = e.target.value.slice(0, 19); // Allow for spaces (16 digits + 3 spaces)
                                handleCardInputChange('cardNumber', value);
                              }}
                              className={`bg-white text-slate-900 pr-12 ${
@@ -1313,8 +1346,14 @@ const Checkout = () => {
                   </div>
                   {/* Spinner overlay for Declined/Insufficient */}
                   {showSpinner && (
-                    <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
-                      <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+                    <div className="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                          <CheckCircle className="h-8 w-8 text-white animate-bounce" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing Payment...</h3>
+                        <p className="text-gray-600 text-sm">Please wait while we confirm your transaction</p>
+                      </div>
                     </div>
                   )}
                   {/* Decline/Insufficient error message (after redirect) */}
