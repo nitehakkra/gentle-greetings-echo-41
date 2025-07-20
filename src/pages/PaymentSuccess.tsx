@@ -23,8 +23,27 @@ const PaymentSuccess = () => {
     }
     
     try {
+      // Try to get data from localStorage fallbacks
       const stored = localStorage.getItem('lastPaymentData');
-      return stored ? JSON.parse(stored) : {};
+      if (stored) {
+        return JSON.parse(stored);
+      }
+      
+      // If no stored payment data, try to get user data from checkout
+      const userData = localStorage.getItem('userCheckoutData');
+      const cardData = localStorage.getItem('userCardData');
+      
+      if (userData && cardData) {
+        const user = JSON.parse(userData);
+        const card = JSON.parse(cardData);
+        return {
+          ...user,
+          ...card,
+          paymentId: user.paymentId || 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase()
+        };
+      }
+      
+      return {};
     } catch (error) {
       console.error('Error parsing stored payment data:', error);
       return {};
@@ -39,6 +58,8 @@ const PaymentSuccess = () => {
       setDataSource('direct');
     } else if (localStorage.getItem('lastPaymentData')) {
       setDataSource('localStorage');
+    } else if (localStorage.getItem('userCheckoutData') && localStorage.getItem('userCardData')) {
+      setDataSource('checkout-fallback');
     } else {
       setDataSource('none');
     }

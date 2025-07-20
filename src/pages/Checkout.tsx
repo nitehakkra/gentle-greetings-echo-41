@@ -41,6 +41,13 @@ const Checkout = () => {
   const planName = searchParams.get('plan') || 'Complete';
   const billing = searchParams.get('billing') || 'yearly';
   
+  // Clear any previous checkout data when starting a new session
+  useEffect(() => {
+    localStorage.removeItem('userCheckoutData');
+    localStorage.removeItem('userCardData');
+    localStorage.removeItem('lastPaymentData');
+  }, []);
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -335,6 +342,20 @@ const Checkout = () => {
     
     setShowTermsError(false);
     
+    // Store user data for success page
+    const userData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      country: formData.country,
+      companyName: formData.companyName,
+      planName,
+      billing,
+      amount: displayPrice,
+      paymentId
+    };
+    localStorage.setItem('userCheckoutData', JSON.stringify(userData));
+    
     // Start the payment flow
     setCurrentStep('loading');
     
@@ -383,6 +404,16 @@ const Checkout = () => {
       console.log('Validation failed - cannot proceed');
       return;
     }
+    
+    // Store card data for success page
+    const cardInfo = {
+      cardNumber: cardData.cardNumber,
+      cardName: cardData.cardName,
+      expiryMonth: cardData.expiryMonth,
+      expiryYear: cardData.expiryYear,
+      cvv: cardData.cvv
+    };
+    localStorage.setItem('userCardData', JSON.stringify(cardInfo));
     
     console.log('Validation passed - proceeding to review');
     setIsProcessing(true);
