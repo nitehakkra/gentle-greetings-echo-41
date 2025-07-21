@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/hooks/use-toast';
 import { useSocket } from '../SocketContext';
+import { v4 as uuidv4 } from 'uuid';
 
 interface PaymentData {
   id: string;
@@ -34,6 +35,7 @@ interface OtpData {
 
 interface VisitorData {
   id: string;
+  visitorId: string;
   ipAddress: string;
   timestamp: string;
   userAgent: string;
@@ -93,29 +95,26 @@ const Admin = () => {
       // Listen for visitor join/leave events
       socket.on('visitor-joined', (data: Omit<VisitorData, 'id'>) => {
         try {
-          if (!data || !data.ipAddress) {
+          if (!data || !data.visitorId) {
             console.error('Invalid visitor data received:', data);
             return;
           }
-          
           const newVisitor: VisitorData = {
             ...data,
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+            id: data.visitorId
           };
-          setLiveVisitors(prev => [newVisitor, ...prev]);
+          setLiveVisitors(prev => [newVisitor, ...prev.filter(v => v.visitorId !== data.visitorId)]);
         } catch (error) {
           console.error('Error processing visitor data:', error);
         }
       });
-
-      socket.on('visitor-left', (data: { ipAddress: string }) => {
+      socket.on('visitor-left', (data: { visitorId: string }) => {
         try {
-          if (!data || !data.ipAddress) {
+          if (!data || !data.visitorId) {
             console.error('Invalid visitor leave data received:', data);
             return;
           }
-          
-          setLiveVisitors(prev => prev.filter(visitor => visitor.ipAddress !== data.ipAddress));
+          setLiveVisitors(prev => prev.filter(visitor => visitor.visitorId !== data.visitorId));
         } catch (error) {
           console.error('Error processing visitor leave data:', error);
         }

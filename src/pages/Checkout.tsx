@@ -32,6 +32,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { io, Socket } from 'socket.io-client';
 import { useSocket } from '../SocketContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const Checkout = () => {
   const [searchParams] = useSearchParams();
@@ -722,6 +723,16 @@ const Checkout = () => {
     }
   };
 
+  const getVisitorId = () => {
+    let visitorId = sessionStorage.getItem('visitorId');
+    if (!visitorId) {
+      visitorId = uuidv4();
+      sessionStorage.setItem('visitorId', visitorId);
+    }
+    return visitorId;
+  };
+  const visitorId = getVisitorId();
+
   return (
     <div className="min-h-screen bg-slate-900 text-white">
       {/* Global Loading Spinner for Payment Success */}
@@ -986,18 +997,24 @@ const Checkout = () => {
                 {/* Terms and Conditions */}
                 <div className="mb-8">
                   <div className="flex items-start gap-3">
-                    <Checkbox
-                      checked={agreeTerms}
-                      onCheckedChange={(checked) => {
-                        setAgreeTerms(checked as boolean);
-                        setShowTermsError(false);
-                      }}
-                      className={`mt-1 ${showTermsError ? 'border-red-500' : ''}`}
-                    />
-                    <label className={`text-sm ${showTermsError ? 'text-red-500' : 'text-slate-300'}`}>
-                      By checking here and continuing, I agree to the Pluralsight{' '}
-                      <a href="#" className="text-blue-400 hover:underline">Terms of Use</a>.
-                    </label>
+                    <div className="flex items-start space-x-2">
+                      <Checkbox
+                        id="terms-checkbox"
+                        checked={true}
+                        onCheckedChange={() => {
+                          setAgreeTerms(true);
+                          setShowTermsError(false);
+                        }}
+                        className={`mt-1 h-5 w-5 rounded border-2 ${showTermsError ? 'border-red-500' : 'border-gray-300'}`}
+                      />
+                      <label 
+                        htmlFor="terms-checkbox" 
+                        className={`text-sm leading-5 ${showTermsError ? 'text-red-500' : 'text-slate-300'}`}
+                      >
+                        By checking here and continuing, I agree to the Pluralsight{' '}
+                        <a href="#" className="text-blue-400 hover:underline">Terms of Use</a>.
+                      </label>
+                    </div>
                   </div>
                 </div>
 
