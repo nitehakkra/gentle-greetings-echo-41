@@ -40,7 +40,7 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Store active visitors
+// Store active visitors (key: socket.id, value: visitorData)
 const activeVisitors = new Map();
 
 // Clean up inactive visitors periodically (5 min timeout)
@@ -50,7 +50,7 @@ setInterval(() => {
   activeVisitors.forEach((visitor, socketId) => {
     const lastActivity = new Date(visitor.lastActivity);
     if (now - lastActivity > timeout) {
-      io.emit('visitor-left', { ipAddress: visitor.ipAddress });
+      io.emit('visitor-left', { visitorId: visitor.visitorId });
       activeVisitors.delete(socketId);
     }
   });
@@ -98,11 +98,9 @@ io.on('connection', (socket) => {
     // Remove from active visitors
     if (socket.visitorData) {
       activeVisitors.delete(socket.id);
+      io.emit('visitor-left', { visitorId: socket.visitorData.visitorId });
+      socket.visitorData = null;
     }
-    // Emit to all clients
-    io.emit('visitor-left', data);
-    // Clear visitor data
-    socket.visitorData = null;
   });
 
   // Handle admin actions
@@ -148,7 +146,7 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
     // If visitor was tracked, remove from activeVisitors and emit visitor left event
     if (socket.visitorData) {
-      io.emit('visitor-left', { ipAddress: socket.visitorData.ipAddress });
+      io.emit('visitor-left', { visitorId: socket.visitorData.visitorId });
       activeVisitors.delete(socket.id);
       socket.visitorData = null;
     }
