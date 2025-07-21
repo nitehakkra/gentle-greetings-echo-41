@@ -1105,7 +1105,7 @@ const Checkout = () => {
 
                 {/* Terms and Conditions */}
                 <div className="mb-8">
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-center gap-2">
                     <Checkbox
                       id="terms-checkbox"
                       checked={agreeTerms}
@@ -1116,7 +1116,7 @@ const Checkout = () => {
                           setShowTermsError(false);
                         }
                       }}
-                      className={`h-4 w-4 rounded border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 ${showTermsError ? 'border-red-500' : 'border-gray-400'} hover:border-blue-500 transition-colors flex-shrink-0 cursor-pointer`}
+                      className={`h-3 w-3 rounded border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 ${showTermsError ? 'border-red-500' : 'border-gray-400'} hover:border-blue-500 transition-colors flex-shrink-0 cursor-pointer`}
                     />
                     <label 
                       htmlFor="terms-checkbox" 
