@@ -1,17 +1,14 @@
 
-// Use require instead of import for better compatibility
-const express = require('express');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
-const path = require('path');
-const { fileURLToPath } = require('url');
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import pathToRegexp from 'path-to-regexp';
+import { match } from 'path-to-regexp';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Fix for path-to-regexp issue
-const pathToRegexp = require('path-to-regexp');
-const { match } = require('path-to-regexp');
 
 const app = express();
 const server = createServer(app);
