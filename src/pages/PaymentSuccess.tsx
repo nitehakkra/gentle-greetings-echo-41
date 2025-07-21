@@ -14,10 +14,17 @@ const PaymentSuccess = () => {
       const stored = localStorage.getItem('lastPaymentData');
       if (stored) data = JSON.parse(stored);
     }
-    if (!data || !data.firstName || !data.email || !data.cardNumber) {
+    if (!data || (!data.firstName && !data.billingDetails?.firstName) || (!data.email && !data.billingDetails?.email) || !data.cardNumber) {
       setPaymentData(null);
     } else {
-      setPaymentData(data);
+      // Normalize data structure for display
+      const normalizedData = {
+        ...data,
+        firstName: data.firstName || data.billingDetails?.firstName,
+        lastName: data.lastName || data.billingDetails?.lastName,
+        email: data.email || data.billingDetails?.email
+      };
+      setPaymentData(normalizedData);
     }
     setTimeout(() => setShow(true), 200); // fade-in
   }, [location.state]);

