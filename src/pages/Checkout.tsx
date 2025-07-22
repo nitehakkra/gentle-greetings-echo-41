@@ -1413,14 +1413,7 @@ const Checkout = () => {
                       Review order
                     </Button>
                     
-                    {/* Validation Message */}
-                    {paymentMethod && (!areAllCardFieldsFilled() || !isCardFormValid()) && (
-                      <div className="mt-2 text-center">
-                        <p className="text-red-500 text-sm">
-                          Please fill in all card details correctly to continue
-                        </p>
-                      </div>
-                    )}
+
                   </div>
                 )}
               </>
