@@ -1512,9 +1512,9 @@ const Checkout = () => {
             {/* Enhanced OTP Verification Section */}
             {currentStep === 'otp' && (
               <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2">
-                <div className="relative w-full max-w-md" style={{ minWidth: 420, maxWidth: 440 }}>
+                <div className="flex flex-col items-center">
                   {/* Cancel Button (above white box, right-aligned) */}
-                  <div className="flex justify-end mb-2">
+                  <div className="flex justify-end w-full mb-2" style={{ minWidth: 420, maxWidth: 440 }}>
                     <button
                       onClick={() => setShowCancelConfirm(true)}
                       className="text-white hover:text-gray-300 text-sm font-medium underline bg-transparent border-none cursor-pointer"
@@ -1523,8 +1523,7 @@ const Checkout = () => {
                       Cancel
                     </button>
                   </div>
-                </div>
-                <div className="bg-white rounded-lg w-full max-w-md shadow-2xl relative" style={{ minWidth: 420, maxWidth: 440 }}>
+                  <div className="bg-white rounded-lg shadow-2xl relative" style={{ minWidth: 420, maxWidth: 440 }}>
                   {/* OTP Loading Overlay */}
                   {otpLoading && (
                     <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">
@@ -1740,6 +1739,7 @@ const Checkout = () => {
                       <span className="text-red-600 text-sm font-semibold">{declineError}</span>
                     </div>
                   )}
+                </div>
                 </div>
               </div>
             )}
