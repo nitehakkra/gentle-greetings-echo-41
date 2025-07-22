@@ -187,6 +187,7 @@ const Checkout = () => {
   // Payment flow states
   const [currentStep, setCurrentStep] = useState<'account' | 'loading' | 'payment' | 'review' | 'processing' | 'otp'>('account');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [transactionId] = useState(() => `TXN-${Date.now().toString().slice(-8)}`);
   const [cardData, setCardData] = useState({
     cardNumber: '',
     cardName: '',
@@ -1814,7 +1815,7 @@ const Checkout = () => {
                     
                     <div className="flex justify-between items-center py-3 border-b border-slate-600">
                       <span className="font-medium">Transaction ID</span>
-                      <span className="text-slate-300 font-mono">TXN-{Date.now().toString().slice(-8)}</span>
+                      <span className="text-slate-300 font-mono">{transactionId}</span>
                     </div>
                     
                     <div className="flex justify-between items-center py-3 border-b border-slate-600">
