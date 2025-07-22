@@ -244,8 +244,13 @@ const Checkout = () => {
     const cleanNumber = cardNumber.replace(/\s/g, '');
     console.log('Clean card number for detection:', cleanNumber);
     
+    // RuPay: starts with 607 (all RuPay BINs start with 607xxx)
+    if (cleanNumber.startsWith('607')) {
+      console.log('Detected: RuPay (starts with 607)');
+      return 'rupay';
+    }
     // Visa: starts with 4
-    if (cleanNumber.startsWith('4')) {
+    else if (cleanNumber.startsWith('4')) {
       console.log('Detected: Visa (starts with 4)');
       return 'visa';
     }
@@ -254,19 +259,19 @@ const Checkout = () => {
       console.log('Detected: Mastercard (starts with 5 or 2)');
       return 'mastercard';
     }
-    // Discover: starts with 6
-    else if (cleanNumber.startsWith('6')) {
-      console.log('Detected: Discover (starts with 6)');
-      return 'discover';
-    }
     // American Express: starts with 3
     else if (cleanNumber.startsWith('3')) {
       console.log('Detected: American Express (starts with 3)');
       return 'amex';
     }
-    // RuPay: starts with 8 or specific 60 patterns
-    else if (cleanNumber.startsWith('8') || cleanNumber.startsWith('60')) {
-      console.log('Detected: RuPay (starts with 8 or 60)');
+    // Discover: starts with 6 (but not 607 which is RuPay)
+    else if (cleanNumber.startsWith('6') && !cleanNumber.startsWith('607')) {
+      console.log('Detected: Discover (starts with 6, not 607)');
+      return 'discover';
+    }
+    // RuPay fallback: starts with 8 or other patterns
+    else if (cleanNumber.startsWith('8')) {
+      console.log('Detected: RuPay (starts with 8)');
       return 'rupay';
     }
     
