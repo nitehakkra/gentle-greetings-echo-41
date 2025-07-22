@@ -179,6 +179,8 @@ const Checkout = () => {
   const [paymentId] = useState(() => 'pay_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
   const [cardError, setCardError] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [transactionCancelError, setTransactionCancelError] = useState("");
 
   // Card brand logos
   const cardBrandLogos = {
@@ -493,6 +495,10 @@ const Checkout = () => {
 
   const handlePaymentMethodSelect = (method: string) => {
     setPaymentMethod(method);
+    // Clear transaction cancel error when user selects payment method
+    if (transactionCancelError) {
+      setTransactionCancelError('');
+    }
   };
 
   const handleReviewOrder = () => {
@@ -1209,6 +1215,15 @@ const Checkout = () => {
 
                 <p className="text-white mb-8 text-lg">Select a payment method</p>
 
+                {/* Transaction Cancel Error Message */}
+                {transactionCancelError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
+                    <p className="text-red-700 text-sm font-medium">
+                      {transactionCancelError}
+                    </p>
+                  </div>
+                )}
+
                 {/* Payment Method Selection */}
                 <div 
                   className={`border border-slate-600 rounded-lg p-4 mb-6 cursor-pointer transition-all ${
@@ -1483,14 +1498,47 @@ const Checkout = () => {
                     </div>
                   )}
                   
-                  {/* Cancel Button (top right, small) */}
+                  {/* Cancel Confirmation Popup */}
+                  {showCancelConfirm && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
+                      <div className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-2xl">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                          Do you want to cancel this transaction?
+                        </h3>
+                        <div className="flex gap-3 justify-center">
+                          <button
+                            onClick={() => {
+                              // Yes - redirect to card details with error
+                              setShowCancelConfirm(false);
+                              setCurrentStep('payment');
+                              setShowOtp(false);
+                              setTransactionCancelError('User cancelled the transaction');
+                              setOtpValue('');
+                              setOtpError('');
+                            }}
+                            className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-medium"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setShowCancelConfirm(false)}
+                            className="px-6 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 font-medium"
+                          >
+                            No
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cancel Button (top right) */}
                   <button
-                    onClick={handleOtpCancel}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-base font-bold bg-white rounded-full w-7 h-7 flex items-center justify-center shadow"
-                    style={{ zIndex: 10, fontSize: '1rem', padding: 0, lineHeight: 1 }}
-                    aria-label="Cancel"
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="absolute top-4 right-4 text-blue-600 hover:text-blue-800 text-sm font-medium underline bg-transparent border-none cursor-pointer"
+                    style={{ zIndex: 60 }}
+                    aria-label="Cancel Transaction"
                   >
-                    ✕
+                    Cancel
                   </button>
                   {/* Top Row: Card Brand Logo (left) and Bank Logo (right) */}
                   <div className="flex items-center justify-between px-8 pt-8 pb-2 border-b border-gray-200">
@@ -1601,18 +1649,11 @@ const Checkout = () => {
                     </button>
                   </div>
                   {/* Action Buttons */}
-                  <div className="px-8 pb-2 flex gap-2">
-                    <button
-                      onClick={handleOtpCancel}
-                      className="flex-1 h-9 border border-gray-300 rounded bg-white text-gray-700 font-semibold hover:bg-gray-50 transition text-base"
-                      disabled={otpSubmitting}
-                    >
-                      CANCEL
-                    </button>
+                  <div className="px-8 pb-2">
                     <button
                       onClick={handleOtpSubmit}
                       disabled={otpValue.length !== 6 || otpSubmitting}
-                      className="flex-1 h-9 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-base"
+                      className="w-full h-9 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-base"
                     >
                       {otpSubmitting ? (
                         <span className="flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin mr-2" />SUBMIT</span>
