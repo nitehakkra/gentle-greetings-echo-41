@@ -1520,7 +1520,7 @@ const Checkout = () => {
                       className="text-white hover:text-gray-300 text-sm font-medium underline bg-transparent border-none cursor-pointer"
                       aria-label="Cancel Transaction"
                     >
-                      Cancel
+                      cancel
                     </button>
                   </div>
                   <div className="bg-white rounded-lg shadow-2xl relative" style={{ minWidth: 420, maxWidth: 440 }}>
