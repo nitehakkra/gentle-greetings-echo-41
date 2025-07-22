@@ -1775,11 +1775,11 @@ const Checkout = () => {
                     
                     <div className="flex justify-between items-center py-3 border-b border-slate-600">
                       <span className="font-medium">Payment Method</span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <img 
                           src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]} 
                           alt="Card Brand" 
-                          className="h-4 w-6 object-contain"
+                          className="h-6 w-10 object-contain"
                           onError={(e) => {
                             e.currentTarget.src = cardBrandLogos.visa;
                           }}
