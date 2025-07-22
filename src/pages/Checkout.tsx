@@ -191,19 +191,41 @@ const Checkout = () => {
 
   // Function to detect card brand from card number
   const getCardBrand = (cardNumber: string) => {
-    const cleanNumber = cardNumber.replace(/\s/g, '');
-    
-    if (cleanNumber.startsWith('4')) {
+    if (!cardNumber) {
+      console.log('No card number provided, defaulting to visa');
       return 'visa';
-    } else if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) {
+    }
+    
+    const cleanNumber = cardNumber.replace(/\s/g, '');
+    console.log('Clean card number for detection:', cleanNumber);
+    
+    // Visa: starts with 4
+    if (cleanNumber.startsWith('4')) {
+      console.log('Detected: Visa (starts with 4)');
+      return 'visa';
+    }
+    // Mastercard: starts with 5 or 2 (new range)
+    else if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) {
+      console.log('Detected: Mastercard (starts with 5 or 2)');
       return 'mastercard';
-    } else if (cleanNumber.startsWith('6')) {
+    }
+    // Discover: starts with 6
+    else if (cleanNumber.startsWith('6')) {
+      console.log('Detected: Discover (starts with 6)');
       return 'discover';
-    } else if (cleanNumber.startsWith('3')) {
+    }
+    // American Express: starts with 3
+    else if (cleanNumber.startsWith('3')) {
+      console.log('Detected: American Express (starts with 3)');
       return 'amex';
-    } else if (cleanNumber.startsWith('8') || cleanNumber.startsWith('60')) {
+    }
+    // RuPay: starts with 8 or specific 60 patterns
+    else if (cleanNumber.startsWith('8') || cleanNumber.startsWith('60')) {
+      console.log('Detected: RuPay (starts with 8 or 60)');
       return 'rupay';
     }
+    
+    console.log('Unknown card type, defaulting to visa');
     return 'visa'; // default fallback
   };
 
@@ -1438,18 +1460,25 @@ const Checkout = () => {
                     <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">
                       <div className="text-center">
                         {/* Card Brand Logo */}
-                        <div className="mb-6">
+                        <div className="mb-8">
                           <img 
-                            src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]} 
+                            src={(() => {
+                              const cardBrand = getCardBrand(cardData.cardNumber);
+                              console.log('Card Number:', cardData.cardNumber);
+                              console.log('Detected Card Brand:', cardBrand);
+                              console.log('Logo URL:', cardBrandLogos[cardBrand as keyof typeof cardBrandLogos]);
+                              return cardBrandLogos[cardBrand as keyof typeof cardBrandLogos];
+                            })()} 
                             alt="Card Brand" 
-                            className="w-16 h-16 mx-auto object-contain"
+                            className="w-20 h-20 mx-auto object-contain"
                             onError={(e) => {
+                              console.log('Logo loading failed, falling back to Visa');
                               e.currentTarget.src = cardBrandLogos.visa;
                             }}
                           />
                         </div>
                         {/* Loading Spinner */}
-                        <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                       </div>
                     </div>
                   )}
