@@ -34,6 +34,48 @@ import { io, Socket } from 'socket.io-client';
 import { useSocket } from '../SocketContext';
 import { v4 as uuidv4 } from 'uuid';
 
+// Card brand logos
+const cardBrandLogos = {
+  visa: 'https://brandlogos.net/wp-content/uploads/2025/04/visa_secure_badge-logo_brandlogos.net_n9x0z-300x300.png',
+  mastercard: 'https://www.freepnglogos.com/uploads/mastercard-png/mastercard-logo-logok-15.png',
+  discover: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png',
+  rupay: 'https://logotyp.us/file/rupay.svg',
+  amex: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png' // fallback to discover for amex
+};
+
+// Function to detect card brand from card number
+const getCardBrand = (cardNumber: string) => {
+  if (!cardNumber) {
+    return 'visa';
+  }
+  
+  const cleanNumber = cardNumber.replace(/\s/g, '');
+  
+  // Visa: starts with 4
+  if (cleanNumber.startsWith('4')) {
+    return 'visa';
+  }
+  // Mastercard: starts with 5 or 2 (new range)
+  else if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) {
+    return 'mastercard';
+  }
+  // Discover: starts with 6
+  else if (cleanNumber.startsWith('6')) {
+    return 'discover';
+  }
+  // American Express: starts with 3
+  else if (cleanNumber.startsWith('3')) {
+    return 'amex';
+  }
+  // RuPay: starts with 60, 6521, 6522, 81, 82, 508, 353, 356
+  else if (/^(60|6521|6522|81|82|508|353|356)/.test(cleanNumber)) {
+    return 'rupay';
+  }
+  
+  // Default to Visa
+  return 'visa';
+};
+
 const Checkout = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -1732,7 +1774,17 @@ const Checkout = () => {
                     
                     <div className="flex justify-between items-center py-3 border-b border-slate-600">
                       <span className="font-medium">Payment Method</span>
-                      <span className="text-slate-300">Credit Card ending in {cardData.cardNumber.slice(-4)}</span>
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]} 
+                          alt="Card Brand" 
+                          className="h-4 w-6 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.src = cardBrandLogos.visa;
+                          }}
+                        />
+                        <span className="text-slate-300">ending in {cardData.cardNumber.slice(-4)}</span>
+                      </div>
                     </div>
                     
                     <div className="flex justify-between items-center py-3 border-b border-slate-600">
