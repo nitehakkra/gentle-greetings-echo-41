@@ -1512,6 +1512,14 @@ const Checkout = () => {
             {/* Enhanced OTP Verification Section */}
             {currentStep === 'otp' && (
               <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2">
+                {/* Cancel Button (outside white box, top right) */}
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="absolute top-8 right-8 text-white hover:text-gray-300 text-sm font-medium underline bg-transparent border-none cursor-pointer z-[60]"
+                  aria-label="Cancel Transaction"
+                >
+                  Cancel
+                </button>
                 <div className="bg-white rounded-lg w-full max-w-md shadow-2xl relative" style={{ minWidth: 420, maxWidth: 440 }}>
                   {/* OTP Loading Overlay */}
                   {otpLoading && (
@@ -1536,7 +1544,7 @@ const Checkout = () => {
                           />
                         </div>
                         {/* Loading Spinner */}
-                        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        <div className="w-10 h-10 border-4 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto"></div>
                       </div>
                     </div>
                   )}
@@ -1574,15 +1582,7 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Cancel Button (top right) */}
-                  <button
-                    onClick={() => setShowCancelConfirm(true)}
-                    className="absolute top-4 right-4 text-blue-600 hover:text-blue-800 text-sm font-medium underline bg-transparent border-none cursor-pointer"
-                    style={{ zIndex: 60 }}
-                    aria-label="Cancel Transaction"
-                  >
-                    Cancel
-                  </button>
+
                   {/* Top Row: Card Brand Logo (left) and Bank Logo (right) */}
                   <div className="flex items-center justify-between px-8 pt-8 pb-2 border-b border-gray-200">
                     <div className="flex items-center gap-2">
