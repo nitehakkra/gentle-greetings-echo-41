@@ -1639,19 +1639,11 @@ const Checkout = () => {
                   </div>
                   {/* OTP Sent Message or Resend Message */}
                   <div className="px-8">
-                    {resendMessage ? (
-                      <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
-                        <p className="text-green-700 text-sm text-center">
-                          One time passcode has been sent to your registered mobile number XX{otpMobileLast4}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
-                        <p className="text-green-700 text-sm text-center">
-                          One time passcode has been sent to your registered mobile number XX{otpMobileLast4}
-                        </p>
-                      </div>
-                    )}
+                    <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
+                      <p className="text-green-700 text-sm text-center">
+                        {resendMessage || `One time passcode has been sent to your registered mobile number XX${otpMobileLast4}`}
+                      </p>
+                    </div>
                   </div>
                   {/* Addon Cardholder OTP Button */}
                   <div className="px-8 mb-2">
