@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ const Index = () => {
   const [emailOptIn, setEmailOptIn] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [heartbeatInterval, setHeartbeatInterval] = useState<NodeJS.Timeout | null>(null);
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Set up visitor tracking when component mounts
   useEffect(() => {
@@ -65,7 +65,7 @@ const Index = () => {
               }, 30000); // Send heartbeat every 30 seconds
               
               // Store interval ID for cleanup
-              setHeartbeatInterval(intervalId);
+              heartbeatIntervalRef.current = intervalId;
             })
             .catch(() => {
               // Fallback if IP service fails
@@ -128,8 +128,9 @@ const Index = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       if (socketInstance) {
         // Clear heartbeat interval
-        if (heartbeatInterval) {
-          clearInterval(heartbeatInterval);
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
         }
         
         fetch('https://api.ipify.org?format=json')
@@ -789,10 +790,7 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* User Avatar */}
-      <div className="fixed bottom-4 right-4 w-12 h-12 bg-white rounded-full overflow-hidden shadow-lg animate-fade-in">
-        <img alt="User avatar" className="w-full h-full object-cover" src="/lovable-uploads/a2ae8783-61ec-4548-8f02-d8c580bc4739.jpg" />
-      </div>
+
     </div>
   );
 };
