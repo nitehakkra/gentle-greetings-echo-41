@@ -1,0 +1,14 @@
+<svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <title>Pluralsight logo</title>
+    <path d="M44.9316 22.9053C44.9316 10.755 35.0819 0.905295 22.9316 0.905295C10.7814 0.905296 0.931639 10.755 0.93164 22.9053C0.93164 35.0555 10.7814 44.9053 22.9316 44.9053C35.0819 44.9053 44.9316 35.0555 44.9316 22.9053Z" fill="url(#paint0_linear_3478_6380)"></path>
+    <path d="M12.3164 32.5829L17.1593 29.7863V35.2378L38.5191 22.9077L17.1593 10.5776V16.0291L12.3164 13.2325V32.5829ZM19.3734 19.8645L24.6465 22.9077L19.3734 25.9509V19.8645ZM19.3734 28.5113L19.4364 28.4746L29.0748 22.9077L19.3734 17.3041V14.4131L34.0855 22.9077L19.3734 31.4023V28.5113ZM14.5306 17.068L17.154 18.5843V27.2311L14.5306 28.7474V17.068Z" fill="white"></path>
+    <defs>
+        <linearGradient id="paint0_linear_3478_6380" x1="25.2469" y1="1.37999" x2="25.2469" y2="45.018" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#ED2676"></stop>
+            <stop offset="0.28" stop-color="#EF4853"></stop>
+            <stop offset="0.57" stop-color="#F26437"></stop>
+            <stop offset="0.81" stop-color="#F37526"></stop>
+            <stop offset="1" stop-color="#F47B20"></stop>
+        </linearGradient>
+    </defs>
+</svg>
