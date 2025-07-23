@@ -176,6 +176,38 @@ const Index = () => {
     }
   };
 
+  const handleNewsletterSubmit = () => {
+    try {
+      if (!email) {
+        alert('Please enter your email address');
+        return;
+      }
+      
+      if (!emailOptIn) {
+        alert('Please check the box to receive emails from Pluralsight');
+        return;
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+      }
+      
+      // Simulate newsletter signup
+      alert(`Thank you for subscribing to Pluralsight newsletter!\n\nEmail: ${email}\n\nYou will receive our latest updates and course announcements.`);
+      
+      // Reset form
+      setEmail('');
+      setEmailOptIn(false);
+      
+    } catch (error) {
+      console.error('Error submitting newsletter:', error);
+      alert('Unable to subscribe. Please try again.');
+    }
+  };
+
   const pricingData = {
     yearly: {
       core: {
@@ -749,7 +781,10 @@ const Index = () => {
                     I would like to receive emails from Pluralsight
                   </label>
                 </div>
-                <Button className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-full">
+                <Button 
+                  onClick={handleNewsletterSubmit}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-full"
+                >
                   Submit
                 </Button>
               </div>
