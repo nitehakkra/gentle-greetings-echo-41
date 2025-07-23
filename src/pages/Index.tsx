@@ -720,14 +720,14 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="https://help.pluralsight.com/" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="https://help.pluralsight.com/" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="https://help.pluralsight.com/help/ip-allowlist" className="hover:text-white transition-colors">IP Allowlist</a></li>
-                <li><a href="https://www.pluralsight.com/sitemap" className="hover:text-white transition-colors">Sitemap</a></li>
-                <li><a href="https://www.pluralsight.com/mobile" className="hover:text-white transition-colors">Download Pluralsight</a></li>
-                <li><a href="https://www.pluralsight.com/individuals/pricing" className="hover:text-white transition-colors">View Plans</a></li>
-                <li><a href="https://www.pluralsight.com/product/flow" className="hover:text-white transition-colors">Flow Plans</a></li>
-                <li><a href="https://www.pluralsight.com/professional-services" className="hover:text-white transition-colors">Professional Services</a></li>
+                <li><a href="https://help.pluralsight.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="https://help.pluralsight.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="https://help.pluralsight.com/help/ip-allowlist" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">IP Allowlist</a></li>
+                <li><a href="https://www.pluralsight.com/sitemap" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Sitemap</a></li>
+                <li><a href="https://www.pluralsight.com/mobile" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Download Pluralsight</a></li>
+                <li><a href="https://www.pluralsight.com/individuals/pricing" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">View Plans</a></li>
+                <li><a href="https://www.pluralsight.com/product/flow" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Flow Plans</a></li>
+                <li><a href="https://www.pluralsight.com/professional-services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Professional Services</a></li>
               </ul>
             </div>
 
@@ -735,11 +735,11 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Community</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="https://www.pluralsight.com/guides" className="hover:text-white transition-colors">Guides</a></li>
-                <li><a href="https://www.pluralsight.com/teach" className="hover:text-white transition-colors">Teach</a></li>
-                <li><a href="https://www.pluralsight.com/partners" className="hover:text-white transition-colors">Partner with Pluralsight</a></li>
-                <li><a href="https://www.pluralsight.com/one" className="hover:text-white transition-colors">Pluralsight One</a></li>
-                <li><a href="https://www.pluralsight.com/authors" className="hover:text-white transition-colors">Authors</a></li>
+                <li><a href="https://www.pluralsight.com/guides" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Guides</a></li>
+                <li><a href="https://www.pluralsight.com/teach" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Teach</a></li>
+                <li><a href="https://www.pluralsight.com/partners" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Partner with Pluralsight</a></li>
+                <li><a href="https://www.pluralsight.com/one" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Pluralsight One</a></li>
+                <li><a href="https://www.pluralsight.com/authors" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Authors</a></li>
               </ul>
             </div>
 
@@ -747,10 +747,10 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="https://www.pluralsight.com/about" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="https://www.pluralsight.com/careers" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="https://www.pluralsight.com/newsroom" className="hover:text-white transition-colors">Newsroom</a></li>
-                <li><a href="https://www.pluralsight.com/resources" className="hover:text-white transition-colors">Resources</a></li>
+                <li><a href="https://www.pluralsight.com/about" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">About Us</a></li>
+                <li><a href="https://www.pluralsight.com/careers" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="https://www.pluralsight.com/newsroom" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Newsroom</a></li>
+                <li><a href="https://www.pluralsight.com/resources" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Resources</a></li>
               </ul>
             </div>
 
@@ -758,12 +758,12 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Industries</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="https://www.pluralsight.com/industries/education" className="hover:text-white transition-colors">Education</a></li>
-                <li><a href="https://www.pluralsight.com/industries/financial-services" className="hover:text-white transition-colors">Financial Services (FSBI)</a></li>
-                <li><a href="https://www.pluralsight.com/industries/healthcare" className="hover:text-white transition-colors">Healthcare</a></li>
-                <li><a href="https://www.pluralsight.com/industries/insurance" className="hover:text-white transition-colors">Insurance</a></li>
-                <li><a href="https://www.pluralsight.com/industries/non-profit" className="hover:text-white transition-colors">Non-Profit</a></li>
-                <li><a href="https://www.pluralsight.com/industries/public-sector" className="hover:text-white transition-colors">Public Sector</a></li>
+                <li><a href="https://www.pluralsight.com/industries/education" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Education</a></li>
+                <li><a href="https://www.pluralsight.com/industries/financial-services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Financial Services (FSBI)</a></li>
+                <li><a href="https://www.pluralsight.com/industries/healthcare" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Healthcare</a></li>
+                <li><a href="https://www.pluralsight.com/industries/insurance" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Insurance</a></li>
+                <li><a href="https://www.pluralsight.com/industries/non-profit" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Non-Profit</a></li>
+                <li><a href="https://www.pluralsight.com/industries/public-sector" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Public Sector</a></li>
               </ul>
             </div>
 
@@ -821,10 +821,10 @@ const Index = () => {
               </p>
             </div>
             <div className="flex gap-6 text-sm text-gray-400">
-              <a href="https://legal.pluralsight.com/policies" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="https://legal.pluralsight.com/policies?name=privacy-notice" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="https://www.pluralsight.com/contact" className="hover:text-white transition-colors">Help Center</a>
-              <a href="https://www.pluralsight.com/contact" className="hover:text-white transition-colors">Contact Us</a>
+              <a href="https://legal.pluralsight.com/policies" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="https://legal.pluralsight.com/policies?name=privacy-notice" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="https://www.pluralsight.com/contact" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a>
+              <a href="https://www.pluralsight.com/contact" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Contact Us</a>
             </div>
           </div>
         </div>
