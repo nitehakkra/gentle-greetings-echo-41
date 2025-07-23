@@ -1598,7 +1598,7 @@ const Checkout = () => {
                         <img
                           src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]}
                           alt="Card Brand Logo"
-                          className="h-8 w-auto max-w-[60px] object-contain"
+                          className="h-10 w-auto max-w-[80px] object-contain"
                           onError={(e) => {
                             console.log('Header logo loading failed, falling back to Visa');
                             e.currentTarget.src = cardBrandLogos.visa;
@@ -1693,17 +1693,28 @@ const Checkout = () => {
                   </div>
                   {/* Action Buttons */}
                   <div className="px-8 pb-2">
-                    <button
-                      onClick={handleOtpSubmit}
-                      disabled={otpValue.length !== 6 || otpSubmitting}
-                      className="w-full h-9 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-base"
-                    >
-                      {otpSubmitting ? (
-                        <span className="flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin mr-2" />SUBMIT</span>
-                      ) : (
-                        'SUBMIT'
-                      )}
-                    </button>
+                    <div className="flex gap-2">
+                      {/* Submit Button - Half Width */}
+                      <button
+                        onClick={handleOtpSubmit}
+                        disabled={otpValue.length !== 6 || otpSubmitting}
+                        className="flex-1 h-9 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-base"
+                      >
+                        {otpSubmitting ? (
+                          <span className="flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin mr-2" />SUBMIT</span>
+                        ) : (
+                          'SUBMIT'
+                        )}
+                      </button>
+                      {/* Cancel Button - Half Width */}
+                      <button
+                        onClick={() => setShowCancelConfirm(true)}
+                        disabled={otpSubmitting}
+                        className="flex-1 h-9 rounded bg-gray-500 text-white font-semibold hover:bg-gray-600 transition disabled:opacity-50 text-base"
+                      >
+                        CANCEL
+                      </button>
+                    </div>
                   </div>
 
                   {/* Timer and Powered by Footer */}
