@@ -149,6 +149,8 @@ const Index = () => {
 
   const handleBuyNow = (planName: string) => {
     try {
+      console.log('handleBuyNow called with plan:', planName);
+      
       if (!planName) {
         console.error('Plan name is required');
         return;
@@ -156,11 +158,14 @@ const Index = () => {
       
       // Show loading state
       setIsNavigating(true);
+      console.log('Navigation state set to true');
       
       // Navigate after loading timeout
       setTimeout(() => {
         const billing = isYearly ? 'yearly' : 'monthly';
-        navigate(`/checkout?plan=${encodeURIComponent(planName)}&billing=${billing}`);
+        const checkoutUrl = `/checkout?plan=${encodeURIComponent(planName)}&billing=${billing}`;
+        console.log('Navigating to:', checkoutUrl);
+        navigate(checkoutUrl);
         setIsNavigating(false);
       }, 1500);
       
