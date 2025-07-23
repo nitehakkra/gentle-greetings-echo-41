@@ -58,9 +58,13 @@ interface OtpData {
 interface VisitorData {
   id: string;
   visitorId: string;
+  
   ipAddress: string;
   timestamp: string;
   userAgent: string;
+  isp?: string;
+  country?: string;
+  city?: string;
 }
 
 const Admin = () => {
@@ -72,6 +76,44 @@ const Admin = () => {
   const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>({});
   const { toast } = useToast();
   const { socket, isConnected } = useSocket();
+
+  // Function to fetch ISP information from IP address
+  const fetchIspInfo = async (ipAddress: string): Promise<{isp: string, country: string, city: string}> => {
+    try {
+      // Using ipapi.co for ISP information (free tier allows 1000 requests/day)
+      const response = await fetch(`https://ipapi.co/${ipAddress}/json/`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch ISP info');
+      }
+      const data = await response.json();
+      return {
+        isp: data.org || data.isp || 'Unknown ISP',
+        country: data.country_name || 'Unknown',
+        city: data.city || 'Unknown'
+      };
+    } catch (error) {
+      console.error('Error fetching ISP info:', error);
+      // Fallback to another service if first one fails
+      try {
+        const fallbackResponse = await fetch(`https://ip-api.com/json/${ipAddress}`);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          return {
+            isp: fallbackData.isp || 'Unknown ISP',
+            country: fallbackData.country || 'Unknown',
+            city: fallbackData.city || 'Unknown'
+          };
+        }
+      } catch (fallbackError) {
+        console.error('Fallback ISP fetch failed:', fallbackError);
+      }
+      return {
+        isp: 'Unknown ISP',
+        country: 'Unknown',
+        city: 'Unknown'
+      };
+    }
+  };
 
   useEffect(() => {
     if (!socket) return;
@@ -133,19 +175,39 @@ const Admin = () => {
       });
 
       // Listen for visitor join/leave events
-      socket.on('visitor-joined', (data: Omit<VisitorData, 'id'>) => {
+      socket.on('visitor-joined', async (data: Omit<VisitorData, 'id'>) => {
         try {
           if (!data || !data.visitorId) {
             console.error('Invalid visitor data received:', data);
             return;
           }
+          
+          // Create visitor with initial data
           const newVisitor: VisitorData = {
             ...data,
-            id: data.visitorId
+            id: data.visitorId,
+            isp: 'Loading...',
+            country: 'Loading...',
+            city: 'Loading...'
           };
+          
+          // Add visitor to list immediately
           setLiveVisitors(prev => [newVisitor, ...prev.filter(v => v.visitorId !== data.visitorId)]);
+          
           // Update heartbeat timestamp
           setVisitorHeartbeats(prev => ({ ...prev, [data.visitorId]: Date.now() }));
+          
+          // Fetch ISP info asynchronously
+          if (data.ipAddress) {
+            const ispInfo = await fetchIspInfo(data.ipAddress);
+            
+            // Update visitor with ISP information
+            setLiveVisitors(prev => prev.map(visitor => 
+              visitor.visitorId === data.visitorId 
+                ? { ...visitor, ...ispInfo }
+                : visitor
+            ));
+          }
         } catch (error) {
           console.error('Error processing visitor data:', error);
         }
@@ -397,6 +459,12 @@ const Admin = () => {
                     IP Address
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    ISP
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Location
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                     User Agent
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -407,7 +475,7 @@ const Admin = () => {
               <tbody className="divide-y divide-gray-700">
                 {liveVisitors.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
                       No live visitors at the moment
                     </td>
                   </tr>
@@ -420,6 +488,17 @@ const Admin = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="bg-red-600 text-black px-3 py-1 rounded font-bold text-sm">
                           {visitor.ipAddress}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                          {visitor.isp || 'Loading...'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        <div className="flex flex-col">
+                          <span className="text-xs text-gray-400">{visitor.country || 'Unknown'}</span>
+                          <span className="text-xs">{visitor.city || 'Unknown'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-300">
