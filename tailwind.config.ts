@@ -12,12 +12,63 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: {
+				DEFAULT: '1rem',
+				sm: '1.5rem',
+				lg: '2rem',
+			},
 			screens: {
-				'2xl': '1400px'
-			}
+				sm: '640px',
+				md: '768px',
+				lg: '1024px',
+				xl: '1280px',
+				'2xl': '1400px',
+			},
 		},
 		extend: {
+			screens: {
+				'xs': '475px',
+				'3xl': '1600px',
+			},
+			fontSize: {
+				'xs': '0.75rem',
+				'sm': '0.875rem',
+				'base': '1rem',
+				'lg': '1.125rem',
+				'xl': '1.25rem',
+				'2xl': '1.5rem',
+				'3xl': '1.875rem',
+				'4xl': '2.25rem',
+				'5xl': '3rem',
+				'6xl': '3.75rem',
+			},
+			spacing: {
+				'18': '4.5rem',
+				'22': '5.5rem',
+				'30': '7.5rem',
+				'34': '8.5rem',
+			},
+			height: {
+				'screen-1/2': '50vh',
+				'screen-1/3': '33.333333vh',
+				'screen-2/3': '66.666667vh',
+				'screen-1/4': '25vh',
+				'screen-3/4': '75vh',
+				'screen-1/5': '20vh',
+				'screen-2/5': '40vh',
+				'screen-3/5': '60vh',
+				'screen-4/5': '80vh',
+			},
+			minHeight: {
+				'screen-1/2': '50vh',
+				'screen-1/3': '33.333333vh',
+				'screen-2/3': '66.666667vh',
+			},
+			maxHeight: {
+				'screen-1/2': '50vh',
+				'screen-1/3': '33.333333vh',
+				'screen-2/3': '66.666667vh',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

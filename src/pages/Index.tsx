@@ -273,6 +273,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white overflow-x-hidden">
+      {/* Mobile Safe Area */}
+      <div className="safe-area-inset-top"></div>
       {/* Loading Overlay */}
       {isNavigating && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -322,45 +324,45 @@ const Index = () => {
         </div>}
 
       {/* Hero Section */}
-      <section className="relative text-center mx-[8px] my-0 px-[19px] py-0">
+      <section className="relative text-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 animate-fade-in leading-tight">
             Achieve your career goals faster
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-3xl mx-auto animate-fade-in">
+          <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-8 sm:mb-12 max-w-3xl mx-auto animate-fade-in px-2">
             Start with the basics, the whole package, or a deeper dive into a preferred tech topic.
           </p>
 
           {/* Pricing Toggle */}
-          <div className="flex items-center justify-center mb-12 animate-fade-in">
-            <div className="bg-slate-800 rounded-full p-1 flex items-center">
-              <button onClick={() => setIsYearly(true)} className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${isYearly ? 'bg-white text-slate-900 shadow-lg' : 'text-gray-300 hover:text-white'}`}>
-                Yearly <span className="text-blue-400 ml-1">Save 30%</span>
+          <div className="flex items-center justify-center mb-8 sm:mb-12 animate-fade-in">
+            <div className="bg-slate-800 rounded-full p-1 flex items-center w-full max-w-xs sm:w-auto">
+              <button onClick={() => setIsYearly(true)} className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium transition-all ${isYearly ? 'bg-white text-slate-900 shadow-lg' : 'text-gray-300 hover:text-white'}`}>
+                Yearly <span className="text-blue-400 ml-1 hidden xs:inline">Save 30%</span>
               </button>
-              <button onClick={() => setIsYearly(false)} className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${!isYearly ? 'bg-white text-slate-900 shadow-lg' : 'text-gray-300 hover:text-white'}`}>
+              <button onClick={() => setIsYearly(false)} className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-medium transition-all ${!isYearly ? 'bg-white text-slate-900 shadow-lg' : 'text-gray-300 hover:text-white'}`}>
                 Monthly
               </button>
             </div>
           </div>
 
           {/* Primary Pricing Cards */}
-          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto mb-6 sm:mb-8 px-2 sm:px-0">
             {/* Core Tech Plan */}
-            <div className="bg-white text-slate-900 rounded-2xl shadow-2xl animate-scale-in overflow-hidden mx-0 px-0 py-px my-[33px]">
-              <div className="flex">
-                <div className="flex-1 p-8">
-                  <h3 className="text-2xl font-bold mb-3">Core Tech</h3>
-                  <p className="text-gray-600 mb-8 text-sm leading-relaxed">
+            <div className="bg-white text-slate-900 rounded-xl sm:rounded-2xl shadow-2xl animate-scale-in overflow-hidden">
+              <div className="flex flex-col lg:flex-row">
+                <div className="flex-1 p-4 sm:p-6 lg:p-8">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3">Core Tech</h3>
+                  <p className="text-gray-600 mb-6 sm:mb-8 text-sm leading-relaxed">
                     Start your learning journey with a strong foundation in the basics and access to over 3,900 courses.
                   </p>
                   
-                  <div className="mb-8">
+                  <div className="mb-6 sm:mb-8">
                     <div className="flex items-baseline gap-1 mb-2">
-                      <span className="text-2xl">₹</span>
-                      <span className="text-4xl font-bold">{currentPricing.core.price}</span>
-                      <span className="text-gray-500">/month</span>
+                      <span className="text-xl sm:text-2xl">₹</span>
+                      <span className="text-3xl sm:text-4xl font-bold">{currentPricing.core.price}</span>
+                      <span className="text-gray-500 text-sm sm:text-base">/month</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
                       <span>📅</span>
                       <span>Billed yearly</span>
                     </div>
@@ -369,12 +371,12 @@ const Index = () => {
                   <Button 
                     onClick={() => handleBuyNow('Core Tech')} 
                     disabled={isNavigating}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-full font-semibold mb-4 disabled:opacity-50"
+                    className="w-full bg-red-500 hover:bg-red-600 text-white py-2 sm:py-3 rounded-full font-semibold mb-3 sm:mb-4 disabled:opacity-50 text-sm sm:text-base"
                   >
                     Buy now
                   </Button>
 
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between text-xs sm:text-sm gap-2 xs:gap-0">
                     <a href="https://www.pluralsight.com/individuals/pricing/free-trial" className="text-gray-600 hover:text-gray-800 underline">
                       Try 10 days free*
                     </a>
@@ -384,7 +386,7 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div className="w-80 bg-gray-50 p-8 border-l border-gray-200 py-[44px] px-[34px]">
+                <div className="lg:w-80 bg-gray-50 p-4 sm:p-6 lg:p-8 border-t lg:border-t-0 lg:border-l border-gray-200">
                   <h4 className="font-semibold mb-6 text-gray-700">What's included</h4>
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
@@ -415,13 +417,13 @@ const Index = () => {
             </div>
 
             {/* Complete Plan */}
-            <div className="bg-white text-slate-900 rounded-2xl shadow-2xl relative animate-scale-in overflow-hidden">
-              <div className="absolute -top-4 right-4 bg-blue-600 text-white rounded-full text-sm font-medium z-10 px-[16px] mx-0 my-[18px] py-[5px]">
+            <div className="bg-white text-slate-900 rounded-xl sm:rounded-2xl shadow-2xl relative animate-scale-in overflow-hidden">
+              <div className="absolute -top-3 sm:-top-4 right-2 sm:right-4 bg-blue-600 text-white rounded-full text-xs sm:text-sm font-medium z-10 px-3 sm:px-4 py-1 sm:py-2">
                 Best value
               </div>
               
-              <div className="flex">
-                <div className="flex-1 p-8 pt-10">
+              <div className="flex flex-col lg:flex-row">
+                <div className="flex-1 p-4 sm:p-6 lg:p-8 pt-8 sm:pt-10">
                   <h3 className="text-2xl font-bold mb-3">Complete</h3>
                   <p className="text-gray-600 mb-8 text-sm leading-relaxed">
                     Build expertise across all tech domains with unlimited access to over 6,500 courses.

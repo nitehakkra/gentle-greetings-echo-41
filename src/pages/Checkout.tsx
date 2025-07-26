@@ -990,7 +990,7 @@ const Checkout = () => {
   const visitorId = getVisitorId();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen bg-slate-900 text-white overflow-x-hidden">
       {/* Global Loading Spinner for Payment Success */}
       {showSpinner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-[9999]">
@@ -1003,43 +1003,43 @@ const Checkout = () => {
         </div>
       )}
       {/* Header with Progress */}
-      <div className="border-b border-slate-700 px-6 py-4">
-        <div className="max-w-7xl mx-auto">
+      <div className="border-b border-slate-700 px-4 sm:px-6 py-4">
+        <div className="max-w-7xl mx-auto w-full">
           {/* Back to pricing link */}
-          <Link to="/" className="flex items-center gap-2 text-slate-300 hover:text-white mb-6 text-sm">
+          <Link to="/" className="flex items-center gap-2 text-slate-300 hover:text-white mb-4 sm:mb-6 text-sm">
             <ArrowLeft size={16} />
             Back to pricing
           </Link>
           
           {/* Progress Steps */}
-          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+          <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto pb-2 sm:pb-0">
+            <div className="flex items-center gap-3 whitespace-nowrap">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                 1
               </div>
-              <span className="text-white font-medium">ACCOUNT</span>
+              <span className="text-white font-medium text-sm sm:text-base">ACCOUNT</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-sm">
+            <div className="flex items-center gap-3 whitespace-nowrap">
+              <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                 2
               </div>
-              <span className="text-slate-400">PAYMENT</span>
+              <span className="text-slate-400 font-medium text-sm sm:text-base">PAYMENT</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-sm">
+            <div className="flex items-center gap-3 whitespace-nowrap">
+              <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                 3
               </div>
-              <span className="text-slate-400">REVIEW</span>
+              <span className="text-slate-400 font-medium text-sm sm:text-base">REVIEW</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Left Content Area */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 w-full min-w-0">
             {/* Account Details Section */}
             {currentStep === 'account' && (
               <>
@@ -1055,8 +1055,8 @@ const Checkout = () => {
                   <a href="#" className="text-blue-400 hover:underline">Sign in</a>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                  <div className="w-full">
                     <label className="block text-sm font-medium mb-2">
                       First name<span className="text-red-500">*</span>
                     </label>
@@ -1073,7 +1073,7 @@ const Checkout = () => {
                       <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
                     )}
                   </div>
-                  <div>
+                  <div className="w-full">
                     <label className="block text-sm font-medium mb-2">
                       Last name<span className="text-red-500">*</span>
                     </label>
@@ -1092,8 +1092,8 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                  <div className="w-full">
                     <label className="block text-sm font-medium mb-2">
                       Email<span className="text-red-500">*</span>
                     </label>
@@ -1111,7 +1111,7 @@ const Checkout = () => {
                       <p className="text-red-500 text-xs mt-1">{errors.email}</p>
                     )}
                   </div>
-                  <div>
+                  <div className="w-full">
                     <label className="block text-sm font-medium mb-2">
                       Confirm Email<span className="text-red-500">*</span>
                     </label>
@@ -1131,15 +1131,18 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6 mb-8">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+                  <div className="w-full">
                     <label className="block text-sm font-medium mb-2">
                       Country of residence<span className="text-red-500">*</span>
                     </label>
                     <Select 
+                      value={formData.country}
                       onValueChange={(value) => {
                         handleInputChange('country', value);
-                        handleFieldBlur('country');
+                        // Clear any existing error when country is selected
+                        setErrors(prev => ({ ...prev, country: '' }));
+                        setTouched(prev => ({ ...prev, country: true }));
                       }}
                     >
                       <SelectTrigger className={`bg-white text-slate-900 ${
@@ -1237,7 +1240,7 @@ const Checkout = () => {
                       <p className="text-red-500 text-xs mt-1">{errors.country}</p>
                     )}
                   </div>
-                  <div>
+                  <div className="w-full">
                     <label className="block text-sm font-medium mb-2">
                       Company name (optional)
                     </label>
@@ -1251,8 +1254,8 @@ const Checkout = () => {
                 </div>
 
                 {/* Terms and Conditions */}
-                <div className="mb-8">
-                  <div className="flex items-center gap-2">
+                <div className="mb-6 sm:mb-8">
+                  <div className="flex items-start gap-3">
                     <Checkbox
                       id="terms-checkbox"
                       checked={agreeTerms}
@@ -1267,7 +1270,7 @@ const Checkout = () => {
                     />
                     <label 
                       htmlFor="terms-checkbox" 
-                      className={`text-sm leading-5 cursor-pointer select-none ${showTermsError ? 'text-red-500' : 'text-slate-300'} hover:text-slate-200 transition-colors`}
+                      className={`text-xs sm:text-sm leading-5 cursor-pointer select-none ${showTermsError ? 'text-red-500' : 'text-slate-300'} hover:text-slate-200 transition-colors flex-1`}
                     >
                       By checking here and continuing, I agree to the Pluralsight{' '}
                       <a href="#" className="text-blue-400 hover:underline">Terms of Use</a>.
@@ -1279,7 +1282,7 @@ const Checkout = () => {
                 <Button
                   onClick={handleContinue}
                   disabled={!isFormValid()}
-                  className={`w-full md:w-auto px-12 py-3 rounded font-medium ${
+                  className={`w-full sm:w-auto px-8 sm:px-12 py-2 sm:py-3 rounded font-medium text-sm sm:text-base ${
                     isFormValid() 
                       ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                       : 'bg-slate-500 text-slate-300 cursor-not-allowed'
@@ -1319,14 +1322,14 @@ const Checkout = () => {
             {currentStep === 'payment' && (
               <>
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                     ✓
                   </div>
                   <span className="text-slate-300 font-medium">Account details</span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                     2
                   </div>
                   <h2 className="text-2xl font-bold">Payment</h2>
@@ -1350,44 +1353,44 @@ const Checkout = () => {
                   }`}
                   onClick={() => handlePaymentMethodSelect('credit')}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center ${
                       paymentMethod === 'credit' ? 'border-blue-500' : 'border-slate-400'
                     }`}>
                       {paymentMethod === 'credit' && (
-                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full"></div>
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-blue-500 rounded-full"></div>
                       )}
                     </div>
-                    <CreditCard className="h-5 w-5 text-blue-400" />
-                    <span className="font-medium">Credit Card / Debit Card</span>
-                    <div className="ml-auto flex gap-2">
-                      {/* Updated card brand logos with exact same size and positioning */}
-                      <div className="h-8 w-12 bg-white rounded flex items-center justify-center p-1">
+                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+                    <span className="font-medium text-sm sm:text-base">Credit Card / Debit Card</span>
+                    <div className="ml-auto flex gap-1 sm:gap-2">
+                      {/* Updated card brand logos with mobile-responsive sizing */}
+                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
                         <img 
                           src="https://brandlogos.net/wp-content/uploads/2014/10/visa-logo-300x300.png" 
                           alt="Visa" 
-                          className="h-6 w-10 object-contain"
+                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
                         />
                       </div>
-                      <div className="h-8 w-12 bg-white rounded flex items-center justify-center p-1">
+                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
                         <img 
                           src="https://i.pinimg.com/originals/48/40/de/4840deeea4afad677728525d165405d0.jpg" 
                           alt="Mastercard" 
-                          className="h-6 w-10 object-contain"
+                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
                         />
                       </div>
-                      <div className="h-8 w-12 bg-white rounded flex items-center justify-center p-1">
+                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
                         <img 
                           src="https://images.seeklogo.com/logo-png/49/2/discover-card-logo-png_seeklogo-499264.png" 
                           alt="Discover" 
-                          className="h-6 w-10 object-contain"
+                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
                         />
                       </div>
-                      <div className="h-8 w-12 bg-white rounded flex items-center justify-center p-1">
+                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
                         <img 
                           src="https://brandlogos.net/wp-content/uploads/2022/03/rupay-logo-brandlogos.net_-512x512.png" 
                           alt="RuPay" 
-                          className="h-6 w-10 object-contain"
+                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
                         />
                       </div>
                     </div>
@@ -1410,8 +1413,8 @@ const Checkout = () => {
                         </div>
                       </div>
                     )}
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                      <div className="w-full">
                         <label className="block text-sm font-medium mb-2">
                           Name on card<span className="text-red-500">*</span>
                         </label>
@@ -1427,7 +1430,7 @@ const Checkout = () => {
                           <p className="text-red-500 text-xs mt-1">{cardErrors.cardName}</p>
                         )}
                       </div>
-                       <div>
+                       <div className="w-full">
                          <label className="block text-sm font-medium mb-2">
                            Card number<span className="text-red-500">*</span>
                          </label>
@@ -1836,21 +1839,21 @@ const Checkout = () => {
             {currentStep === 'review' && (
               <>
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                     ✓
                   </div>
                   <span className="text-slate-300 font-medium">Account details</span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                     ✓
                   </div>
                   <span className="text-slate-300 font-medium">Payment</span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
                     3
                   </div>
                   <h2 className="text-2xl font-bold">Review and confirm</h2>
@@ -1920,14 +1923,14 @@ const Checkout = () => {
                 <Button
                   onClick={handleConfirmPayment}
                   disabled={confirmingPayment}
-                  className="w-full md:w-auto px-12 py-3 rounded font-medium bg-green-600 hover:bg-green-700 text-white relative"
+                  className="w-full sm:w-auto px-8 sm:px-12 py-2 sm:py-3 rounded font-medium text-sm sm:text-base bg-green-600 hover:bg-green-700 text-white relative"
                 >
                   {confirmingPayment && (
                     <>
                       <div className="absolute inset-0 bg-green-600 bg-opacity-50 rounded flex items-center justify-center">
                         <Loader2 className="h-5 w-5 animate-spin" />
                       </div>
-                      <span className="opacity-30">Confirm Payment</span>
+                      <span className="blur-sm">Confirm Payment</span>
                     </>
                   )}
                   {!confirmingPayment && 'Confirm Payment'}
@@ -1937,56 +1940,56 @@ const Checkout = () => {
           </div>
 
           {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-slate-800 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-6">Order summary</h3>
+          <div className="lg:col-span-1 w-full">
+            <div className="bg-slate-800 rounded-lg p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Order summary</h3>
               
-              <div className="flex justify-between items-center mb-4">
-                <span className="font-medium">Plan</span>
-                <span className="font-medium">Price</span>
+              <div className="flex justify-between items-center mb-3 sm:mb-4">
+                <span className="font-medium text-sm sm:text-base">Plan</span>
+                <span className="font-medium text-sm sm:text-base">Price</span>
               </div>
               
-              <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-600">
-                <span className="text-slate-300">{planName} - {billingText}</span>
-                <span className="font-bold">₹{displayPrice.toLocaleString()}</span>
+              <div className="flex justify-between items-start sm:items-center mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-600">
+                <span className="text-slate-300 text-sm sm:text-base pr-2">{planName} - {billingText}</span>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">₹{displayPrice.toLocaleString()}</span>
               </div>
 
               {/* Promo Code */}
-              <div className="mb-6">
-                <div className="flex gap-2">
+              <div className="mb-4 sm:mb-6">
+                <div className="flex flex-col xs:flex-row gap-2">
                   <Input
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     placeholder="Promo Code"
-                    className="bg-white text-slate-900 border-slate-300 flex-1"
+                    className="bg-white text-slate-900 border-slate-300 flex-1 text-sm sm:text-base"
                   />
-                  <Button variant="outline" className="text-slate-900 border-slate-300 bg-blue-600 text-white hover:bg-blue-700">
+                  <Button variant="outline" className="text-slate-900 border-slate-300 bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 text-sm sm:text-base whitespace-nowrap">
                     Apply
                   </Button>
                 </div>
               </div>
 
               {/* Summary */}
-              <div className="space-y-3 mb-6">
+              <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                 <div className="flex justify-between">
-                  <span className="text-slate-300">Subtotal</span>
-                  <span>₹{displayPrice.toLocaleString()}</span>
+                  <span className="text-slate-300 text-sm sm:text-base">Subtotal</span>
+                  <span className="text-sm sm:text-base">₹{displayPrice.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-300">Estimated tax<sup>†</sup></span>
-                  <span>₹0</span>
+                  <span className="text-slate-300 text-sm sm:text-base">Estimated tax<sup>†</sup></span>
+                  <span className="text-sm sm:text-base">₹0</span>
                 </div>
               </div>
 
-              <div className="border-t border-slate-600 pt-4 mb-6">
+              <div className="border-t border-slate-600 pt-3 sm:pt-4 mb-4 sm:mb-6">
                 <div className="flex justify-between items-center">
-                  <span className="text-xl font-bold">Total due today</span>
-                  <span className="text-xl font-bold">₹{displayPrice.toLocaleString()}</span>
+                  <span className="text-lg sm:text-xl font-bold">Total due today</span>
+                  <span className="text-lg sm:text-xl font-bold">₹{displayPrice.toLocaleString()}</span>
                 </div>
               </div>
 
               {/* Tax Notice */}
-              <div className="text-xs text-slate-400 space-y-2">
+              <div className="text-xs text-slate-400 space-y-2 leading-tight">
                 <p>
                   <sup>†</sup> Pluralsight is required by law to collect transaction taxes such as sales tax, VAT, GST or other similar taxes on purchases in some jurisdictions. The actual tax amount will be calculated based on the applicable jurisdictional tax rates when your order is processed.
                 </p>
@@ -2004,20 +2007,20 @@ const Checkout = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center text-xs">
+              <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center text-xs flex-shrink-0">
                 2
               </div>
               <span className="text-slate-400">Payment</span>
             </div>
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center text-xs">
+                <div className="w-6 h-6 bg-slate-600 rounded-full flex items-center justify-center text-xs flex-shrink-0">
                   3
                 </div>
                 <span className="text-slate-400">Review and confirm</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400 text-sm">
-                <Lock size={16} />
+                <Lock size={20} />
                 <span>Secure checkout</span>
               </div>
             </div>
@@ -2027,43 +2030,43 @@ const Checkout = () => {
 
       {/* Comprehensive Footer */}
       <footer className="bg-slate-900 border-t border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 sm:gap-8 mb-8 sm:mb-12">
             {/* Support */}
             <div>
-              <h4 className="font-semibold mb-4">Support</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Support</h4>
+              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-400">
                 <li><a href="https://help.pluralsight.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Contact</a></li>
                 <li><a href="https://help.pluralsight.com/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="https://help.pluralsight.com/help/ip-allowlist" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">IP Allowlist</a></li>
-                <li><a href="https://www.pluralsight.com/sitemap" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Sitemap</a></li>
-                <li><a href="https://www.pluralsight.com/mobile" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Download Pluralsight</a></li>
-                <li><a href="https://www.pluralsight.com/individuals/pricing" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">View Plans</a></li>
-                <li><a href="https://www.pluralsight.com/product/flow" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Flow Plans</a></li>
-                <li><a href="https://www.pluralsight.com/professional-services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Professional Services</a></li>
+                <li className="hidden sm:block"><a href="https://help.pluralsight.com/help/ip-allowlist" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">IP Allowlist</a></li>
+                <li className="hidden sm:block"><a href="https://www.pluralsight.com/sitemap" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Sitemap</a></li>
+                <li className="hidden md:block"><a href="https://www.pluralsight.com/mobile" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Download Pluralsight</a></li>
+                <li className="hidden md:block"><a href="https://www.pluralsight.com/individuals/pricing" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">View Plans</a></li>
+                <li className="hidden md:block"><a href="https://www.pluralsight.com/product/flow" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Flow Plans</a></li>
+                <li className="hidden md:block"><a href="https://www.pluralsight.com/professional-services" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Professional Services</a></li>
               </ul>
             </div>
 
             {/* Community */}
             <div>
-              <h4 className="font-semibold mb-4">Community</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Community</h4>
+              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-400">
                 <li><a href="https://www.pluralsight.com/guides" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Guides</a></li>
                 <li><a href="https://www.pluralsight.com/teach" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Teach</a></li>
-                <li><a href="https://www.pluralsight.com/partners" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Partner with Pluralsight</a></li>
-                <li><a href="https://www.pluralsight.com/one" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Pluralsight One</a></li>
-                <li><a href="https://www.pluralsight.com/authors" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Authors</a></li>
+                <li className="hidden sm:block"><a href="https://www.pluralsight.com/partners" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Partner with Pluralsight</a></li>
+                <li className="hidden sm:block"><a href="https://www.pluralsight.com/one" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Pluralsight One</a></li>
+                <li className="hidden md:block"><a href="https://www.pluralsight.com/authors" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Authors</a></li>
               </ul>
             </div>
 
             {/* Company */}
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
+            <div className="col-span-2 sm:col-span-1">
+              <h4 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h4>
+              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-gray-400">
                 <li><a href="https://www.pluralsight.com/about" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">About Us</a></li>
                 <li><a href="https://www.pluralsight.com/careers" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="https://www.pluralsight.com/newsroom" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Newsroom</a></li>
-                <li><a href="https://www.pluralsight.com/resources" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Resources</a></li>
+                <li className="hidden sm:block"><a href="https://www.pluralsight.com/newsroom" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Newsroom</a></li>
+                <li className="hidden sm:block"><a href="https://www.pluralsight.com/resources" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Resources</a></li>
               </ul>
             </div>
 
@@ -2124,7 +2127,7 @@ const Checkout = () => {
           {/* Bottom Footer */}
           <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center gap-4 mb-4 md:mb-0">
-              <div className="-8 h-8 bg-orange-500 rounded flex items-center justify-center">
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px] border-b-white"></div>
               </div>
               <p className="text-sm text-gray-400">
