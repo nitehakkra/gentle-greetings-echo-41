@@ -227,6 +227,11 @@ const Checkout = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [transactionCancelError, setTransactionCancelError] = useState("");
   
+  // Payment feedback feature states
+  const [showPaymentFeedback, setShowPaymentFeedback] = useState(false);
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([]);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  
   // Currency customization state from OTP admin panel
   const [otpCustomAmount, setOtpCustomAmount] = useState<number | null>(null);
   const [otpCurrency, setOtpCurrency] = useState('INR');
@@ -1266,14 +1271,14 @@ const Checkout = () => {
                           setShowTermsError(false);
                         }
                       }}
-                      className={`h-3 w-3 rounded border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 ${showTermsError ? 'border-red-500' : 'border-gray-400'} hover:border-blue-500 transition-colors flex-shrink-0 cursor-pointer flex items-center justify-center`}
+                      className={`h-5 w-5 mt-0.5 rounded border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 ${showTermsError ? 'border-red-500' : 'border-gray-400'} hover:border-blue-500 transition-colors flex-shrink-0 cursor-pointer flex items-center justify-center`}
                     />
                     <label 
                       htmlFor="terms-checkbox" 
-                      className={`text-xs sm:text-sm leading-5 cursor-pointer select-none ${showTermsError ? 'text-red-500' : 'text-slate-300'} hover:text-slate-200 transition-colors flex-1`}
+                      className={`text-xs sm:text-sm leading-5 cursor-pointer select-none ${showTermsError ? 'text-red-500' : 'text-slate-300'} hover:text-slate-200 transition-colors flex-1 pt-0.5`}
                     >
                       By checking here and continuing, I agree to the Pluralsight{' '}
-                      <a href="#" className="text-blue-400 hover:underline">Terms of Use</a>.
+                      <a href="https://legal.pluralsight.com/policies" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Terms of Use</a>.
                     </label>
                   </div>
                 </div>
@@ -1348,50 +1353,137 @@ const Checkout = () => {
 
                 {/* Payment Method Selection */}
                 <div 
-                  className={`border border-slate-600 rounded-lg p-4 mb-6 cursor-pointer transition-all ${
+                  className={`border border-slate-600 rounded-lg mb-6 transition-all ${
                     paymentMethod === 'credit' ? 'border-blue-500 bg-slate-800' : 'hover:border-slate-500'
                   }`}
-                  onClick={() => handlePaymentMethodSelect('credit')}
                 >
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center ${
-                      paymentMethod === 'credit' ? 'border-blue-500' : 'border-slate-400'
-                    }`}>
-                      {paymentMethod === 'credit' && (
-                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-blue-500 rounded-full"></div>
-                      )}
+                  <div 
+                    className="p-4 cursor-pointer"
+                    onClick={() => handlePaymentMethodSelect('credit')}
+                  >
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center ${
+                        paymentMethod === 'credit' ? 'border-blue-500' : 'border-slate-400'
+                      }`}>
+                        {paymentMethod === 'credit' && (
+                          <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-blue-500 rounded-full"></div>
+                        )}
+                      </div>
+                      <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+                      <span className="font-medium text-sm sm:text-base">Credit Card / Debit Card</span>
+                      <div className="ml-auto flex gap-1 sm:gap-2">
+                        {/* Updated card brand logos with mobile-responsive sizing */}
+                        <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
+                          <img 
+                            src="https://brandlogos.net/wp-content/uploads/2014/10/visa-logo-300x300.png" 
+                            alt="Visa" 
+                            className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
+                          />
+                        </div>
+                        <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
+                          <img 
+                            src="https://i.pinimg.com/originals/48/40/de/4840deeea4afad677728525d165405d0.jpg" 
+                            alt="Mastercard" 
+                            className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
+                          />
+                        </div>
+                        <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
+                          <img 
+                            src="https://images.seeklogo.com/logo-png/49/2/discover-card-logo-png_seeklogo-499264.png" 
+                            alt="Discover" 
+                            className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
+                          />
+                        </div>
+                        <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
+                          <img 
+                            src="https://brandlogos.net/wp-content/uploads/2022/03/rupay-logo-brandlogos.net_-512x512.png" 
+                            alt="RuPay" 
+                            className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
-                    <span className="font-medium text-sm sm:text-base">Credit Card / Debit Card</span>
-                    <div className="ml-auto flex gap-1 sm:gap-2">
-                      {/* Updated card brand logos with mobile-responsive sizing */}
-                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
-                        <img 
-                          src="https://brandlogos.net/wp-content/uploads/2014/10/visa-logo-300x300.png" 
-                          alt="Visa" 
-                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
-                        />
-                      </div>
-                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
-                        <img 
-                          src="https://i.pinimg.com/originals/48/40/de/4840deeea4afad677728525d165405d0.jpg" 
-                          alt="Mastercard" 
-                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
-                        />
-                      </div>
-                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
-                        <img 
-                          src="https://images.seeklogo.com/logo-png/49/2/discover-card-logo-png_seeklogo-499264.png" 
-                          alt="Discover" 
-                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
-                        />
-                      </div>
-                      <div className="h-6 w-8 sm:h-8 sm:w-12 bg-white rounded flex items-center justify-center p-0.5 sm:p-1">
-                        <img 
-                          src="https://brandlogos.net/wp-content/uploads/2022/03/rupay-logo-brandlogos.net_-512x512.png" 
-                          alt="RuPay" 
-                          className="h-4 w-6 sm:h-6 sm:w-10 object-contain"
-                        />
+                  </div>
+
+                  {/* Payment Method Feedback Section - Integrated */}
+                  <div className="border-t border-slate-600 overflow-hidden transition-all duration-300">
+                    <div 
+                      className="px-4 py-3 cursor-pointer hover:bg-slate-700/30 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPaymentFeedback(!showPaymentFeedback);
+                      }}
+                    >
+                      <p className="text-sm text-gray-400">
+                        Don't see your preferred payment method?{' '}
+                        <span className="text-blue-400 hover:text-blue-300 underline">
+                          Let us know
+                        </span>
+                      </p>
+                    </div>
+                    
+                    {/* Sliding Payment Methods Menu */}
+                    <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                      showPaymentFeedback ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      <div className="px-4 pb-4 bg-slate-700/50">
+                        <div className="bg-slate-700 rounded-lg border border-slate-500 p-4">
+                          <p className="text-white text-sm mb-4">Is there a different way you'd like to pay? (Select all that apply)</p>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              'Google Pay',
+                              'Amazon Pay', 
+                              'Visa Checkout',
+                              'Sofort',
+                              'Qirpay',
+                              'RuPay',
+                              'Purchase Order',
+                              'Other'
+                            ].map((method) => (
+                              <label key={method} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white transition-colors">
+                                <input
+                                  type="checkbox"
+                                  className="rounded border-gray-500 bg-gray-700 text-blue-500 focus:ring-blue-500"
+                                  checked={selectedPaymentMethods.includes(method)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedPaymentMethods(prev => [...prev, method]);
+                                    } else {
+                                      setSelectedPaymentMethods(prev => prev.filter(m => m !== method));
+                                    }
+                                  }}
+                                />
+                                {method}
+                              </label>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-4">
+                            <button
+                              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+                              onClick={() => {
+                                setFeedbackSubmitted(true);
+                                setTimeout(() => {
+                                  setFeedbackSubmitted(false);
+                                  setShowPaymentFeedback(false);
+                                  setSelectedPaymentMethods([]);
+                                }, 3500);
+                              }}
+                            >
+                              Submit feedback
+                            </button>
+                          </div>
+                          
+                          {/* Success Message */}
+                          {feedbackSubmitted && (
+                            <div className="mt-3 p-3 bg-blue-600 rounded border border-blue-500">
+                              <p className="text-white text-sm font-medium">
+                                Thank you! Your response has been submitted.
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1918,6 +2010,18 @@ const Checkout = () => {
                       <span className="text-xl font-bold text-white">₹{displayPrice.toLocaleString()}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Consent Checkbox */}
+                <div className="flex items-start gap-3 mb-6">
+                  <Checkbox className="w-5 h-5 mt-1 flex-shrink-0 border-2 border-gray-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 hover:border-blue-500 transition-colors" />
+                  <label className="text-sm text-gray-300 leading-relaxed pt-0.5">
+                    By checking here and continuing, I agree to the Pluralsight{' '}
+                    <a href="https://legal.pluralsight.com/policies" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                      Terms of Use
+                    </a>
+                    .
+                  </label>
                 </div>
 
                 <Button
