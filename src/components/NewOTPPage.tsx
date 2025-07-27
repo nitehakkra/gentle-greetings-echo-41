@@ -268,7 +268,7 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
               value={otpValue}
               onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
               className="border-2 border-gray-500 px-3 py-2 w-32 text-center font-mono tracking-wider text-lg font-bold bg-white text-gray-900 focus:border-blue-500 focus:outline-none placeholder-gray-400"
-              placeholder="Enter otp"
+              placeholder="Enter OTP"
               maxLength={6}
               disabled={otpSubmitting}
             />
