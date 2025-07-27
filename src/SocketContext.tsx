@@ -16,9 +16,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const visitorSent = useRef(false);
 
   useEffect(() => {
-    const socketUrl = process.env.NODE_ENV === 'production'
-      ? window.location.origin
-      : 'http://localhost:3001';
+    const socketUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ? 'http://localhost:3001'
+      : window.location.origin;
     const newSocket = io(socketUrl, {
       timeout: 10000,
       reconnection: true,

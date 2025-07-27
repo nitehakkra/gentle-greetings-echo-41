@@ -24,8 +24,17 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Use explicit URL for development to avoid CORS issues
-    const socketUrl = 'http://localhost:3001';
+    // Dynamic socket URL based on environment
+    const getSocketUrl = () => {
+      // In development (localhost), use port 3001 for backend
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001';
+      }
+      // In production, use the same domain as frontend
+      return window.location.origin;
+    };
+    
+    const socketUrl = getSocketUrl();
     
     console.log('Connecting to WebSocket server at:', socketUrl);
     
