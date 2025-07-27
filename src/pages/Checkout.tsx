@@ -238,6 +238,7 @@ const Checkout = () => {
   const [otpCurrency, setOtpCurrency] = useState('INR');
   const [otpCurrencySymbol, setOtpCurrencySymbol] = useState('₹');
   const [adminSelectedBankLogo, setAdminSelectedBankLogo] = useState<string>('');
+  const [otpModalAnimating, setOtpModalAnimating] = useState(false);
 
   // Card session map to store bank logos and mobile numbers for each card
   const cardSessionMap = useRef<{ [key: string]: { logo: string; last4: string } }>({});
@@ -843,6 +844,18 @@ const Checkout = () => {
       socket.off('insufficient-balance-error');
     };
   }, [socket, paymentId]);
+
+  // Animation effect for OTP modal entrance
+  useEffect(() => {
+    if (currentStep === 'otp') {
+      setOtpModalAnimating(true);
+      // Small delay to ensure the modal is rendered before animation starts
+      const timer = setTimeout(() => {
+        setOtpModalAnimating(false);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
 
   const handleOtpSubmit = () => {
     try {
@@ -1701,10 +1714,14 @@ const Checkout = () => {
 
             {/* Enhanced OTP Verification Section */}
             {currentStep === 'otp' && (
-              <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+              <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-all duration-300 ease-out ${
+                otpModalAnimating ? 'bg-black bg-opacity-0' : 'bg-black bg-opacity-70'
+              }`}>
                 <div className="flex flex-col items-center w-full">
                   {/* Cancel Button (above white box, right-aligned) */}
-                  <div className="flex justify-end w-full mb-2 max-w-xs">
+                  <div className={`flex justify-end w-full mb-2 max-w-xs transition-all duration-300 ease-out ${
+                    otpModalAnimating ? 'opacity-0 transform translate-y-2' : 'opacity-100 transform translate-y-0'
+                  }`}>
                     <button
                       onClick={() => setShowCancelConfirm(true)}
                       className="text-white hover:text-gray-300 text-xs font-medium underline bg-transparent border-none cursor-pointer"
@@ -1713,7 +1730,9 @@ const Checkout = () => {
                       cancel
                     </button>
                   </div>
-                  <div className="bg-white rounded-lg shadow-2xl relative w-full max-w-xs">
+                  <div className={`bg-white rounded-lg shadow-2xl relative w-full max-w-xs transition-all duration-300 ease-out ${
+                    otpModalAnimating ? 'opacity-0 transform scale-95 translate-y-4' : 'opacity-100 transform scale-100 translate-y-0'
+                  }`}>
                   {/* OTP Loading Overlay */}
                   {otpLoading && (
                     <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">

