@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test Page</h1>
+    <button id="testStore">Test Store Payment</button>
+    <button id="testGet">Test Get Payment</button>
+    <div id="results"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001';
+        const testHash = 'test_hash_123';
+        
+        document.getElementById('testStore').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/success-payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        hash: testHash,
+                        paymentData: {
+                            firstName: 'Test',
+                            lastName: 'User',
+                            email: 'test@example.com',
+                            amount: 100,
+                            planName: 'Test Plan'
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                document.getElementById('results').innerHTML = `<h3>Store Result:</h3><pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<h3>Store Error:</h3><pre>${error.message}</pre>`;
+            }
+        });
+        
+        document.getElementById('testGet').addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/success-payment/${testHash}`);
+                const result = await response.json();
+                document.getElementById('results').innerHTML = `<h3>Get Result:</h3><pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('results').innerHTML = `<h3>Get Error:</h3><pre>${error.message}</pre>`;
+            }
+        });
+    </script>
+</body>
+</html>

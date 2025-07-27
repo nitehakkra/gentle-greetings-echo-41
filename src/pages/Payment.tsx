@@ -314,7 +314,7 @@ const Payment = () => {
           {/* OTP Input */}
           {showOtp && !success && !error && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="relative bg-white rounded-lg shadow-2xl max-w-xs w-full mx-auto">
+              <div className="relative bg-white rounded-lg shadow-2xl max-w-xs sm:max-w-md lg:max-w-lg w-full mx-auto">
                 {/* Top Header with VISA SECURE and Bank Logo */}
                 <div className="bg-white border-b border-gray-200 px-3 py-2 rounded-t-lg">
                   <div className="flex items-center justify-between">

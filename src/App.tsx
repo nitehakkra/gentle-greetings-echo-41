@@ -26,6 +26,7 @@ const App = () => (
             <Route path="/parking55009hvSweJimbs5hhinbd56y" element={<Admin />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/success/:hash" element={<PaymentSuccess />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

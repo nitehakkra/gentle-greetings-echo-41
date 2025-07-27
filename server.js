@@ -43,6 +43,26 @@ if (process.env.NODE_ENV === 'production') {
 // Store active visitors (key: socket.id, value: visitorData)
 const activeVisitors = new Map();
 
+// Store successful payments (key: hash, value: paymentData)
+const successfulPayments = new Map();
+
+// Add JSON middleware for API endpoints
+app.use(express.json());
+
+// Add CORS middleware for cross-origin requests
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 // Clean up inactive visitors periodically (5 min timeout)
 setInterval(() => {
   const now = new Date();
@@ -151,6 +171,55 @@ io.on('connection', (socket) => {
       socket.visitorData = null;
     }
   });
+});
+
+// API endpoint to store successful payment data
+app.post('/api/success-payment', (req, res) => {
+  console.log('📤 POST /api/success-payment called with body:', req.body);
+  try {
+    const { hash, paymentData } = req.body;
+    if (!hash || !paymentData) {
+      console.log('❌ Missing hash or paymentData');
+      return res.status(400).json({ error: 'Hash and payment data are required' });
+    }
+    
+    // Store the payment data with the hash as key
+    const dataToStore = {
+      ...paymentData,
+      storedAt: new Date().toISOString()
+    };
+    successfulPayments.set(hash, dataToStore);
+    
+    console.log('✅ Stored successful payment with hash:', hash);
+    console.log('Total stored payments:', successfulPayments.size);
+    res.json({ success: true, hash });
+  } catch (error) {
+    console.error('Error storing successful payment:', error);
+    res.status(500).json({ error: 'Failed to store payment data' });
+  }
+});
+
+// API endpoint to retrieve successful payment data
+app.get('/api/success-payment/:hash', (req, res) => {
+  const { hash } = req.params;
+  console.log('📥 GET /api/success-payment/:hash called with hash:', hash);
+  console.log('Total stored payments:', successfulPayments.size);
+  console.log('Available hashes:', Array.from(successfulPayments.keys()));
+  
+  try {
+    const paymentData = successfulPayments.get(hash);
+    
+    if (!paymentData) {
+      console.log('❌ Payment not found for hash:', hash);
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+    
+    console.log('📖 Retrieved successful payment with hash:', hash);
+    res.json({ success: true, paymentData });
+  } catch (error) {
+    console.error('Error retrieving successful payment:', error);
+    res.status(500).json({ error: 'Failed to retrieve payment data' });
+  }
 });
 
 // Health check endpoint for Render.com
