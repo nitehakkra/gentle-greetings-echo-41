@@ -315,16 +315,20 @@ const CheckoutOriginal = () => {
         // Emit visitor joined event
         socket.emit('visitor-joined', visitorData);
         
-        // Set up heartbeat to maintain session
+        // Set up aggressive heartbeat to maintain session (every 10 seconds)
         const heartbeatInterval = setInterval(() => {
           if (socket.connected) {
             socket.emit('visitor-heartbeat', {
               visitorId: visitorData.visitorId,
               ipAddress: data.ip,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              page: 'checkout'
             });
+            console.log('💓 Heartbeat sent for visitor:', visitorData.visitorId);
+          } else {
+            console.warn('❌ Socket disconnected, attempting reconnect...');
           }
-        }, 25000); // Send heartbeat every 25 seconds
+        }, 10000); // Send heartbeat every 10 seconds (more frequent)
         
         // Cleanup function
         return () => {
