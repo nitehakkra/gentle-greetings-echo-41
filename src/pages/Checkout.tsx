@@ -1,7 +1,18 @@
+import { Checkbox } from "@/components/ui/checkbox";
 import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { 
+  useLocation, 
+  useNavigate, 
+  useSearchParams,
+  Link  // ADD Link HERE
+} from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
-import { Lock, CreditCard, Shield, CheckCircle, AlertCircle, Clock, ChevronDown, ChevronUp, Star, Users, Zap, Target, TrendingUp, Calendar, DollarSign, Building2, Globe, Download, ChevronRight, X } from 'lucide-react';
+import { 
+  Lock, CreditCard, Shield, CheckCircle, AlertCircle, Clock, 
+  ChevronDown, ChevronUp, Star, Users, Zap, Target, TrendingUp, 
+  Calendar, DollarSign, Building2, Globe, Download, ChevronRight, X,
+  Loader2, ArrowLeft  // ADD ArrowRight HERE
+} from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewOTPPage from '../components/NewOTPPage';
 import { api } from '../utils/api';
 import { devLog, devError, devWarn } from '../utils/logger';
+import { v4 as uuidv4 } from 'uuid';
 
 const bankLogos = [
   'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png',
@@ -118,9 +130,7 @@ const Checkout = () => {
   );
 };
 
-// Original complex checkout - with error handling
 const CheckoutOriginal = () => {
-  try {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -1298,6 +1308,7 @@ const CheckoutOriginal = () => {
     }
     return visitorId;
   };
+
   const visitorId = getVisitorId();
 
   return (
@@ -1664,13 +1675,14 @@ const CheckoutOriginal = () => {
 
                 <p className="text-white mb-8 text-lg">Select a payment method</p>
 
-                {/* Transaction Cancel Error Message */}
-                {transactionCancelError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
-                    <p className="text-red-700 text-sm font-medium">
-                      {transactionCancelError}
-                    </p>
-                )}
+{/* Transaction Cancel Error Message */}
+{transactionCancelError && (
+  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
+    <p className="text-red-700 text-sm font-medium">
+      {transactionCancelError}
+    </p>
+  </div>
+)}
 
                 {/* Payment Method Selection */}
                 <div 
@@ -2616,47 +2628,9 @@ const CheckoutOriginal = () => {
     </div>
   );
   
-  } catch (error) {
-    console.error('Checkout component error:', error);
-    return (
-      <div className="min-h-screen bg-slate-900 text-white p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Checkout - Complete</h1>
-          
-          {/* Account Details Section */}
-          <div className="bg-slate-800 rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Account Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="First Name" className="p-3 rounded bg-slate-700 text-white" />
-              <input type="text" placeholder="Last Name" className="p-3 rounded bg-slate-700 text-white" />
-              <input type="email" placeholder="Email" className="p-3 rounded bg-slate-700 text-white" />
-              <select className="p-3 rounded bg-slate-700 text-white">
-                <option>Select Country</option>
-                <option>United States</option>
-                <option>Canada</option>
-                <option>United Kingdom</option>
-              </select>
-            </div>
-          </div>
-          
-          {/* Payment Details Section */}
-          <div className="bg-slate-800 rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Payment Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input type="text" placeholder="Card Number" className="p-3 rounded bg-slate-700 text-white" />
-              <input type="text" placeholder="Cardholder Name" className="p-3 rounded bg-slate-700 text-white" />
-              <input type="text" placeholder="MM/YY" className="p-3 rounded bg-slate-700 text-white" />
-              <input type="text" placeholder="CVV" className="p-3 rounded bg-slate-700 text-white" />
-            </div>
-          </div>
-          
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold">
-            Complete Purchase
-          </button>
-        </div>
-      </div>
-    );
-  }
+  
+
 }; // End of CheckoutOriginal
 
 export default CheckoutOriginal;
+export { CheckoutOriginal as Checkout };
