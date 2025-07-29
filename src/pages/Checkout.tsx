@@ -139,6 +139,7 @@ const CheckoutOriginal = () => {
   const billing = searchParams.get('billing') || 'yearly';
   const customAmount = searchParams.get('amount');
   const linkId = searchParams.get('linkId');
+  const linkCurrency = searchParams.get('currency'); // Currency parameter from payment link
   
   // Clear any previous checkout data when starting a new session
   useEffect(() => {
@@ -287,9 +288,17 @@ const CheckoutOriginal = () => {
     
     // Listen for global currency changes from admin panel
     newSocket.on('global-currency-change', (data) => {
-      setGlobalCurrency(data.currency);
+      console.log('🔄 Global currency change received:', data.currency, 'linkCurrency:', linkCurrency);
+      // Only update global currency if no link-specific currency is set
+      if (!linkCurrency) {
+        console.log('✅ Applying global currency change:', data.currency);
+        setGlobalCurrency(data.currency);
+        setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
+      } else {
+        console.log('🚫 Ignoring global currency change - link currency locked:', linkCurrency);
+      }
+      // Always update exchange rate
       setExchangeRate(data.exchangeRate);
-      setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
     });
     
     // Listen for exchange rate updates
@@ -299,9 +308,17 @@ const CheckoutOriginal = () => {
     
     // Listen for currency settings response
     newSocket.on('currency-settings', (data) => {
-      setGlobalCurrency(data.currency);
+      console.log('⚙️ Currency settings received:', data.currency, 'linkCurrency:', linkCurrency);
+      // Only update global currency if no link-specific currency is set
+      if (!linkCurrency) {
+        console.log('✅ Applying currency settings:', data.currency);
+        setGlobalCurrency(data.currency);
+        setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
+      } else {
+        console.log('🚫 Ignoring currency settings - link currency locked:', linkCurrency);
+      }
+      // Always update exchange rate
       setExchangeRate(data.exchangeRate);
-      setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
     });
     
       return () => {
@@ -311,7 +328,7 @@ const CheckoutOriginal = () => {
       console.error('Socket connection failed:', error);
       // Continue without socket - checkout will work without real-time features
     }
-  }, []);
+  }, [linkCurrency]); // Add linkCurrency dependency to update socket listeners when currency changes
   
   // Visitor tracking for checkout page
   useEffect(() => {
@@ -475,7 +492,20 @@ const CheckoutOriginal = () => {
   const [otpCurrencySymbol, setOtpCurrencySymbol] = useState('₹');
   const [adminSelectedBankLogo, setAdminSelectedBankLogo] = useState<string>('');
   const [otpModalAnimating, setOtpModalAnimating] = useState(false);
-  
+
+  // Override global currency if payment link specifies a currency
+  useEffect(() => {
+    console.log('🔍 URL linkCurrency parameter:', linkCurrency);
+    if (linkCurrency && (linkCurrency === 'INR' || linkCurrency === 'USD')) {
+      setGlobalCurrency(linkCurrency);
+      setCurrencySymbol(linkCurrency === 'USD' ? '$' : '₹');
+      console.log(`🔒 Payment link currency override applied: ${linkCurrency}`);
+      console.log(`💰 Currency symbol set to: ${linkCurrency === 'USD' ? '$' : '₹'}`);
+    } else {
+      console.log('❌ No valid linkCurrency found, using global currency');
+    }
+  }, [linkCurrency]);
+
   // Currency conversion helper function
   const convertPrice = (inrPrice: number): number => {
     if (globalCurrency === 'USD') {

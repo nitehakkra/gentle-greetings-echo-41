@@ -113,6 +113,7 @@ const Admin = () => {
   // Start with empty heartbeats - only track current session
   const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>({});
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>('');
+  const [paymentLinkCurrency, setPaymentLinkCurrency] = useState<string>('INR');
   const [generatedLink, setGeneratedLink] = useState<string>('');
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>('');
@@ -1188,32 +1189,32 @@ const Admin = () => {
     const linkId = uuidv4();
     const amount = parseFloat(paymentLinkAmount);
     
-    // Convert amount to INR if user entered USD amount
+    // Convert amount to INR if user selected USD currency
     let finalAmount = amount;
     let displayAmount = amount;
     let currencySymbol = '₹';
     
-    if (globalCurrency === 'USD') {
-      // If global currency is USD, convert entered amount to INR for backend storage
+    if (paymentLinkCurrency === 'USD') {
+      // If payment link currency is USD, convert entered amount to INR for backend storage
       finalAmount = amount * currentExchangeRate;
       displayAmount = amount;
       currencySymbol = '$';
     } else {
-      // If global currency is INR, use amount as-is
+      // If payment link currency is INR, use amount as-is
       finalAmount = amount;
       displayAmount = amount;
       currencySymbol = '₹';
     }
     
-    // Create the payment link with INR amount (backend always expects INR)
+    // Create the payment link with INR amount (backend always expects INR) and currency parameter
     const baseUrl = window.location.origin;
-    const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${finalAmount}&linkId=${linkId}`;
+    const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${finalAmount}&linkId=${linkId}&currency=${paymentLinkCurrency}`;
     
     setGeneratedLink(paymentLink);
     
     toast({
       title: "Payment Link Generated!",
-      description: `Link created for ${currencySymbol}${displayAmount}`,
+      description: `Link created for ${currencySymbol}${displayAmount} (${paymentLinkCurrency})`,
     });
   };
 
@@ -1577,19 +1578,45 @@ const Admin = () => {
           </div>
           <div className="p-4 sm:p-6">
             <div className="flex flex-col gap-4">
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount ({globalCurrency === 'USD' ? '$' : '₹'})
-                </label>
-                <Input
-                  type="number"
-                  placeholder="Enter amount"
-                  value={paymentLinkAmount}
-                  onChange={(e) => setPaymentLinkAmount(e.target.value)}
-                  className="bg-gray-800 border-gray-600 text-white h-12 text-base"
-                  min="1"
-                  step="0.01"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Amount ({paymentLinkCurrency === 'USD' ? '$' : '₹'})
+                  </label>
+                  <Input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={paymentLinkAmount}
+                    onChange={(e) => setPaymentLinkAmount(e.target.value)}
+                    className="bg-gray-800 border-gray-600 text-white h-12 text-base"
+                    min="1"
+                    step="0.01"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Currency
+                  </label>
+                  <Select value={paymentLinkCurrency} onValueChange={setPaymentLinkCurrency}>
+                    <SelectTrigger className="bg-gray-800 border-gray-600 text-white h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-800 border-gray-600">
+                      <SelectItem value="INR" className="text-white hover:bg-gray-700">
+                        <span className="flex items-center gap-2">
+                          <span>🇮🇳</span>
+                          <span>INR (₹)</span>
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="USD" className="text-white hover:bg-gray-700">
+                        <span className="flex items-center gap-2">
+                          <span>🇺🇸</span>
+                          <span>USD ($)</span>
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <Button
                 onClick={generatePaymentLink}
@@ -1621,7 +1648,7 @@ const Admin = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-400 mt-2">
-                  Amount: {globalCurrency === 'USD' ? '$' : '₹'}{paymentLinkAmount} | Link expires when used
+                  Amount: {paymentLinkCurrency === 'USD' ? '$' : '₹'}{paymentLinkAmount} | Currency: {paymentLinkCurrency} | Link expires when used
                 </p>
               </div>
             )}
