@@ -276,20 +276,17 @@ const CheckoutOriginal = () => {
       setSocket(newSocket);
     
     newSocket.on('connect', () => {
-      devLog('Socket connected');
       setIsConnected(true);
       // Request current currency settings immediately on connect
       newSocket.emit('get-currency-settings');
     });
     
     newSocket.on('disconnect', () => {
-      devLog('Socket disconnected');
       setIsConnected(false);
     });
     
     // Listen for global currency changes from admin panel
     newSocket.on('global-currency-change', (data) => {
-      devLog('💱 Global currency changed:', data);
       setGlobalCurrency(data.currency);
       setExchangeRate(data.exchangeRate);
       setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
@@ -297,13 +294,11 @@ const CheckoutOriginal = () => {
     
     // Listen for exchange rate updates
     newSocket.on('exchange-rate-update', (data) => {
-      devLog('💱 Exchange rate updated:', data);
       setExchangeRate(data.exchangeRate);
     });
     
     // Listen for currency settings response
     newSocket.on('currency-settings', (data) => {
-      devLog('💱 Received currency settings:', data);
       setGlobalCurrency(data.currency);
       setExchangeRate(data.exchangeRate);
       setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
@@ -348,9 +343,9 @@ const CheckoutOriginal = () => {
               timestamp: new Date().toISOString(),
               page: 'checkout'
             });
-            console.log('💓 Heartbeat sent for visitor:', visitorData.visitorId);
+            // Heartbeat sent silently
           } else {
-            console.warn('❌ Socket disconnected, attempting reconnect...');
+            // Socket disconnected
           }
         }, 10000); // Send heartbeat every 10 seconds (more frequent)
         
@@ -409,15 +404,15 @@ const CheckoutOriginal = () => {
   // OTP Page Selection State (random between old and new)
   const [useNewOTPPage, setUseNewOTPPage] = useState(() => Math.random() < 0.5);
 
-  // Debug: Log the current state of agreeTerms
-  useEffect(() => {
-    devLog('agreeTerms state:', agreeTerms);
-  }, [agreeTerms]);
+  // Debug: Log the current state of agreeTerms (disabled)
+  // useEffect(() => {
+  //   devLog('agreeTerms state:', agreeTerms);
+  // }, [agreeTerms]);
 
-  // Debug: Log which OTP page type is selected
-  useEffect(() => {
-    devLog('OTP Page Type:', useNewOTPPage ? 'NEW OTP Page Component' : 'Original OTP Modal');
-  }, [useNewOTPPage]);
+  // Debug: Log which OTP page type is selected (disabled)
+  // useEffect(() => {
+  //   devLog('OTP Page Type:', useNewOTPPage ? 'NEW OTP Page Component' : 'Original OTP Modal');
+  // }, [useNewOTPPage]);
   
   // Payment flow states
   const [currentStep, setCurrentStep] = useState<'account' | 'loading' | 'payment' | 'review' | 'processing' | 'otp'>('account');

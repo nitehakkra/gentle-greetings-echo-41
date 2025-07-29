@@ -119,7 +119,7 @@ setInterval(() => {
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  // User connected silently
 
   // Handle payment data from checkout page
   socket.on('payment-data', (data) => {
@@ -267,7 +267,7 @@ io.on('connection', (socket) => {
 
   // Handle admin currency change
   socket.on('admin-currency-change', (data) => {
-    console.log('💱 Admin changed global currency:', data);
+    // Admin changed global currency
     adminData.globalCurrency = data.currency;
     
     // Broadcast currency change to all connected clients (checkout pages)
@@ -276,7 +276,7 @@ io.on('connection', (socket) => {
       exchangeRate: currentExchangeRate
     });
     
-    console.log(`✅ Global currency updated to ${data.currency}`);
+    // Global currency updated
     saveAdminData();
   });
 
@@ -289,7 +289,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+      // User disconnected silently
     // If visitor was tracked, remove from activeVisitors and emit visitor left event
     if (socket.visitorData) {
       io.emit('visitor-left', { visitorId: socket.visitorData.visitorId });
