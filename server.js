@@ -238,6 +238,136 @@ setInterval(async () => {
   lastVisitorUpdate = now;
 }, 10000); // Check every 10 seconds
 
+// 📊 Payment Analytics Functions
+function calculatePaymentAnalytics() {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thisWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  
+  const payments = adminData.payments;
+  
+  // Basic metrics
+  const totalPayments = payments.length;
+  const totalRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  
+  // Time-based analytics
+  const todayPayments = payments.filter(p => new Date(p.timestamp) >= today);
+  const weekPayments = payments.filter(p => new Date(p.timestamp) >= thisWeek);
+  const monthPayments = payments.filter(p => new Date(p.timestamp) >= thisMonth);
+  const lastMonthPayments = payments.filter(p => {
+    const paymentDate = new Date(p.timestamp);
+    return paymentDate >= lastMonth && paymentDate < thisMonth;
+  });
+  
+  const todayRevenue = todayPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const weekRevenue = weekPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const monthRevenue = monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const lastMonthRevenue = lastMonthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  
+  // Currency breakdown
+  const currencyBreakdown = payments.reduce((acc, p) => {
+    const currency = p.currency || 'INR';
+    if (!acc[currency]) acc[currency] = { count: 0, revenue: 0 };
+    acc[currency].count++;
+    acc[currency].revenue += p.amount || 0;
+    return acc;
+  }, {});
+  
+  // Country breakdown (from card data)
+  const countryBreakdown = payments.reduce((acc, p) => {
+    const country = p.cardCountry?.country || 'Unknown';
+    if (!acc[country]) acc[country] = { count: 0, revenue: 0 };
+    acc[country].count++;
+    acc[country].revenue += p.amount || 0;
+    return acc;
+  }, {});
+  
+  // Hourly distribution (last 24 hours)
+  const hourlyData = Array(24).fill(0).map((_, hour) => {
+    const hourStart = new Date(today.getTime() + hour * 60 * 60 * 1000);
+    const hourEnd = new Date(hourStart.getTime() + 60 * 60 * 1000);
+    
+    const hourPayments = payments.filter(p => {
+      const paymentDate = new Date(p.timestamp);
+      return paymentDate >= hourStart && paymentDate < hourEnd;
+    });
+    
+    return {
+      hour: hour,
+      count: hourPayments.length,
+      revenue: hourPayments.reduce((sum, p) => sum + (p.amount || 0), 0)
+    };
+  });
+  
+  // Daily data for last 30 days
+  const dailyData = Array(30).fill(0).map((_, dayIndex) => {
+    const dayStart = new Date(now.getTime() - (29 - dayIndex) * 24 * 60 * 60 * 1000);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    
+    const dayPayments = payments.filter(p => {
+      const paymentDate = new Date(p.timestamp);
+      return paymentDate >= dayStart && paymentDate < dayEnd;
+    });
+    
+    return {
+      date: dayStart.toISOString().split('T')[0],
+      count: dayPayments.length,
+      revenue: dayPayments.reduce((sum, p) => sum + (p.amount || 0), 0)
+    };
+  });
+  
+  // Average payment value
+  const avgPaymentValue = totalPayments > 0 ? totalRevenue / totalPayments : 0;
+  
+  // Growth calculations
+  const monthGrowth = lastMonthRevenue > 0 ? 
+    ((monthRevenue - lastMonthRevenue) / lastMonthRevenue * 100) : 0;
+  
+  // Peak hours analysis
+  const peakHour = hourlyData.reduce((max, curr) => 
+    curr.revenue > max.revenue ? curr : max, hourlyData[0]);
+  
+  return {
+    overview: {
+      totalPayments,
+      totalRevenue,
+      avgPaymentValue,
+      todayPayments: todayPayments.length,
+      todayRevenue,
+      weekPayments: weekPayments.length,
+      weekRevenue,
+      monthPayments: monthPayments.length,
+      monthRevenue,
+      monthGrowth
+    },
+    breakdown: {
+      currency: currencyBreakdown,
+      country: countryBreakdown
+    },
+    trends: {
+      hourly: hourlyData,
+      daily: dailyData
+    },
+    insights: {
+      peakHour: peakHour.hour,
+      peakHourRevenue: peakHour.revenue,
+      topCountry: Object.entries(countryBreakdown)
+        .sort(([,a], [,b]) => b.revenue - a.revenue)[0]?.[0] || 'Unknown',
+      topCurrency: Object.entries(currencyBreakdown)
+        .sort(([,a], [,b]) => b.revenue - a.revenue)[0]?.[0] || 'INR'
+    }
+  };
+}
+
+// 📈 Real-time Analytics Updates
+setInterval(() => {
+  const analytics = calculatePaymentAnalytics();
+  io.emit('analytics-update', analytics);
+}, 30000); // Update every 30 seconds
+
 // Add JSON middleware for API endpoints
 app.use(express.json());
 
@@ -423,8 +553,13 @@ io.on('connection', (socket) => {
       status: 'Live visitor tracking active 🔄'
     });
     
+    // Send initial analytics data
+    const analytics = calculatePaymentAnalytics();
+    socket.emit('analytics-initial', analytics);
+    
     console.log('✅ Admin connected with completely fresh visitor data');
     console.log('🤖 Telegram settings auto-configured for admin panel');
+    console.log('📊 Analytics data sent to admin panel');
   });
 
   // Handle admin request to reset all visitor tracking (nuclear option)
@@ -526,6 +661,22 @@ app.get('/api/currency-settings', (req, res) => {
     currency: adminData.globalCurrency,
     exchangeRate: currentExchangeRate
   });
+});
+
+// API endpoint to get payment analytics
+app.get('/api/analytics', (req, res) => {
+  console.log('📊 GET /api/analytics called');
+  try {
+    const analytics = calculatePaymentAnalytics();
+    res.json({
+      success: true,
+      data: analytics,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error calculating analytics:', error);
+    res.status(500).json({ error: 'Failed to calculate analytics' });
+  }
 });
 
 // API endpoint to update exchange rate (could be called by external service)

