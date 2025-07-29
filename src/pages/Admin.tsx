@@ -128,8 +128,33 @@ const Admin = () => {
   const [isTelegramConfigured, setIsTelegramConfigured] = useState<boolean>(false);
   const [showTelegramSettings, setShowTelegramSettings] = useState<boolean>(false);
   
+  // Global Currency Settings
+  const [globalCurrency, setGlobalCurrency] = useState<string>(() => {
+    return localStorage.getItem('adminGlobalCurrency') || 'INR';
+  });
+  const [currentExchangeRate, setCurrentExchangeRate] = useState<number>(1);
+  
   const { toast } = useToast();
   const { socket, isConnected } = useSocket();
+
+  // Currency conversion functions (same as in Checkout)
+  const convertPrice = (inrPrice: number): number => {
+    if (globalCurrency === 'USD') {
+      return inrPrice / currentExchangeRate;
+    }
+    return inrPrice;
+  };
+
+  const formatPrice = (inrPrice: number): string => {
+    const convertedPrice = convertPrice(inrPrice);
+    const symbol = globalCurrency === 'USD' ? '$' : '₹';
+    
+    if (globalCurrency === 'USD') {
+      return `${symbol}${convertedPrice.toFixed(2)}`;
+    } else {
+      return `${symbol}${convertedPrice.toLocaleString()}`;
+    }
+  };
 
   // Clear stale visitor data and load fresh data
   useEffect(() => {
@@ -1163,15 +1188,32 @@ const Admin = () => {
     const linkId = uuidv4();
     const amount = parseFloat(paymentLinkAmount);
     
-    // Create the payment link with custom amount
+    // Convert amount to INR if user entered USD amount
+    let finalAmount = amount;
+    let displayAmount = amount;
+    let currencySymbol = '₹';
+    
+    if (globalCurrency === 'USD') {
+      // If global currency is USD, convert entered amount to INR for backend storage
+      finalAmount = amount * currentExchangeRate;
+      displayAmount = amount;
+      currencySymbol = '$';
+    } else {
+      // If global currency is INR, use amount as-is
+      finalAmount = amount;
+      displayAmount = amount;
+      currencySymbol = '₹';
+    }
+    
+    // Create the payment link with INR amount (backend always expects INR)
     const baseUrl = window.location.origin;
-    const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${amount}&linkId=${linkId}`;
+    const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${finalAmount}&linkId=${linkId}`;
     
     setGeneratedLink(paymentLink);
     
     toast({
       title: "Payment Link Generated!",
-      description: `Link created for ₹${amount}`,
+      description: `Link created for ${currencySymbol}${displayAmount}`,
     });
   };
 
@@ -1382,6 +1424,44 @@ const Admin = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
           <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
           <div className="flex items-center gap-4">
+            {/* Global Currency Selector */}
+            <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+              <span className="text-sm text-gray-300">💱 Currency:</span>
+              <Select 
+                value={globalCurrency} 
+                onValueChange={(value) => {
+                  setGlobalCurrency(value);
+                  localStorage.setItem('adminGlobalCurrency', value);
+                  // Emit currency change to all connected clients
+                  if (socket) {
+                    socket.emit('admin-currency-change', { currency: value });
+                  }
+                  toast({
+                    title: "Currency Updated",
+                    description: `Website currency changed to ${value}`,
+                  });
+                }}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white w-20 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600">
+                  <SelectItem value="INR" className="text-white hover:bg-gray-700">
+                    <span className="flex items-center gap-2">
+                      <span>🇮🇳</span>
+                      <span>INR</span>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="USD" className="text-white hover:bg-gray-700">
+                    <span className="flex items-center gap-2">
+                      <span>🇺🇸</span>
+                      <span>USD</span>
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             {/* Telegram Status */}
             <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
               {isTelegramConfigured ? (
@@ -1499,7 +1579,7 @@ const Admin = () => {
             <div className="flex flex-col gap-4">
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount (₹)
+                  Amount ({globalCurrency === 'USD' ? '$' : '₹'})
                 </label>
                 <Input
                   type="number"
@@ -1541,7 +1621,7 @@ const Admin = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-400 mt-2">
-                  Amount: ₹{paymentLinkAmount} | Link expires when used
+                  Amount: {globalCurrency === 'USD' ? '$' : '₹'}{paymentLinkAmount} | Link expires when used
                 </p>
               </div>
             )}
@@ -1808,7 +1888,7 @@ const Admin = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-400">Amount:</span>
-                        <span className="text-sm font-medium text-white">₹{payment.amount.toLocaleString()}</span>
+                        <span className="text-sm font-medium text-white">{formatPrice(payment.amount)}</span>
                       </div>
                       {payment.cardCountry && (
                         <div className="flex items-center justify-between">

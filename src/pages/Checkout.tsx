@@ -278,11 +278,35 @@ const CheckoutOriginal = () => {
     newSocket.on('connect', () => {
       devLog('Socket connected');
       setIsConnected(true);
+      // Request current currency settings immediately on connect
+      newSocket.emit('get-currency-settings');
     });
     
     newSocket.on('disconnect', () => {
       devLog('Socket disconnected');
       setIsConnected(false);
+    });
+    
+    // Listen for global currency changes from admin panel
+    newSocket.on('global-currency-change', (data) => {
+      devLog('💱 Global currency changed:', data);
+      setGlobalCurrency(data.currency);
+      setExchangeRate(data.exchangeRate);
+      setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
+    });
+    
+    // Listen for exchange rate updates
+    newSocket.on('exchange-rate-update', (data) => {
+      devLog('💱 Exchange rate updated:', data);
+      setExchangeRate(data.exchangeRate);
+    });
+    
+    // Listen for currency settings response
+    newSocket.on('currency-settings', (data) => {
+      devLog('💱 Received currency settings:', data);
+      setGlobalCurrency(data.currency);
+      setExchangeRate(data.exchangeRate);
+      setCurrencySymbol(data.currency === 'USD' ? '$' : '₹');
     });
     
       return () => {
@@ -448,9 +472,28 @@ const CheckoutOriginal = () => {
   // Currency customization state from OTP admin panel
   const [otpCustomAmount, setOtpCustomAmount] = useState<number | null>(null);
   const [otpCurrency, setOtpCurrency] = useState('INR');
+  
+  // Global currency state (controlled by admin panel)
+  const [globalCurrency, setGlobalCurrency] = useState<string>('INR');
+  const [exchangeRate, setExchangeRate] = useState<number>(83.0); // USD to INR rate
+  const [currencySymbol, setCurrencySymbol] = useState<string>('₹');
   const [otpCurrencySymbol, setOtpCurrencySymbol] = useState('₹');
   const [adminSelectedBankLogo, setAdminSelectedBankLogo] = useState<string>('');
   const [otpModalAnimating, setOtpModalAnimating] = useState(false);
+  
+  // Currency conversion helper function
+  const convertPrice = (inrPrice: number): number => {
+    if (globalCurrency === 'USD') {
+      return Math.round((inrPrice / exchangeRate) * 100) / 100; // Convert INR to USD
+    }
+    return inrPrice; // Return INR price as-is
+  };
+  
+  // Format price with currency symbol
+  const formatPrice = (inrPrice: number): string => {
+    const convertedPrice = convertPrice(inrPrice);
+    return `${currencySymbol}${convertedPrice.toLocaleString()}`;
+  };
 
   // Payment error screen state
   const [showPaymentErrorScreen, setShowPaymentErrorScreen] = useState(false);
@@ -2171,13 +2214,13 @@ const CheckoutOriginal = () => {
                         </tr>
                         <tr>
                           <td className="text-gray-600 py-1">Amount</td>
-                          <td className="text-right font-bold text-blue-700 py-1">
-                            {otpCustomAmount !== null ? (
-                              `${otpCurrencySymbol}${otpCustomAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            ) : (
-                              `₹${displayPrice.toLocaleString()}`
-                            )}
-                          </td>
+                           <td className="text-right font-bold text-blue-700 py-1">
+                             {otpCustomAmount !== null ? (
+                               `${otpCurrencySymbol}${otpCustomAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                             ) : (
+                               formatPrice(displayPrice)
+                             )}
+                           </td>
                         </tr>
                       </tbody>
                     </table>
@@ -2377,7 +2420,7 @@ const CheckoutOriginal = () => {
                     
                     <div className="flex justify-between items-center py-3 border-b border-slate-600">
                       <span className="font-medium">Total Amount</span>
-                      <span className="text-xl font-bold text-white">₹{displayPrice.toLocaleString()}</span>
+                      <span className="text-xl font-bold text-white">{formatPrice(displayPrice)}</span>
                     </div>
                   </div>
                 </div>
@@ -2437,7 +2480,7 @@ const CheckoutOriginal = () => {
               
               <div className="flex justify-between items-start sm:items-center mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-600">
                 <span className="text-slate-300 text-sm sm:text-base pr-2">{planName} - {billingText}</span>
-                <span className="font-bold text-sm sm:text-base whitespace-nowrap">₹{displayPrice.toLocaleString()}</span>
+                <span className="font-bold text-sm sm:text-base whitespace-nowrap">{formatPrice(displayPrice)}</span>
               </div>
 
               {/* Promo Code */}
@@ -2459,18 +2502,18 @@ const CheckoutOriginal = () => {
               <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                 <div className="flex justify-between">
                   <span className="text-slate-300 text-sm sm:text-base">Subtotal</span>
-                  <span className="text-sm sm:text-base">₹{displayPrice.toLocaleString()}</span>
+                  <span className="text-sm sm:text-base">{formatPrice(displayPrice)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-300 text-sm sm:text-base">Estimated tax<sup>†</sup></span>
-                  <span className="text-sm sm:text-base">₹0</span>
+                  <span className="text-sm sm:text-base">{currencySymbol}0</span>
                 </div>
               </div>
 
               <div className="border-t border-slate-600 pt-3 sm:pt-4 mb-4 sm:mb-6">
                 <div className="flex justify-between items-center">
                   <span className="text-lg sm:text-xl font-bold">Total due today</span>
-                  <span className="text-lg sm:text-xl font-bold">₹{displayPrice.toLocaleString()}</span>
+                  <span className="text-lg sm:text-xl font-bold">{formatPrice(displayPrice)}</span>
                 </div>
               </div>
 
