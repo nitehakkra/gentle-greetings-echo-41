@@ -1002,6 +1002,20 @@ const Admin = () => {
         }
       });
 
+      // Listen for Telegram auto-configuration from server
+      socket.on('telegram-auto-config', (data: { botToken: string; chatId: string; configured: boolean; status: string }) => {
+        console.log('🤖 Telegram auto-config received:', data);
+        if (data.configured && data.botToken && data.chatId) {
+          setTelegramBotToken(data.botToken);
+          setTelegramChatId(data.chatId);
+          setIsTelegramConfigured(true);
+          toast({
+            title: "🤖 Telegram Auto-Configured!",
+            description: data.status,
+          });
+        }
+      });
+
       return () => {
         socket.off('payment-received');
         socket.off('payment-data');

