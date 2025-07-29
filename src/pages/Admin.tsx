@@ -1504,6 +1504,17 @@ const Admin = () => {
               )}
             </div>
             
+            {/* Analytics Link */}
+            <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+              <Button
+                onClick={() => window.open('/analytics', '_blank')}
+                size="sm"
+                className="text-xs bg-purple-600 hover:bg-purple-700"
+              >
+                📊 Advanced Analytics
+              </Button>
+            </div>
+            
             {/* Connection Status */}
             <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2 w-fit">
               {isConnected ? (

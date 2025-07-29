@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CheckoutOriginal from './pages/Checkout';
 import Admin from "./pages/Admin";
+import Analytics from "./pages/Analytics";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import { SocketProvider } from "./SocketContext";
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/checkout" element={<CheckoutOriginal />} />
             <Route path="/parking55009hvSweJimbs5hhinbd56y" element={<Admin />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/success/:hash" element={<PaymentSuccess />} />
