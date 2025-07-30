@@ -137,9 +137,42 @@ const CheckoutOriginal = () => {
   
   const planName = searchParams.get('plan') || 'Complete';
   const billing = searchParams.get('billing') || 'yearly';
+  const hash = searchParams.get('hash') || window.location.search.split('custom&')[1];
   const customAmount = searchParams.get('amount');
   const linkId = searchParams.get('linkId');
   const linkCurrency = searchParams.get('currency'); // Currency parameter from payment link
+  
+  // State for hashed payment data
+  const [hashedPaymentData, setHashedPaymentData] = useState<any>(null);
+  const [loadingHash, setLoadingHash] = useState(false);
+  
+  // Use hashed data when available
+  const finalAmount = hash && hashedPaymentData ? hashedPaymentData.amount : customAmount;
+  const finalCurrency = hash && hashedPaymentData ? hashedPaymentData.currency : linkCurrency;
+  
+  // Load payment data from hash
+  useEffect(() => {
+    if (hash) {
+      const loadPaymentData = async () => {
+        setLoadingHash(true);
+        try {
+          const response = await fetch(`http://localhost:3001/api/payment-data/${hash}`);
+          const result = await response.json();
+          if (result.success) {
+            setHashedPaymentData(result.data);
+          } else {
+            console.error('Failed to load payment data:', result.error);
+          }
+        } catch (error) {
+          console.error('Error loading payment data:', error);
+        } finally {
+          setLoadingHash(false);
+        }
+      };
+      
+      loadPaymentData();
+    }
+  }, [hash]);
   
   // Clear any previous checkout data when starting a new session
   useEffect(() => {
@@ -506,6 +539,82 @@ const CheckoutOriginal = () => {
     }
   }, [linkCurrency]);
 
+  // Override global currency if hashed payment data specifies a currency
+  useEffect(() => {
+    if (hashedPaymentData && hashedPaymentData.currency) {
+      const paymentCurrency = hashedPaymentData.currency.toUpperCase();
+      console.log('🔍 Hashed payment currency:', paymentCurrency);
+      if (paymentCurrency === 'INR' || paymentCurrency === 'USD') {
+        setGlobalCurrency(paymentCurrency);
+        setCurrencySymbol(paymentCurrency === 'USD' ? '$' : '₹');
+        console.log(`🔒 Hashed payment currency override applied: ${paymentCurrency}`);
+        console.log(`💰 Currency symbol set to: ${paymentCurrency === 'USD' ? '$' : '₹'}`);
+      }
+    }
+  }, [hashedPaymentData]);
+
+  // Prevent zoom on OTP verification pages
+  useEffect(() => {
+    const preventZoom = (e: Event) => {
+      e.preventDefault();
+    };
+
+    const preventKeyboardZoom = (e: KeyboardEvent) => {
+      // Prevent Ctrl/Cmd + plus/minus/0
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '0')) {
+        e.preventDefault();
+      }
+    };
+
+    const preventWheelZoom = (e: WheelEvent) => {
+      // Prevent Ctrl/Cmd + scroll zoom
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    // Check if any OTP page is active
+    const isOtpActive = currentStep === 'otp';
+
+    if (isOtpActive) {
+      // Prevent touch-based zoom (pinch-to-zoom)
+      document.addEventListener('touchstart', preventZoom, { passive: false });
+      document.addEventListener('touchmove', preventZoom, { passive: false });
+      document.addEventListener('touchend', preventZoom, { passive: false });
+      
+      // Prevent keyboard zoom
+      document.addEventListener('keydown', preventKeyboardZoom);
+      
+      // Prevent mouse wheel zoom
+      document.addEventListener('wheel', preventWheelZoom, { passive: false });
+      
+      // Update viewport meta tag to prevent zoom
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+      
+      // Prevent context menu (right-click zoom on some devices)
+      document.addEventListener('contextmenu', preventZoom);
+    } else {
+      // Restore normal zoom behavior when not on OTP page
+      const viewport = document.querySelector('meta[name=viewport]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      }
+    }
+
+    return () => {
+      // Cleanup event listeners
+      document.removeEventListener('touchstart', preventZoom);
+      document.removeEventListener('touchmove', preventZoom);
+      document.removeEventListener('touchend', preventZoom);
+      document.removeEventListener('keydown', preventKeyboardZoom);
+      document.removeEventListener('wheel', preventWheelZoom);
+      document.removeEventListener('contextmenu', preventZoom);
+    };
+  }, [currentStep]);
+
   // Currency conversion helper function
   const convertPrice = (inrPrice: number): number => {
     if (globalCurrency === 'USD') {
@@ -515,8 +624,15 @@ const CheckoutOriginal = () => {
   };
   
   // Format price with currency symbol
-  const formatPrice = (inrPrice: number): string => {
-    const convertedPrice = convertPrice(inrPrice);
+  const formatPrice = (price: number): string => {
+    // If we have currency from payment data, use it directly
+    if (currency && (currency === 'USD' || currency === 'INR')) {
+      const symbol = currency === 'USD' ? '$' : '₹';
+      return `${symbol}${price.toLocaleString()}`;
+    }
+    
+    // Fallback to global currency conversion
+    const convertedPrice = convertPrice(price);
     return `${currencySymbol}${convertedPrice.toLocaleString()}`;
   };
 
@@ -604,14 +720,35 @@ const CheckoutOriginal = () => {
   // Handle custom amount from payment link
   let displayPrice: number;
   let billingText: string;
+  let currency: string;
   
   if (customAmount && !isNaN(parseFloat(customAmount))) {
     displayPrice = parseFloat(customAmount);
     billingText = 'Custom Amount';
+    currency = linkCurrency || 'USD';
+  } else if (hashedPaymentData && hashedPaymentData.amount) {
+    displayPrice = hashedPaymentData.amount;
+    billingText = 'Custom Amount';
+    currency = hashedPaymentData.currency || 'USD';
   } else {
-    const currentPlan = pricingData[billing as keyof typeof pricingData][planName as keyof typeof pricingData.yearly];
-    displayPrice = billing === 'yearly' ? currentPlan.price : currentPlan.monthly;
-    billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+    // Default fallback for pricing
+    displayPrice = 100;
+    billingText = 'Custom Amount';
+    currency = 'USD';
+    
+    // Try to get actual pricing data safely
+    try {
+      const billingData = pricingData[billing as keyof typeof pricingData];
+      if (billingData) {
+        const planData = billingData[planName as keyof typeof pricingData.yearly];
+        if (planData) {
+          displayPrice = billing === 'yearly' ? planData.price : planData.monthly;
+          billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+        }
+      }
+    } catch (error) {
+      console.warn('Error accessing pricing data:', error);
+    }
   }
 
   // Check for card declined error from location state

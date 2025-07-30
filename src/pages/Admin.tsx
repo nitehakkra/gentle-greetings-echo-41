@@ -1191,7 +1191,7 @@ const Admin = () => {
     });
   };
 
-  const generatePaymentLink = () => {
+  const generatePaymentLink = async () => {
     if (!paymentLinkAmount || parseFloat(paymentLinkAmount) <= 0) {
       toast({
         title: "Error",
@@ -1222,11 +1222,38 @@ const Admin = () => {
       currencySymbol = '₹';
     }
     
-    // Create the payment link with INR amount (backend always expects INR) and currency parameter
-    const baseUrl = window.location.origin;
-    const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${finalAmount}&linkId=${linkId}&currency=${paymentLinkCurrency}`;
-    
-    setGeneratedLink(paymentLink);
+    // Create hashed payment link using backend API
+    try {
+      const response = await fetch('http://localhost:3001/api/create-payment-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: finalAmount,
+          currency: paymentLinkCurrency,
+          plan: 'Custom',
+          billing: 'custom'
+        }),
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        const baseUrl = window.location.origin;
+        const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&${result.hash}`;
+        setGeneratedLink(paymentLink);
+      } else {
+        throw new Error('Failed to create payment link');
+      }
+    } catch (error) {
+      console.error('Error creating payment link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate payment link",
+        variant: "destructive",
+      });
+      return;
+    }
     
     toast({
       title: "Payment Link Generated!",

