@@ -145,6 +145,23 @@
   "globalCurrency": "INR",
   "visitors": [
     {
+      "visitorId": "0utpit2-BviAtVx2AAAB",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-07-31T04:45:14.463Z",
+      "lastActivity": "2025-07-31T04:45:14.463Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "0utpit2-BviAtVx2AAAB",
+      "status": "active"
+    },
+    {
       "visitorId": "7VYTkPUT0bw_s7ThAAAJ",
       "ipAddress": "unknown",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
@@ -1460,6 +1477,15 @@
       "plan": "Custom",
       "billing": "custom",
       "createdAt": "2025-07-30T17:07:02.373Z",
+      "status": "pending"
+    },
+    "5554B5AC2735490B": {
+      "hash": "5554B5AC2735490B",
+      "amount": 342,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-07-31T04:45:44.708Z",
       "status": "pending"
     }
   }
