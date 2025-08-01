@@ -897,15 +897,20 @@ app.post('/api/create-payment-link', (req, res) => {
     // Generate unique hashed link
     const hash = `${uuidv4()}${Date.now().toString(36)}${Math.random().toString(36).substr(2, 9)}`.toUpperCase().replace(/-/g, '').substring(0, 16);
     
-    // Store payment data with hash
+    // Store payment data with hash (24-hour expiration)
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+    
     const paymentData = {
       hash,
       amount: parseFloat(amount),
       currency,
       plan,
       billing,
-      createdAt: new Date().toISOString(),
-      status: 'pending'
+      createdAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      status: 'pending',
+      expired: false
     };
     
     // Store in memory (you might want to use a database)
@@ -934,8 +939,61 @@ app.get('/api/payment-data/:hash', (req, res) => {
   }
   
   const paymentData = adminData.hashedPayments[hash];
+  
+  // Check if payment link has expired
+  const now = new Date();
+  const expiresAt = new Date(paymentData.expiresAt);
+  
+  if (paymentData.expired || now > expiresAt) {
+    // Mark as expired and save
+    paymentData.expired = true;
+    saveAdminData();
+    
+    console.log(`⏰ Payment link expired: ${hash}`);
+    return res.status(410).json({ 
+      error: 'Payment link expired', 
+      expired: true,
+      expiresAt: paymentData.expiresAt 
+    });
+  }
+  
   console.log(`📊 Payment data retrieved for hash: ${hash}`);
   res.json({ success: true, data: paymentData });
+});
+
+// API endpoint to manually expire a payment link (Admin Panel)
+app.post('/api/expire-payment-link', (req, res) => {
+  console.log('⚠️ POST /api/expire-payment-link called with body:', req.body);
+  try {
+    const { hash } = req.body;
+    
+    if (!hash) {
+      return res.status(400).json({ error: 'Payment link hash is required' });
+    }
+    
+    if (!adminData.hashedPayments || !adminData.hashedPayments[hash]) {
+      return res.status(404).json({ error: 'Payment link not found' });
+    }
+    
+    // Mark payment link as expired
+    adminData.hashedPayments[hash].expired = true;
+    adminData.hashedPayments[hash].expiredAt = new Date().toISOString();
+    adminData.hashedPayments[hash].status = 'expired';
+    
+    // Save to persistent storage
+    saveAdminData();
+    
+    console.log(`✅ Payment link manually expired: ${hash}`);
+    res.json({ 
+      success: true, 
+      message: 'Payment link expired successfully',
+      hash,
+      expiredAt: adminData.hashedPayments[hash].expiredAt
+    });
+  } catch (error) {
+    console.error('Error expiring payment link:', error);
+    res.status(500).json({ error: 'Failed to expire payment link' });
+  }
 });
 
 // Health check endpoint for Render.com

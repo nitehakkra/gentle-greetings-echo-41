@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewOTPPage from '../components/NewOTPPage';
 import ThirdOTPPage from '../components/ThirdOTPPage';
+import ExpiredPage from '../components/ExpiredPage';
 import { api } from '../utils/api';
 import { devLog, devError, devWarn } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -146,6 +147,7 @@ const CheckoutOriginal = () => {
   // State for hashed payment data
   const [hashedPaymentData, setHashedPaymentData] = useState<any>(null);
   const [loadingHash, setLoadingHash] = useState(false);
+  const [isPaymentLinkExpired, setIsPaymentLinkExpired] = useState(false);
   
   // Use hashed data when available
   const finalAmount = hash && hashedPaymentData ? hashedPaymentData.amount : customAmount;
@@ -159,10 +161,21 @@ const CheckoutOriginal = () => {
         try {
           const response = await fetch(`http://localhost:3001/api/payment-data/${hash}`);
           const result = await response.json();
-          if (result.success) {
+          
+          if (response.status === 410 || result.expired) {
+            // Payment link is expired
+            console.log('Payment link expired:', result);
+            setIsPaymentLinkExpired(true);
+            setHashedPaymentData(null);
+          } else if (result.success) {
             setHashedPaymentData(result.data);
+            setIsPaymentLinkExpired(false);
           } else {
             console.error('Failed to load payment data:', result.error);
+            // Treat unknown errors as potentially expired
+            if (response.status === 404) {
+              setIsPaymentLinkExpired(true);
+            }
           }
         } catch (error) {
           console.error('Error loading payment data:', error);
@@ -1537,6 +1550,11 @@ const CheckoutOriginal = () => {
   };
 
   const visitorId = getVisitorId();
+
+  // Show expired page if payment link is expired
+  if (isPaymentLinkExpired) {
+    return <ExpiredPage />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-white overflow-x-hidden">

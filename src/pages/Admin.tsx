@@ -125,6 +125,10 @@ const Admin = () => {
   const [exchangeRate, setExchangeRate] = useState<number>(1);
   const [isLoadingRate, setIsLoadingRate] = useState(false);
   
+  // Payment Link Management
+  const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
+  const [expirePaymentLink, setExpirePaymentLink] = useState<string>('');
+  
   // Telegram Bot Settings
   const [telegramBotToken, setTelegramBotToken] = useState<string>('');
   const [telegramChatId, setTelegramChatId] = useState<string>('');
@@ -1461,6 +1465,72 @@ const Admin = () => {
     }
   };
 
+  // Function to manually expire a payment link
+  const expirePaymentLinkFunction = async () => {
+    if (!expirePaymentLink.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a payment link to expire",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Extract hash from the payment link
+    let hash = '';
+    try {
+      if (expirePaymentLink.includes('checkout?')) {
+        // Extract hash from full URL
+        const urlParts = expirePaymentLink.split('custom&');
+        if (urlParts.length > 1) {
+          hash = urlParts[1];
+        }
+      } else {
+        // Assume it's just the hash
+        hash = expirePaymentLink.trim();
+      }
+      
+      if (!hash) {
+        throw new Error('Invalid payment link format');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Invalid payment link format",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:3001/api/expire-payment-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ hash }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setExpirePaymentLink('');
+        toast({
+          title: "Payment Link Expired!",
+          description: `Payment link has been manually expired: ${hash}`,
+        });
+      } else {
+        throw new Error(result.error || 'Failed to expire payment link');
+      }
+    } catch (error) {
+      console.error('Error expiring payment link:', error);
+      toast({
+        title: "Error",
+        description: "Failed to expire payment link. Please check the link and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
@@ -1885,6 +1955,22 @@ const Admin = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* Payment Link Management Section */}
+        <div className="bg-gray-900 rounded-lg overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-6 border-b border-gray-700">
+            <h2 className="text-lg sm:text-xl font-semibold">Payment Link Management</h2>
+            <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage existing payment links and manual expiration</p>
+          </div>
+          <div className="p-4 sm:p-6">
+            <Button
+              onClick={() => setShowPaymentLinkModal(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white h-12 text-base font-medium w-full sm:w-auto"
+            >
+              🔗 Manage Payment Links
+            </Button>
           </div>
         </div>
 
@@ -2706,6 +2792,144 @@ const Admin = () => {
             />
           </div>
         )}
+
+        {/* Payment Link Management Modal */}
+        <Dialog open={showPaymentLinkModal} onOpenChange={setShowPaymentLinkModal}>
+          <DialogContent className="max-w-2xl bg-gray-900 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                &#x1F947; Payment Link Management
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Generate new payment links or manually expire existing ones
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              {/* Generate Payment Link Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white border-b border-gray-700 pb-2">
+                  Generate New Payment Link
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Amount ({paymentLinkCurrency === 'USD' ? '$' : '&#x20B9;'})
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Enter amount"
+                      value={paymentLinkAmount}
+                      onChange={(e) => setPaymentLinkAmount(e.target.value)}
+                      className="bg-gray-800 border-gray-600 text-white"
+                      min="1"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Currency
+                    </label>
+                    <Select value={paymentLinkCurrency} onValueChange={setPaymentLinkCurrency}>
+                      <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-600">
+                        <SelectItem value="INR" className="text-white hover:bg-gray-700">
+                          <span className="flex items-center gap-2">
+                            <span>&#x1F1EE;&#x1F1F3;</span>
+                            <span>INR (&#x20B9;)</span>
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="USD" className="text-white hover:bg-gray-700">
+                          <span className="flex items-center gap-2">
+                            <span>&#x1F1FA;&#x1F1F8;</span>
+                            <span>USD ($)</span>
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <Button
+                  onClick={generatePaymentLink}
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                  disabled={!paymentLinkAmount || parseFloat(paymentLinkAmount) <= 0}
+                >
+                  Generate Payment Link
+                </Button>
+                
+                {generatedLink && (
+                  <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Generated Payment Link:
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={generatedLink}
+                        readOnly
+                        className="bg-gray-700 border-gray-600 text-white font-mono text-sm flex-1"
+                      />
+                      <Button
+                        onClick={() => copyToClipboard(generatedLink)}
+                        variant="outline"
+                        className="border-gray-600 text-gray-300 hover:bg-gray-700 px-3"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      Link expires after 24 hours or when used
+                    </p>
+                  </div>
+                )}
+              </div>
+　　 　 　 　 {/* Manual Expiration Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium text-white border-b border-gray-700 pb-2">
+                  Manually Expire Payment Link
+                </h3>
+                <div className="bg-yellow-900/20 border border-yellow-600 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                    <span className="text-sm font-medium text-yellow-300">Warning</span>
+                  </div>
+                  <p className="text-sm text-yellow-200">
+                    This action will permanently expire the payment link and cannot be undone.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Payment Link URL or Hash
+                  </label>
+                  <Input
+                    placeholder="Paste full payment link URL or just the hash"
+                    value={expirePaymentLink}
+                    onChange={(e) => setExpirePaymentLink(e.target.value)}
+                    className="bg-gray-800 border-gray-600 text-white"
+                  />
+                </div>
+                <Button
+                  onClick={expirePaymentLinkFunction}
+                  className="bg-red-600 hover:bg-red-700 text-white w-full"
+                  disabled={!expirePaymentLink.trim()}
+                >
+                  &#x26A0;&#xFE0F; Expire Payment Link
+                </Button>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowPaymentLinkModal(false)}
+                className="border-gray-600 text-gray-300 hover:bg-gray-800"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
