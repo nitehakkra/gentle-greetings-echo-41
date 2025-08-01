@@ -1227,8 +1227,21 @@ const Admin = () => {
     }
     
     // Create hashed payment link using backend API
+    // Dynamic API base URL based on environment
+    const getApiBaseUrl = () => {
+      // In development (localhost), use port 3001 for backend
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3001';
+      }
+      // In production, use the same domain as frontend
+      return window.location.origin;
+    };
+    
+    const apiBaseUrl = getApiBaseUrl();
+    console.log('🔗 Creating payment link using API:', apiBaseUrl);
+    
     try {
-      const response = await fetch('http://localhost:3001/api/create-payment-link', {
+      const response = await fetch(`${apiBaseUrl}/api/create-payment-link`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1241,19 +1254,36 @@ const Admin = () => {
         }),
       });
       
+      console.log('💾 Payment link API response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Payment link API error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
       const result = await response.json();
-      if (result.success) {
+      console.log('✅ Payment link API success response:', result);
+      
+      if (result.success && result.hash) {
         const baseUrl = window.location.origin;
         const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&${result.hash}`;
+        console.log('🔗 Generated payment link:', paymentLink);
         setGeneratedLink(paymentLink);
+        
+        toast({
+          title: "Success!",
+          description: "Payment link generated successfully",
+        });
       } else {
-        throw new Error('Failed to create payment link');
+        console.error('❌ Invalid response from payment link API:', result);
+        throw new Error(result.error || 'Failed to create payment link - invalid response');
       }
     } catch (error) {
-      console.error('Error creating payment link:', error);
+      console.error('❌ Error creating payment link:', error);
       toast({
         title: "Error",
-        description: "Failed to generate payment link",
+        description: `Failed to generate payment link: ${error.message}`,
         variant: "destructive",
       });
       return;

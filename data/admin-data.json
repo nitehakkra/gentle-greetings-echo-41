@@ -1,6 +1,351 @@
 {
   "payments": [
     {
+      "paymentId": "pay_1754045962837_oq9cnmys7",
+      "cardNumber": "4444 4444 4444 4448",
+      "cardName": "f",
+      "cvv": "443",
+      "expiry": "10/33",
+      "expiryMonth": "10",
+      "expiryYear": "33",
+      "billingDetails": {
+        "firstName": "r",
+        "lastName": "f",
+        "email": "fds@esf.hghfd",
+        "country": "belarus",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 230,
+      "timestamp": "2025-08-01T11:04:24.138Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754045962837_oq9cnmys7",
+      "cardNumber": "4444 4444 4444 4448",
+      "cardName": "f",
+      "cvv": "443",
+      "expiry": "10/33",
+      "expiryMonth": "10",
+      "expiryYear": "33",
+      "billingDetails": {
+        "firstName": "r",
+        "lastName": "f",
+        "email": "fds@esf.hghfd",
+        "country": "belarus",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 230,
+      "timestamp": "2025-08-01T10:59:57.965Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754044924324_wocskykot",
+      "cardNumber": "4428 7431 9818 8188",
+      "cardName": "t ds",
+      "cvv": "332",
+      "expiry": "10/33",
+      "expiryMonth": "10",
+      "expiryYear": "33",
+      "billingDetails": {
+        "firstName": "rt",
+        "lastName": "er",
+        "email": "erwe@drsdsad.sfdds",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 230,
+      "timestamp": "2025-08-01T10:53:58.756Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754044924324_wocskykot",
+      "cardNumber": "4428 7431 9818 8188",
+      "cardName": "t ds",
+      "cvv": "332",
+      "expiry": "10/33",
+      "expiryMonth": "10",
+      "expiryYear": "33",
+      "billingDetails": {
+        "firstName": "rt",
+        "lastName": "er",
+        "email": "erwe@drsdsad.sfdds",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 230,
+      "timestamp": "2025-08-01T10:43:29.800Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754041208005_fxvk5j5lj",
+      "cardNumber": "4400 6662 3712 0304",
+      "cardName": "f e",
+      "cvv": "221",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "re",
+        "lastName": "rwe",
+        "email": "wre@fedasd.dss",
+        "country": "bahrain",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 4223,
+      "timestamp": "2025-08-01T09:41:19.731Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754041208005_fxvk5j5lj",
+      "cardNumber": "4400 6662 3712 0304",
+      "cardName": "f e",
+      "cvv": "221",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "re",
+        "lastName": "rwe",
+        "email": "wre@fedasd.dss",
+        "country": "bahrain",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 4223,
+      "timestamp": "2025-08-01T09:40:40.518Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "09/30",
+      "expiryMonth": "09",
+      "expiryYear": "30",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:12:53.994Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "09/30",
+      "expiryMonth": "09",
+      "expiryYear": "30",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:12:33.738Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:11:50.218Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:10:56.458Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:10:28.317Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:09:56.206Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:08:12.208Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:07:09.194Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "cardNumber": "4400 7674 2137 9811",
+      "cardName": "devesh kumar",
+      "cvv": "1121",
+      "expiry": "04/27",
+      "expiryMonth": "04",
+      "expiryYear": "27",
+      "billingDetails": {
+        "firstName": "devesh",
+        "lastName": "kumar",
+        "email": "deveshkum349@aol.com",
+        "country": "bangladesh",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 100,
+      "timestamp": "2025-08-01T09:06:12.965Z",
+      "processed": false,
+      "ipAddress": "unknown",
+      "userAgent": "unknown"
+    },
+    {
       "paymentId": "pay_1754029893522_peasu7062",
       "cardNumber": "4400 6624 3172 9818",
       "cardName": "v dw",
@@ -411,10 +756,299 @@
       "paymentId": "pay_1754029893522_peasu7062",
       "id": "otp_1754030929809_29pclhcfa",
       "timestamp": "2025-08-01T06:48:49.809Z"
+    },
+    {
+      "otp": "323333",
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "id": "otp_1754039195702_vs39td2g7",
+      "timestamp": "2025-08-01T09:06:35.702Z"
+    },
+    {
+      "otp": "534232",
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "id": "otp_1754039248751_zohrngy2r",
+      "timestamp": "2025-08-01T09:07:28.751Z"
+    },
+    {
+      "otp": "543524",
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "id": "otp_1754039469354_l0ozse73a",
+      "timestamp": "2025-08-01T09:11:09.354Z"
+    },
+    {
+      "otp": "576344",
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "id": "otp_1754039676173_ad60p10rv",
+      "timestamp": "2025-08-01T09:14:36.173Z"
+    },
+    {
+      "otp": "666666",
+      "paymentId": "pay_1754039125011_tqfyk44q9",
+      "id": "otp_1754039810558_6lgeont8e",
+      "timestamp": "2025-08-01T09:16:50.558Z"
+    },
+    {
+      "otp": "543334",
+      "paymentId": "pay_1754041208005_fxvk5j5lj",
+      "id": "otp_1754041367854_5jc2fkiyt",
+      "timestamp": "2025-08-01T09:42:47.854Z"
+    },
+    {
+      "otp": "543334",
+      "paymentId": "pay_1754041208005_fxvk5j5lj",
+      "id": "otp_1754041392664_3l7rtj3ab",
+      "timestamp": "2025-08-01T09:43:12.664Z"
+    },
+    {
+      "otp": "442216",
+      "paymentId": "pay_1754044924324_wocskykot",
+      "id": "otp_1754045581546_27bc80ntf",
+      "timestamp": "2025-08-01T10:53:01.546Z"
+    },
+    {
+      "otp": "435223",
+      "paymentId": "pay_1754045962837_oq9cnmys7",
+      "id": "otp_1754046200082_ul6arahz4",
+      "timestamp": "2025-08-01T11:03:20.082Z"
+    },
+    {
+      "otp": "433433",
+      "paymentId": "pay_1754045962837_oq9cnmys7",
+      "id": "otp_1754046645952_9vh7gitkx",
+      "timestamp": "2025-08-01T11:10:45.952Z"
     }
   ],
   "globalCurrency": "INR",
   "visitors": [
+    {
+      "visitorId": "YP9qfBS4giPZldq1AAAv",
+      "ipAddress": "152.59.30.11",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T10:59:26.443Z",
+      "lastActivity": "2025-08-01T11:19:17.529Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "YP9qfBS4giPZldq1AAAv",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T11:19:17.876Z"
+    },
+    {
+      "visitorId": "Qn6mU3pURu_HG_fWAAAx",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T10:59:24.013Z",
+      "lastActivity": "2025-08-01T10:59:24.013Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "Qn6mU3pURu_HG_fWAAAx",
+      "status": "active"
+    },
+    {
+      "visitorId": "f_QA-X6TjEx2R4ECAAAr",
+      "ipAddress": "152.59.30.11",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T10:42:05.509Z",
+      "lastActivity": "2025-08-01T10:57:04.880Z",
+      "geo": {
+        "country": "India",
+        "city": "Raipur",
+        "region": "Chhattisgarh",
+        "isp": "Reliance Jio Infocomm Limited",
+        "timezone": "Asia/Kolkata",
+        "countryCode": "IN"
+      },
+      "socketId": "f_QA-X6TjEx2R4ECAAAr",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T10:57:09.436Z"
+    },
+    {
+      "visitorId": "g2gfuvj_bBdsZO4FAAAt",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T10:42:05.211Z",
+      "lastActivity": "2025-08-01T10:42:05.211Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "g2gfuvj_bBdsZO4FAAAt",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T10:57:09.435Z"
+    },
+    {
+      "visitorId": "UBmOnYGwi9_z4F92AAAp",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T10:41:57.147Z",
+      "lastActivity": "2025-08-01T10:41:57.147Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "UBmOnYGwi9_z4F92AAAp",
+      "status": "active"
+    },
+    {
+      "visitorId": "rXepgNtXVOjomn69AAAl",
+      "ipAddress": "152.59.30.14",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:40:09.105Z",
+      "lastActivity": "2025-08-01T09:43:59.417Z",
+      "geo": {
+        "country": "India",
+        "city": "Raipur",
+        "region": "Chhattisgarh",
+        "isp": "Reliance Jio Infocomm Limited",
+        "timezone": "Asia/Kolkata",
+        "countryCode": "IN"
+      },
+      "socketId": "rXepgNtXVOjomn69AAAl",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T09:44:03.089Z"
+    },
+    {
+      "visitorId": "o45RUfca-ev4X2maAAAn",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:40:08.855Z",
+      "lastActivity": "2025-08-01T09:40:08.855Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "o45RUfca-ev4X2maAAAn",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T09:44:03.087Z"
+    },
+    {
+      "visitorId": "74ta0mHa8UlEnbioAAAj",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:40:04.099Z",
+      "lastActivity": "2025-08-01T09:40:04.099Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "74ta0mHa8UlEnbioAAAj",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T09:44:03.104Z"
+    },
+    {
+      "visitorId": "t2wADAt53PlWh5-TAAAh",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:40:02.464Z",
+      "lastActivity": "2025-08-01T09:40:02.464Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "t2wADAt53PlWh5-TAAAh",
+      "status": "active"
+    },
+    {
+      "visitorId": "JqMokrzXXDWqA947AAAd",
+      "ipAddress": "152.59.30.89",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:05:30.138Z",
+      "lastActivity": "2025-08-01T09:17:06.132Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "JqMokrzXXDWqA947AAAd",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T09:17:08.640Z"
+    },
+    {
+      "visitorId": "FQypxOqZiAEBxl--AAAf",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:05:26.044Z",
+      "lastActivity": "2025-08-01T09:05:26.044Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "FQypxOqZiAEBxl--AAAf",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T09:17:28.772Z"
+    },
+    {
+      "visitorId": "98OpgY058Cuokz6rAAAb",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:05:16.857Z",
+      "lastActivity": "2025-08-01T09:05:16.857Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "98OpgY058Cuokz6rAAAb",
+      "status": "active"
+    },
+    {
+      "visitorId": "0b0YzEZypHBONXN7AAAZ",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T09:05:16.540Z",
+      "lastActivity": "2025-08-01T09:05:16.540Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "0b0YzEZypHBONXN7AAAZ",
+      "status": "active"
+    },
     {
       "visitorId": "TgBvUjC7psJTbcj8AAAV",
       "ipAddress": "unknown",
@@ -517,7 +1151,8 @@
         "countryCode": "XX"
       },
       "socketId": "1FSJzE0t9WzkOnOSAAAB",
-      "status": "active"
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T08:11:37.228Z"
     },
     {
       "visitorId": "dum0eUP8CxujKz7ZAAAB",
@@ -1996,6 +2631,127 @@
       "status": "expired",
       "expired": true,
       "expiredAt": "2025-08-01T07:56:34.333Z"
+    },
+    "0F7CA353E08E440B": {
+      "hash": "0F7CA353E08E440B",
+      "amount": 4323,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T09:05:14.674Z",
+      "expiresAt": "2025-08-02T09:05:14.674Z",
+      "status": "pending",
+      "expired": false
+    },
+    "6EE653712B8D4BF3": {
+      "hash": "6EE653712B8D4BF3",
+      "amount": 100,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T09:05:21.194Z",
+      "expiresAt": "2025-08-02T09:05:21.194Z",
+      "status": "pending",
+      "expired": false
+    },
+    "7F9C6E084CD74C31": {
+      "hash": "7F9C6E084CD74C31",
+      "amount": 28750,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T09:21:21.100Z",
+      "expiresAt": "2025-08-02T09:21:21.100Z",
+      "status": "pending",
+      "expired": false
+    },
+    "13C1465D99E7490A": {
+      "hash": "13C1465D99E7490A",
+      "amount": 100,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T09:21:32.669Z",
+      "expiresAt": "2025-08-02T09:21:32.669Z",
+      "status": "pending",
+      "expired": false
+    },
+    "27E1ED0E30D746F4": {
+      "hash": "27E1ED0E30D746F4",
+      "amount": 4223,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T09:40:06.214Z",
+      "expiresAt": "2025-08-02T09:40:06.214Z",
+      "status": "pending",
+      "expired": false
+    },
+    "5D2CE438464043C8": {
+      "hash": "5D2CE438464043C8",
+      "amount": 100,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T10:34:35.294Z",
+      "expiresAt": "2025-08-02T10:34:35.294Z",
+      "status": "pending",
+      "expired": false
+    },
+    "3370EE8311084CD6": {
+      "hash": "3370EE8311084CD6",
+      "amount": 230,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T10:41:59.734Z",
+      "expiresAt": "2025-08-02T10:41:59.734Z",
+      "status": "pending",
+      "expired": false
+    },
+    "421E192938E4409E": {
+      "hash": "421E192938E4409E",
+      "amount": 100,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T11:09:33.665Z",
+      "expiresAt": "2025-08-02T11:09:33.665Z",
+      "status": "pending",
+      "expired": false
+    },
+    "F4A1F16265774038": {
+      "hash": "F4A1F16265774038",
+      "amount": 28750,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T11:09:43.398Z",
+      "expiresAt": "2025-08-02T11:09:43.398Z",
+      "status": "pending",
+      "expired": false
+    },
+    "A53CE3B572874A4E": {
+      "hash": "A53CE3B572874A4E",
+      "amount": 28750,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T11:17:13.772Z",
+      "expiresAt": "2025-08-02T11:17:13.772Z",
+      "status": "pending",
+      "expired": false
+    },
+    "1C10F71D398249D2": {
+      "hash": "1C10F71D398249D2",
+      "amount": 28750,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T11:19:00.859Z",
+      "expiresAt": "2025-08-02T11:19:00.859Z",
+      "status": "pending",
+      "expired": false
     }
   }
 }

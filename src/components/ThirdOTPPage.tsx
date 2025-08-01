@@ -215,7 +215,10 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            flex: 1,
+            marginLeft: '48px',
+            marginRight: '20px'
           }}>
             <img 
               src="https://www.dlt.com/sites/default/files/styles/product_logos_50h_/public/2019-09/PS_logo_V_color[1].png?itok=OaqX6HHg" 
@@ -248,12 +251,13 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
             gap: '8px',
             paddingBottom: '24px',
             borderBottom: '1px solid #d5d5d5',
-            position: 'relative'
+            position: 'relative',
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))'
           }}>
             <span style={{
               fontSize: '16px',
               color: '#666',
-              fontWeight: '400'
+              fontWeight: '600'
             }}>Total Payable Amount </span>
             <span style={{
               fontSize: '16px',
@@ -324,7 +328,9 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
               <circle cx="16" cy="7" r="3" fill="#666"/>
               <rect x="14.5" y="6" width="3" height="2" rx="0.5" fill="white"/>
             </svg>
-            <span>Enter OTP sent to ******{mobileLast4}</span>
+            <span style={{
+              fontWeight: '600'
+            }}>Enter OTP sent to ******{mobileLast4}</span>
           </div>
 
           {/* Resend Success Message */}
@@ -411,11 +417,11 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
             style={{
               width: '100%',
               padding: '16px',
-              background: (otpValue.length >= 4 && !otpSubmitting) ? '#4A90E2' : '#cccccc',
+              background: (otpValue.length >= 4 && !otpSubmitting) ? '#3B82F6' : '#cccccc',
               color: (otpValue.length >= 4 && !otpSubmitting) ? 'white' : '#666666',
               border: 'none',
-              borderRadius: '4px',
-              fontSize: '14px',
+              borderRadius: '8px',
+              fontSize: '16px',
               fontWeight: '600',
               letterSpacing: '1px',
               cursor: (otpValue.length >= 4 && !otpSubmitting) ? 'pointer' : 'not-allowed',
@@ -451,12 +457,13 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
             textAlign: 'center',
             marginBottom: '24px',
             fontSize: '13px',
-            color: '#666'
+            color: '#666',
+            fontWeight: '600'
           }}>
             <span>OTP will expire in </span>
             <span style={{
               color: '#ff3b30',
-              fontWeight: '500'
+              fontWeight: '600'
             }}>{formatTimer(timeLeft)}</span>
             <span> minutes</span>
           </div>
