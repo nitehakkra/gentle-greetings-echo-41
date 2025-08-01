@@ -821,6 +821,59 @@
   "globalCurrency": "INR",
   "visitors": [
     {
+      "visitorId": "Is7S0xRTfrNWdksMAAAD",
+      "ipAddress": "152.59.30.198",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T12:38:48.358Z",
+      "lastActivity": "2025-08-01T12:38:48.358Z",
+      "geo": {
+        "country": "India",
+        "city": "Raipur",
+        "region": "Chhattisgarh",
+        "isp": "Reliance Jio Infocomm Limited",
+        "timezone": "Asia/Kolkata",
+        "countryCode": "IN"
+      },
+      "socketId": "Is7S0xRTfrNWdksMAAAD",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T12:38:48.847Z"
+    },
+    {
+      "visitorId": "_snGvlclMPXbggfJAAAF",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T12:38:47.831Z",
+      "lastActivity": "2025-08-01T12:38:47.831Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "_snGvlclMPXbggfJAAAF",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T12:38:48.841Z"
+    },
+    {
+      "visitorId": "rmxQYCh6cbnKKV8XAAAB",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T12:38:04.599Z",
+      "lastActivity": "2025-08-01T12:38:04.599Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "rmxQYCh6cbnKKV8XAAAB",
+      "status": "active"
+    },
+    {
       "visitorId": "bM1-RELkIK8EAXhuAAAE",
       "ipAddress": "152.59.30.198",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
@@ -2814,6 +2867,17 @@
       "billing": "custom",
       "createdAt": "2025-08-01T12:22:20.065Z",
       "expiresAt": "2025-08-02T12:22:20.065Z",
+      "status": "pending",
+      "expired": false
+    },
+    "7388E2DDBD5042DB": {
+      "hash": "7388E2DDBD5042DB",
+      "amount": 232,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T12:38:44.826Z",
+      "expiresAt": "2025-08-08T12:38:44.826Z",
       "status": "pending",
       "expired": false
     }

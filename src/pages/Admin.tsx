@@ -1267,8 +1267,9 @@ const Admin = () => {
       
       if (result.success && result.hash) {
         const baseUrl = window.location.origin;
-        const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&${result.hash}`;
-        console.log('🔗 Generated payment link:', paymentLink);
+        // Add amount and currency as backup URL parameters for production reliability
+        const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${finalAmount}&currency=${paymentLinkCurrency}&${result.hash}`;
+        console.log('🔗 Generated payment link with backup params:', paymentLink);
         setGeneratedLink(paymentLink);
         
         toast({

@@ -174,6 +174,7 @@ const CheckoutOriginal = () => {
   const linkCurrency = searchParams.get('currency'); // Currency parameter from payment link
   
   console.log('📊 Checkout params:', { planName, billing, hash, customAmount, linkId, linkCurrency });
+  console.log('🔍 Debug payment values:', { finalAmount, finalCurrency, hashedPaymentData: !!hashedPaymentData });
   
   // State for hashed payment data
   const [hashedPaymentData, setHashedPaymentData] = useState<any>(null);
@@ -787,17 +788,17 @@ const CheckoutOriginal = () => {
   let billingText: string;
   let currency: string;
   
-  // Use finalAmount and finalCurrency which properly handle hashed payment data
+  // Priority order: hashed data > URL parameters > defaults
   if (finalAmount && !isNaN(parseFloat(finalAmount))) {
     displayPrice = parseFloat(finalAmount);
     billingText = 'Custom Amount';
     currency = finalCurrency || 'USD';
-    console.log('✅ Using finalAmount from payment link:', displayPrice, currency);
+    console.log('✅ Using finalAmount from hashed payment data:', displayPrice, currency);
   } else if (customAmount && !isNaN(parseFloat(customAmount))) {
     displayPrice = parseFloat(customAmount);
     billingText = 'Custom Amount';
     currency = linkCurrency || 'USD';
-    console.log('✅ Using customAmount:', displayPrice, currency);
+    console.log('✅ Using customAmount from URL parameters:', displayPrice, currency);
   } else {
     // No payment link data, use default pricing based on plan
     displayPrice = 100;
