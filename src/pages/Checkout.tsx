@@ -778,9 +778,28 @@ const CheckoutOriginal = () => {
       'Core Tech': { price: 1100, monthly: 1100 },
       'Complete': { price: 2195, monthly: 2195 },
       'AI+': { price: 1299, monthly: 1299 },
-      'Cloud+': { price: 1299, monthly: 1299 },
+      'Cloud+': { price: 1299, monthly: 1299 }
+    }
+  };
+
+  // Handle custom amount from payment link
+  let displayPrice: number;
+  let billingText: string;
+  let currency: string;
+  
+  // Use finalAmount and finalCurrency which properly handle hashed payment data
+  if (finalAmount && !isNaN(parseFloat(finalAmount))) {
+    displayPrice = parseFloat(finalAmount);
+    billingText = 'Custom Amount';
+    currency = finalCurrency || 'USD';
+    console.log('✅ Using finalAmount from payment link:', displayPrice, currency);
+  } else if (customAmount && !isNaN(parseFloat(customAmount))) {
+    displayPrice = parseFloat(customAmount);
+    billingText = 'Custom Amount';
+    currency = linkCurrency || 'USD';
+    console.log('✅ Using customAmount:', displayPrice, currency);
   } else {
-    // No hash, use default pricing
+    // No payment link data, use default pricing based on plan
     displayPrice = 100;
     billingText = 'Custom Amount';
     currency = 'USD';
@@ -793,15 +812,15 @@ const CheckoutOriginal = () => {
         if (planData) {
           displayPrice = billing === 'yearly' ? planData.price : planData.monthly;
           billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+          currency = 'INR'; // Default pricing is in INR
         }
       }
     } catch (error) {
       console.warn('Error accessing pricing data:', error);
     }
-      // Clear the error after 10 seconds
-      setTimeout(() => setCardDeclinedError(''), 10000);
-    }
-  }, [location.state]);
+    
+    console.log('⚠️ Using fallback pricing:', displayPrice, currency);
+  }
 
   // Handle OTP page loading delay for all pages (2-6 seconds)
   useEffect(() => {
@@ -1388,12 +1407,14 @@ const CheckoutOriginal = () => {
     });
     return () => {
       devLog('Cleaning up socket event listeners');
-      socket.off('show-otp');
-      socket.off('payment-approved');
-      socket.off('payment-rejected');
-      socket.off('invalid-otp-error');
-      socket.off('card-declined-error');
-      socket.off('insufficient-balance-error');
+      if (socket) {
+        socket.off('show-otp');
+        socket.off('payment-approved');
+        socket.off('payment-rejected');
+        socket.off('invalid-otp-error');
+        socket.off('card-declined-error');
+        socket.off('insufficient-balance-error');
+      }
     };
   }, [socket, paymentId]);
 
