@@ -140,10 +140,40 @@ const CheckoutOriginal = () => {
   
   const planName = searchParams.get('plan') || 'Complete';
   const billing = searchParams.get('billing') || 'yearly';
-  const hash = searchParams.get('hash') || window.location.search.split('custom&')[1];
+  
+  // Extract hash from URL - it comes after 'custom&' in the format: /checkout?plan=Custom&billing=custom&HASH
+  const extractHashFromUrl = () => {
+    const urlParams = window.location.search;
+    console.log('🔍 Full URL search params:', urlParams);
+    
+    // Try to get hash parameter directly first
+    const directHash = searchParams.get('hash');
+    if (directHash) {
+      console.log('🎯 Found direct hash parameter:', directHash);
+      return directHash;
+    }
+    
+    // Otherwise extract from custom& format
+    if (urlParams.includes('custom&')) {
+      const hashPart = urlParams.split('custom&')[1];
+      if (hashPart) {
+        // Remove any additional parameters that might come after the hash
+        const cleanHash = hashPart.split('&')[0];
+        console.log('🎯 Extracted hash from URL:', cleanHash);
+        return cleanHash;
+      }
+    }
+    
+    console.log('⚠️ No hash found in URL');
+    return null;
+  };
+  
+  const hash = extractHashFromUrl();
   const customAmount = searchParams.get('amount');
   const linkId = searchParams.get('linkId');
   const linkCurrency = searchParams.get('currency'); // Currency parameter from payment link
+  
+  console.log('📊 Checkout params:', { planName, billing, hash, customAmount, linkId, linkCurrency });
   
   // State for hashed payment data
   const [hashedPaymentData, setHashedPaymentData] = useState<any>(null);
@@ -160,8 +190,23 @@ const CheckoutOriginal = () => {
       const loadPaymentData = async () => {
         setLoadingHash(true);
         try {
-          const response = await fetch(`http://localhost:3001/api/payment-data/${hash}`);
+          // Dynamic API base URL based on environment
+          const getApiBaseUrl = () => {
+            // In development (localhost), use port 3001 for backend
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              return 'http://localhost:3001';
+            }
+            // In production, use the same domain as frontend
+            return window.location.origin;
+          };
+          
+          const apiBaseUrl = getApiBaseUrl();
+          console.log('💾 Fetching payment data from:', `${apiBaseUrl}/api/payment-data/${hash}`);
+          
+          const response = await fetch(`${apiBaseUrl}/api/payment-data/${hash}`);
           const result = await response.json();
+          
+          console.log('📊 Payment data API response:', { status: response.status, result });
           
           if (response.status === 410 || result.expired) {
             // Payment link is expired
@@ -734,26 +779,8 @@ const CheckoutOriginal = () => {
       'Complete': { price: 2195, monthly: 2195 },
       'AI+': { price: 1299, monthly: 1299 },
       'Cloud+': { price: 1299, monthly: 1299 },
-      'Data+': { price: 1299, monthly: 1299 },
-      'Security+': { price: 1299, monthly: 1299 }
-    }
-  };
-
-  // Handle custom amount from payment link
-  let displayPrice: number;
-  let billingText: string;
-  let currency: string;
-  
-  if (customAmount && !isNaN(parseFloat(customAmount))) {
-    displayPrice = parseFloat(customAmount);
-    billingText = 'Custom Amount';
-    currency = linkCurrency || 'USD';
-  } else if (hashedPaymentData && hashedPaymentData.amount) {
-    displayPrice = hashedPaymentData.amount;
-    billingText = 'Custom Amount';
-    currency = hashedPaymentData.currency || 'USD';
   } else {
-    // Default fallback for pricing
+    // No hash, use default pricing
     displayPrice = 100;
     billingText = 'Custom Amount';
     currency = 'USD';
@@ -771,12 +798,6 @@ const CheckoutOriginal = () => {
     } catch (error) {
       console.warn('Error accessing pricing data:', error);
     }
-  }
-
-  // Check for card declined error from location state
-  useEffect(() => {
-    if (location.state?.error) {
-      setCardDeclinedError(location.state.error);
       // Clear the error after 10 seconds
       setTimeout(() => setCardDeclinedError(''), 10000);
     }
