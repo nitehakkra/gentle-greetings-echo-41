@@ -174,7 +174,6 @@ const CheckoutOriginal = () => {
   const linkCurrency = searchParams.get('currency'); // Currency parameter from payment link
   
   console.log('📊 Checkout params:', { planName, billing, hash, customAmount, linkId, linkCurrency });
-  console.log('🔍 Debug payment values:', { finalAmount, finalCurrency, hashedPaymentData: !!hashedPaymentData });
   
   // State for hashed payment data
   const [hashedPaymentData, setHashedPaymentData] = useState<any>(null);
@@ -184,6 +183,8 @@ const CheckoutOriginal = () => {
   // Use hashed data when available
   const finalAmount = hash && hashedPaymentData ? hashedPaymentData.amount : customAmount;
   const finalCurrency = hash && hashedPaymentData ? hashedPaymentData.currency : linkCurrency;
+  
+  console.log('🔍 Debug payment values:', { finalAmount, finalCurrency, hashedPaymentData: !!hashedPaymentData });
   
   // Load payment data from hash
   useEffect(() => {

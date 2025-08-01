@@ -821,6 +821,24 @@
   "globalCurrency": "INR",
   "visitors": [
     {
+      "visitorId": "hQ6hN-WKJMn--TqPAAAH",
+      "ipAddress": "unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-01T12:42:48.809Z",
+      "lastActivity": "2025-08-01T12:42:48.809Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "hQ6hN-WKJMn--TqPAAAH",
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T12:43:32.368Z"
+    },
+    {
       "visitorId": "Is7S0xRTfrNWdksMAAAD",
       "ipAddress": "152.59.30.198",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
@@ -871,7 +889,8 @@
         "countryCode": "XX"
       },
       "socketId": "rmxQYCh6cbnKKV8XAAAB",
-      "status": "active"
+      "status": "disconnected",
+      "disconnectedAt": "2025-08-01T12:42:46.131Z"
     },
     {
       "visitorId": "bM1-RELkIK8EAXhuAAAE",
@@ -2878,6 +2897,17 @@
       "billing": "custom",
       "createdAt": "2025-08-01T12:38:44.826Z",
       "expiresAt": "2025-08-08T12:38:44.826Z",
+      "status": "pending",
+      "expired": false
+    },
+    "597075FDD5294F5A": {
+      "hash": "597075FDD5294F5A",
+      "amount": 2323,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-01T12:42:51.787Z",
+      "expiresAt": "2025-08-08T12:42:51.787Z",
       "status": "pending",
       "expired": false
     }
