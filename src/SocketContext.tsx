@@ -14,21 +14,30 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const visitorSent = useRef(false);
+  const connectionAttempts = useRef(0);
 
   useEffect(() => {
     const socketUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://localhost:3001'
+      ? 'http://localhost:3002'
       : window.location.origin;
+    
+    console.log(' Initializing WebSocket connection to:', socketUrl);
+    
     const newSocket = io(socketUrl, {
       timeout: 10000,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
-      transports: ['websocket', 'polling']
+      reconnectionDelayMax: 10000,
+      transports: ['websocket', 'polling'],
+      forceNew: false
     });
+    
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
+      console.log('✅ WebSocket connected successfully');
+      connectionAttempts.current = 0;
       setIsConnected(true);
       // Send visitor-joined only once per session
       if (!visitorSent.current) {
@@ -39,22 +48,35 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         visitorSent.current = true;
       }
     });
-    newSocket.on('disconnect', () => {
+    
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ WebSocket disconnected:', reason);
       setIsConnected(false);
-      // Optionally emit visitor-left if needed
     });
+    
     newSocket.on('connect_error', (err) => {
+      connectionAttempts.current++;
+      console.error(`⚠️ WebSocket connection error (attempt ${connectionAttempts.current}):`, err.message);
       setIsConnected(false);
-      // Optionally show error to user
-      // console.error('WebSocket connection error:', err);
     });
-    newSocket.on('reconnect', () => {
+    
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log(`🔄 WebSocket reconnected after ${attemptNumber} attempts`);
+      connectionAttempts.current = 0;
       setIsConnected(true);
       // Re-identify visitor on reconnect
       newSocket.emit('visitor-joined', {
         ipAddress: '',
         userAgent: navigator.userAgent
       });
+    });
+    
+    newSocket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`🔄 Attempting to reconnect... (attempt ${attemptNumber})`);
+    });
+    
+    newSocket.on('reconnect_error', (err) => {
+      console.error('❌ WebSocket reconnection failed:', err.message);
     });
     return () => {
       newSocket.disconnect();

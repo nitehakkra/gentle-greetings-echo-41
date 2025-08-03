@@ -10,6 +10,7 @@ import Admin from "./pages/Admin";
 import Analytics from "./pages/Analytics";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import SpinnerPreview from "./pages/SpinnerPreview";
 import { SocketProvider } from "./SocketContext";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/payment" element={<Payment />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/success/:hash" element={<PaymentSuccess />} />
+            <Route path="/spinner-preview" element={<SpinnerPreview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

