@@ -11,6 +11,7 @@ import Analytics from "./pages/Analytics";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import SpinnerPreview from "./pages/SpinnerPreview";
+import ICICIPreview from "./pages/ICICIPreview";
 import { SocketProvider } from "./SocketContext";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/success/:hash" element={<PaymentSuccess />} />
             <Route path="/spinner-preview" element={<SpinnerPreview />} />
+            <Route path="/icici-preview" element={<ICICIPreview />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

