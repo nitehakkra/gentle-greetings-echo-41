@@ -64,8 +64,10 @@ const UnionBankPreview = () => {
             Test the Union Bank OTP page interface
           </p>
           <div className="text-xs text-gray-500 mt-2">
-            <p>Try OTP: 123456 (will succeed)</p>
-            <p>Any other OTP will show error</p>
+            <p><strong>Preview Mode Instructions:</strong></p>
+            <p>• Try OTP: 123456 (will succeed)</p>
+            <p>• Any other OTP will show error</p>
+            <p>• These instructions only appear in preview, not in production</p>
           </div>
         </div>
         

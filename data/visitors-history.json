@@ -1,5 +1,59 @@
 [
   {
+    "visitorId": "nBg6Z-1mGadPLb89AAAF",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T16:38:00.891Z",
+    "lastActivity": "2025-08-03T16:38:00.891Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "nBg6Z-1mGadPLb89AAAF",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T16:39:11.818Z"
+  },
+  {
+    "visitorId": "4TEBFjU5vHkjATxKAAAD",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T16:25:39.657Z",
+    "lastActivity": "2025-08-03T16:25:39.657Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "4TEBFjU5vHkjATxKAAAD",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T16:37:58.479Z"
+  },
+  {
+    "visitorId": "8dx6KnPEhnIr2pDAAAAB",
+    "ipAddress": "unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-03T16:18:54.832Z",
+    "lastActivity": "2025-08-03T16:18:54.832Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "8dx6KnPEhnIr2pDAAAAB",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-03T16:25:16.658Z"
+  },
+  {
     "visitorId": "owQuqi3ir0-hNJlDAAAD",
     "ipAddress": "unknown",
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
