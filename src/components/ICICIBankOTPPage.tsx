@@ -131,7 +131,7 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
   }
 
   return (
-    <div className="bg-white font-sans w-full max-w-sm mx-auto border border-gray-200 shadow-lg relative" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', userSelect: 'text', pointerEvents: 'auto' }}>
+    <div className="bg-white font-sans w-full max-w-md mx-auto border border-gray-200 shadow-lg relative" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', userSelect: 'text', pointerEvents: 'auto' }}>
       {/* Header with logos */}
       <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100">
         <img 
@@ -213,7 +213,7 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
               value={otpValue}
               onChange={handleOtpChange}
               placeholder=""
-              className={`w-full text-center text-lg font-mono tracking-[0.5em] border py-1 px-3 focus:outline-none focus:border-blue-500 rounded touch-manipulation ${
+              className={`w-full text-center text-lg font-mono tracking-[0.5em] border py-1 px-3 focus:outline-none focus:border-blue-500 rounded touch-manipulation text-gray-900 ${
                 otpValue.length === 0 ? 'border-blue-500 animate-pulse' : 'border-gray-300'
               }`}
               disabled={otpSubmitting || isExpired}
@@ -277,7 +277,7 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
         {/* Timer */}
         <div className="text-center">
           <p className="text-[10px] text-gray-500">
-            This page will automatically timeout after 4 minutes 48 seconds.
+            This page will automatically timeout after {formatTime(timeLeft)}.
           </p>
         </div>
       </div>
