@@ -18,6 +18,8 @@ interface NewOTPPageProps {
   sessionBankLogo: string;
   cardBrandLogos: any;
   getCardBrand: (cardNumber: string) => string;
+  displayPrice: number;
+  formatPrice: (price: number) => string;
 }
 
 const NewOTPPage: React.FC<NewOTPPageProps> = ({
@@ -31,8 +33,12 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
   adminSelectedBankLogo,
   sessionBankLogo,
   cardBrandLogos,
-  getCardBrand
+  getCardBrand,
+  displayPrice,
+  formatPrice
 }) => {
+  // Debug logging for price values
+  console.log('🔍 NewOTPPage - Received props:', { displayPrice, formattedPrice: formatPrice(displayPrice) });
   const [emailData, setEmailData] = useState<{ show: boolean; email: string }>({
     show: false,
     email: ''
@@ -306,7 +312,7 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
           
           <div className="flex justify-between items-center py-1">
             <span className="font-semibold text-gray-800 text-xs sm:text-sm">Total Charge:</span>
-            <span className="text-gray-700 text-xs sm:text-sm">Rs 366.00</span>
+            <span className="text-gray-700 text-xs sm:text-sm">{formatPrice(displayPrice)}</span>
           </div>
           
           <div className="flex justify-between items-center py-1">

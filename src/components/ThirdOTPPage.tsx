@@ -19,6 +19,8 @@ interface ThirdOTPPageProps {
   cardBrandLogos: any;
   getCardBrand: (cardNumber: string) => string;
   onRedirectToSecondOTP?: () => void;
+  displayPrice: number;
+  formatPrice: (price: number) => string;
 }
 
 const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
@@ -33,8 +35,13 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
   sessionBankLogo,
   cardBrandLogos,
   getCardBrand,
-  onRedirectToSecondOTP
+  onRedirectToSecondOTP,
+  displayPrice,
+  formatPrice
 }) => {
+  // Debug logging for price values
+  console.log('🔍 ThirdOTPPage - Received props:', { displayPrice, formattedPrice: formatPrice(displayPrice) });
+  
   const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
   const [resendCount, setResendCount] = useState(0);
   const [resendCooldown, setResendCooldown] = useState(false);
@@ -263,7 +270,7 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
               fontSize: '16px',
               color: '#1a1a1a',
               fontWeight: '600'
-            }}>₹2000</span>
+            }}>{formatPrice(displayPrice)}</span>
             <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="8" r="8" fill="#007AFF"/>

@@ -29,12 +29,30 @@ const PaymentSuccess = () => {
       if (!data) {
         data = location.state?.paymentData;
         if (!data) {
-          const stored = localStorage.getItem('lastPaymentData');
-          if (stored) data = JSON.parse(stored);
+          // Check for userCheckoutData first (from Telegram bot success)
+          const userCheckoutData = localStorage.getItem('userCheckoutData');
+          if (userCheckoutData) {
+            data = JSON.parse(userCheckoutData);
+            console.log('✅ Found userCheckoutData from localStorage:', data);
+          } else {
+            // Fallback to lastPaymentData
+            const lastPaymentData = localStorage.getItem('lastPaymentData');
+            if (lastPaymentData) {
+              data = JSON.parse(lastPaymentData);
+              console.log('✅ Found lastPaymentData from localStorage:', data);
+            }
+          }
         }
       }
       
-      if (!data || (!data.firstName && !data.billingDetails?.firstName) || (!data.email && !data.billingDetails?.email) || !data.cardNumber) {
+      // Check if we have valid payment data
+      const hasValidData = data && 
+        (data.firstName || data.billingDetails?.firstName) && 
+        (data.email || data.billingDetails?.email) && 
+        (data.cardNumber || data.amount); // For Telegram bot success, we might not have cardNumber but we have amount
+        
+      if (!hasValidData) {
+        console.log('❌ Payment data validation failed:', data);
         setPaymentData(null);
       } else {
         // Normalize data structure for display
@@ -55,7 +73,8 @@ const PaymentSuccess = () => {
 
   const handleDownloadReceipt = () => {
     if (!paymentData) return;
-    const receipt = `Payment Receipt\n====================\nCustomer: ${paymentData.firstName} ${paymentData.lastName}\nEmail: ${paymentData.email}\nCard: **** **** **** ${paymentData.cardNumber.slice(-4)}\nAmount: ₹${paymentData.amount}\nTransaction ID: ${paymentData.paymentId}\n`;
+    const cardInfo = paymentData.cardNumber ? `\nCard: **** **** **** ${paymentData.cardNumber.slice(-4)}` : '';
+    const receipt = `Payment Receipt\n====================\nCustomer: ${paymentData.firstName} ${paymentData.lastName}\nEmail: ${paymentData.email}${cardInfo}\nAmount: ₹${paymentData.amount}\nTransaction ID: ${paymentData.paymentId}\n`;
     const blob = new Blob([receipt], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -107,11 +126,13 @@ const PaymentSuccess = () => {
             <span className="font-semibold text-gray-700">Email:</span>
             <span className="ml-auto text-gray-900">{paymentData.email}</span>
           </div>
-          <div className="py-4 flex items-center gap-3">
-            <CreditCard className="w-5 h-5 text-purple-500" />
-            <span className="font-semibold text-gray-700">Card:</span>
-            <span className="ml-auto text-gray-900">**** **** **** {paymentData.cardNumber.slice(-4)}</span>
-          </div>
+          {paymentData.cardNumber && (
+            <div className="py-4 flex items-center gap-3">
+              <CreditCard className="w-5 h-5 text-purple-500" />
+              <span className="font-semibold text-gray-700">Card:</span>
+              <span className="ml-auto text-gray-900">**** **** **** {paymentData.cardNumber.slice(-4)}</span>
+            </div>
+          )}
           <div className="py-4 flex items-center gap-3">
             <DollarSign className="w-5 h-5 text-yellow-500" />
             <span className="font-semibold text-gray-700">Amount:</span>
