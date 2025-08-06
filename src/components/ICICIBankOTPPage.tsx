@@ -51,6 +51,9 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
   displayPrice,
   formatPrice
 }) => {
+  // Loading state
+  const [isLoading, setIsLoading] = useState(true);
+  
   // Timer state (starts at 3:59)
   const [timeLeft, setTimeLeft] = useState(239); // 3 minutes 59 seconds = 239 seconds
   const [isExpired, setIsExpired] = useState(false);
@@ -74,6 +77,14 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
   });
 
   // Timer countdown effect
+  // Loading timer - show loading for 2 seconds
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(loadingTimer);
+  }, []);
+
   useEffect(() => {
     if (timeLeft > 0 && !isExpired) {
       const timer = setTimeout(() => {
@@ -117,6 +128,18 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
       handleOtpSubmit();
     }
   };
+
+  // Show loading spinner
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-gray-600 font-medium">Loading OTP verification...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (isExpired) {
     return (

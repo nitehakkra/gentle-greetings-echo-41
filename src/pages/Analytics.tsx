@@ -36,7 +36,7 @@ import {
   ArrowLeft,
   FileText
 } from 'lucide-react';
-import { useSocket } from '../SocketContext';
+import { useSocket } from '../context/SocketContext';
 import { useNavigate } from 'react-router-dom';
 
 // Register ChartJS components
@@ -287,7 +287,7 @@ const AnalyticsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
-                onClick={() => navigate('/admin')}
+                onClick={() => navigate('/parking55009hvSweJimbs5hhinbd56y')}
                 variant="ghost"
                 size="sm"
                 className="text-gray-400 hover:text-white"

@@ -2,12 +2,8 @@
 // Dynamic API base URL based on environment
 import { devLog, devError, devWarn } from './logger';
 const getApiBaseUrl = () => {
-  // In development (localhost), use port 3001 for backend
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3002';
-  }
-  // In production, use the same domain as frontend
-  return window.location.origin;
+  // Always use relative URLs since we have Vite proxy configured
+  return '';
 };
 
 const API_BASE_URL = getApiBaseUrl();

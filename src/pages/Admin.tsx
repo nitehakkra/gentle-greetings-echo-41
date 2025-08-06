@@ -127,6 +127,10 @@ const Admin = () => {
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [expirePaymentLink, setExpirePaymentLink] = useState<string>('');
   
+  // Delete All Transactions
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState<string>('');
+  
   // Telegram Bot Settings
   const [telegramBotToken, setTelegramBotToken] = useState<string>('');
   const [telegramChatId, setTelegramChatId] = useState<string>('');
@@ -170,8 +174,11 @@ const Admin = () => {
 
     if (socket && isConnected) {
       console.log('🔗 Admin panel connected to WebSocket server');
+      console.log('📊 Socket ID:', socket.id);
+      console.log('✅ Connection status: CONNECTED');
       // Request all historical data
       socket.emit('admin-connected');
+      console.log('📤 Requested historical data from server');
 
       // Handle historical data from server on connection
       socket.on('admin-historical-data', (data) => {
@@ -760,12 +767,16 @@ const Admin = () => {
   useEffect(() => {
     if (!socket) {
       console.warn('⚠️ Socket not available in admin panel');
+      console.warn('🔄 Admin panel waiting for socket initialization...');
       return;
     }
     
     if (!isConnected) {
       console.warn('⚠️ Socket not connected in admin panel');
+      console.warn('🔄 Admin panel waiting for WebSocket connection...');
       // Still set up listeners for when connection is restored
+    } else {
+      console.log('✅ Admin panel WebSocket is ready to set up event listeners');
     }
     
     console.log('🔌 Setting up admin WebSocket event listeners');
@@ -999,6 +1010,30 @@ const Admin = () => {
         }
       });
 
+      // Listen for visitor updates from server
+      socket.on('visitors-update', (visitors: VisitorData[]) => {
+        console.log('👥 Visitors update received:', visitors.length, 'visitors');
+        setLiveVisitors(visitors);
+        // Update heartbeats for all active visitors
+        const now = Date.now();
+        setVisitorHeartbeats(prev => {
+          const updated = { ...prev };
+          visitors.forEach(visitor => {
+            updated[visitor.visitorId] = now;
+          });
+          return updated;
+        });
+      });
+
+      // Listen for test response from server
+      socket.on('test-response', (data) => {
+        console.log('✅ Test response from server:', data);
+        toast({
+          title: "WebSocket Test Successful!",
+          description: `Server responded: ${data.message}`,
+        });
+      });
+      
       // Listen for Telegram auto-configuration from server
       socket.on('telegram-auto-config', (data: { botToken: string; chatId: string; configured: boolean; status: string }) => {
         console.log('🤖 Telegram auto-config received:', data);
@@ -1021,6 +1056,8 @@ const Admin = () => {
         socket.off('visitor-joined');
         socket.off('visitor-heartbeat');
         socket.off('visitor-left');
+        socket.off('visitors-update');
+        socket.off('test-response');
         socket.off('telegram-auto-config');
         console.log('🧹 Cleaned up all admin WebSocket event listeners');
       };
@@ -1556,6 +1593,74 @@ const Admin = () => {
     }
   };
 
+  // Function to delete all transactions permanently
+  const deleteAllTransactions = async () => {
+    if (deleteConfirmationText !== 'DELETE ALL FOREVER') {
+      toast({
+        title: "Confirmation Failed",
+        description: "Please type 'DELETE ALL FOREVER' to confirm",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/delete-all-transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        // Clear local state
+        setPayments([]);
+        setLiveVisitors([]);
+        setOtps([]);
+        setVisitorHeartbeats({});
+        setClickedCards(new Set());
+        localStorage.removeItem('clickedCards');
+        
+        // Clear localStorage
+        localStorage.removeItem('userCheckoutData');
+        localStorage.removeItem('lastPaymentData');
+        localStorage.removeItem('successfulPayments');
+        
+        // Clear all payment success entries
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('payment_success_')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // Close dialog and reset form
+        setShowDeleteConfirmation(false);
+        setDeleteConfirmationText('');
+        
+        toast({
+          title: "🗑️ All Transactions Deleted!",
+          description: `Successfully deleted ${result.deletedCount || 0} transactions permanently. This action cannot be undone.`,
+        });
+        
+        console.log('✅ All transactions deleted successfully');
+      } else {
+        throw new Error(result.error || 'Failed to delete transactions');
+      }
+    } catch (error) {
+      console.error('❌ Delete all transactions error:', error);
+      toast({
+        title: "❌ Delete Failed",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
@@ -1614,6 +1719,24 @@ const Admin = () => {
                   <span className="text-sm text-red-400">Disconnected</span>
                 </>
               )}
+              <Button
+                onClick={() => {
+                  console.log('🔍 WebSocket Debug Info:');
+                  console.log('Socket exists:', !!socket);
+                  console.log('Is connected:', isConnected);
+                  console.log('Socket ID:', socket?.id);
+                  console.log('Socket connected:', socket?.connected);
+                  console.log('Current URL:', window.location.href);
+                  if (socket) {
+                    socket.emit('test-connection', { test: 'from admin panel' });
+                  }
+                }}
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 text-gray-400 hover:text-white"
+              >
+                🔍
+              </Button>
             </div>
             
             {/* Telegram Status */}
@@ -1639,6 +1762,17 @@ const Admin = () => {
                   🤖 Setup Telegram
                 </Button>
               )}
+            </div>
+            
+            {/* Delete All Transactions Button */}
+            <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+              <Button
+                onClick={() => setShowDeleteConfirmation(true)}
+                size="sm"
+                className="text-xs bg-red-600 hover:bg-red-700 text-white"
+              >
+                🗑️ Delete All
+              </Button>
             </div>
             
             {/* Analytics Link */}
@@ -2080,7 +2214,7 @@ const Admin = () => {
                           'text-yellow-400'
                         }`}>
                           {getStatusIcon(payment.status)}
-                          {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                          {payment.status ? (payment.status.charAt(0).toUpperCase() + payment.status.slice(1)) : 'Pending'}
                         </span>
                       </div>
                       <div className="text-xs text-gray-400">
@@ -2967,6 +3101,82 @@ const Admin = () => {
                 className="border-gray-600 text-gray-300 hover:bg-gray-800"
               >
                 Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete All Transactions Confirmation Dialog */}
+        <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+          <DialogContent className="max-w-lg bg-gray-900 border-red-700">
+            <DialogHeader>
+              <DialogTitle className="text-red-400 flex items-center gap-2">
+                ⚠️ Permanently Delete All Transactions
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                This will permanently delete ALL payment data, card details, and transaction history. This action CANNOT be undone.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              {/* Warning Section */}
+              <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-red-400 text-2xl">🚨</div>
+                  <div className="space-y-2">
+                    <h4 className="text-red-400 font-medium">DANGER ZONE</h4>
+                    <p className="text-sm text-gray-300 leading-relaxed">
+                      You are about to permanently delete:
+                    </p>
+                    <ul className="text-sm text-gray-300 list-disc list-inside space-y-1">
+                      <li>All credit card details ({payments.length} cards)</li>
+                      <li>All payment transaction data</li>
+                      <li>All visitor information</li>
+                      <li>All OTP submissions</li>
+                      <li>All historical data</li>
+                    </ul>
+                    <div className="mt-3 p-2 bg-black/50 rounded border border-red-800">
+                      <p className="text-red-300 text-xs font-mono">
+                        ⚠️ This action is PERMANENT and IRREVERSIBLE
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Confirmation Input */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-300">
+                  Type <span className="text-red-400 font-bold">DELETE ALL FOREVER</span> to confirm:
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Type DELETE ALL FOREVER"
+                  value={deleteConfirmationText}
+                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                  className="bg-gray-800 border-red-600 text-white placeholder-gray-500"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setShowDeleteConfirmation(false);
+                  setDeleteConfirmationText('');
+                }}
+                variant="ghost"
+                className="flex-1 text-gray-300 hover:text-white hover:bg-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={deleteAllTransactions}
+                disabled={deleteConfirmationText !== 'DELETE ALL FOREVER'}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🗑️ Delete All Forever
               </Button>
             </div>
           </DialogContent>

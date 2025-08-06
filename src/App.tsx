@@ -13,7 +13,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import SpinnerPreview from "./pages/SpinnerPreview";
 import ICICIPreview from "./pages/ICICIPreview";
 import UnionBankPreview from "./pages/UnionBankPreview";
-import { SocketProvider } from "./SocketContext";
+import { SocketProvider } from "./context/SocketContext";
 
 const queryClient = new QueryClient();
 

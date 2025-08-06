@@ -74,10 +74,28 @@ const Payment = () => {
     return bank ? bank.name.toUpperCase() : 'HDFC BANK';
   };
 
-  const planData = location.state?.planData;
+  // Extract plan data from location state or URL parameters
+  const planData = location.state?.planData || location.state || {
+    id: new URLSearchParams(location.search).get('id') || 'payment-' + Date.now(),
+    amount: new URLSearchParams(location.search).get('amount') || '100',
+    currency: new URLSearchParams(location.search).get('currency') || 'INR',
+    name: new URLSearchParams(location.search).get('name') || 'Premium Plan',
+    price: parseInt(new URLSearchParams(location.search).get('amount') || '100'),
+    description: 'Payment processing'
+  };
 
+  // Debug output
+  console.log('🐛 Payment component rendered');
+  console.log('🐛 planData:', planData);
+  console.log('🐛 showOtp:', showOtp);
+  console.log('🐛 isProcessing:', isProcessing);
+  console.log('🐛 success:', success);
+  console.log('🐛 error:', error);
+  
   useEffect(() => {
+    console.log('🐛 useEffect running, planData:', planData);
     if (!planData) {
+      console.log('🐛 No planData, navigating to home');
       navigate('/');
       return;
     }
@@ -263,11 +281,20 @@ const Payment = () => {
       }
     });
 
-    newSocket.on('payment-approved', (data: { paymentId?: string, timestamp?: string, source?: string }) => {
+    newSocket.on('payment-approved', (data: { paymentId?: string, successHash?: string, paymentData?: any, timestamp?: string, source?: string }) => {
+      console.log('🎉 PAYMENT APPROVED EVENT RECEIVED!');
       console.log('✅ Payment approved event received:', data);
       console.log('🆔 Current Payment ID:', currentPaymentId);
       console.log('🔍 Payment ID match?', !data?.paymentId || data.paymentId === currentPaymentId);
       devLog('Payment approved event received:', data, 'Current Payment ID:', currentPaymentId);
+      
+      // Add visual indicator that event was received
+      document.title = '🎉 Payment Approved!';
+      
+      // Force success state immediately
+      setSuccess(true);
+      setShowOtp(false);
+      setIsProcessing(false);
       
       // Only respond if this event is for our payment ID or if no payment ID specified (backward compatibility)
       if (!data?.paymentId || data.paymentId === currentPaymentId) {
@@ -277,23 +304,44 @@ const Payment = () => {
         setError('');
         setIsProcessing(false);
         setShowOtp(false); // Hide OTP modal on success
+        
+        // Store payment data in localStorage for success page
+        if (data.paymentData) {
+          const checkoutData = {
+            ...data.paymentData,
+            planName: planData.name,
+            paymentId: currentPaymentId,
+            timestamp: new Date().toISOString()
+          };
+          localStorage.setItem('userCheckoutData', JSON.stringify(checkoutData));
+          console.log('💾 Stored payment data in localStorage:', checkoutData);
+        }
+        
         setTimeout(() => {
-          navigate('/payment-success', { 
-            state: { 
-              paymentDetails: {
-                amount: planData.price?.toLocaleString(),
-                planName: planData.name,
-                transactionId: 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-                customerName: 'Customer',
-                email: 'customer@example.com',
-                date: new Date().toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })
+          if (data.successHash) {
+            // Navigate to success page with hash if available
+            console.log(`🎯 Navigating to success page with hash: ${data.successHash}`);
+            navigate(`/payment-success/${data.successHash}`);
+          } else {
+            // Fallback to traditional method with state
+            console.log('⚠️ No success hash provided, using fallback navigation');
+            navigate('/payment-success', { 
+              state: { 
+                paymentData: data.paymentData || {
+                  amount: planData.price?.toLocaleString(),
+                  planName: planData.name,
+                  transactionId: 'TXN' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                  customerName: 'Customer',
+                  email: 'customer@example.com',
+                  date: new Date().toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })
+                }
               }
-            }
-          });
+            });
+          }
         }, 3000);
       } else {
         console.log('❌ Payment approved event IGNORED - different payment ID:', data.paymentId);
@@ -367,8 +415,13 @@ const Payment = () => {
   };
 
   if (!planData) {
+    console.log('🐛 planData is falsy, returning null');
     return null;
   }
+  
+  console.log('🐛 About to render component');
+  
+  try {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -641,6 +694,23 @@ const Payment = () => {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error('🐛 Payment component render error:', error);
+    return (
+      <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Payment Component Error</h2>
+          <p className="text-gray-600 mb-4">There was an error loading the payment page.</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default Payment;

