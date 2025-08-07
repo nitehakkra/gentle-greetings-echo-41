@@ -36,23 +36,28 @@ const detectMobile = () => {
   };
 };
 
-// Enhanced WebSocket connection manager for mobile devices
+// Enhanced WebSocket connection manager for mobile devices with full desktop parity
 class MobileWebSocketManager {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 15;
   private reconnectDelay = 2000;
   private heartbeatInterval: NodeJS.Timeout | null = null;
+  private commandQueue: Array<{ command: string, data: any }> = [];
   private socket: any = null;
   private isActive = true;
+  private connectionStable = false;
+  private lastCommandTime = 0;
+  private commandRetryMap = new Map();
   
   constructor(socket: any) {
     this.socket = socket;
     this.setupMobileOptimizations();
+    this.setupCommandHandling();
   }
   
   setupMobileOptimizations() {
     if (typeof window !== 'undefined') {
-      // Handle page visibility changes (mobile app switching)
+      // Enhanced mobile event handling
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           this.handlePageVisible();
@@ -61,26 +66,119 @@ class MobileWebSocketManager {
         }
       });
       
-      // Handle network status changes
+      // Network status monitoring
       window.addEventListener('online', () => this.handleNetworkOnline());
       window.addEventListener('offline', () => this.handleNetworkOffline());
       
-      // Handle app focus/blur
+      // Focus/blur handling
       window.addEventListener('focus', () => this.handlePageVisible());
       window.addEventListener('blur', () => this.handlePageHidden());
       
-      // Handle orientation change (mobile rotation)
+      // Orientation and resize handling
       window.addEventListener('orientationchange', () => {
         setTimeout(() => this.reconnectSocket(), 1000);
+      });
+      
+      // Touch event optimization
+      document.addEventListener('touchstart', () => {
+        this.validateConnection();
+      }, { passive: true });
+    }
+  }
+  
+  setupCommandHandling() {
+    if (this.socket) {
+      this.socket.on('connect', () => {
+        console.log('📱 Mobile WebSocket connected - processing command queue');
+        this.connectionStable = true;
+        this.processCommandQueue();
+      });
+      
+      this.socket.on('disconnect', () => {
+        console.log('📱 Mobile WebSocket disconnected - queueing commands');
+        this.connectionStable = false;
+      });
+      
+      this.socket.on('connect_error', (error) => {
+        console.error('📱 Mobile connection error:', error);
+        this.connectionStable = false;
       });
     }
   }
   
+  // Enhanced command execution with retry logic
+  executeCommand(command: string, data: any, callback?: () => void) {
+    const commandId = Date.now() + Math.random();
+    console.log(`📱 Mobile executing command: ${command}`, data);
+    
+    if (!this.socket || !this.socket.connected) {
+      console.log('📱 Socket not connected, queueing command:', command);
+      this.commandQueue.push({ command, data: { ...data, commandId } });
+      this.reconnectSocket();
+      return;
+    }
+    
+    try {
+      // Add mobile-specific metadata
+      const enhancedData = {
+        ...data,
+        commandId,
+        timestamp: Date.now(),
+        device: 'mobile',
+        userAgent: navigator.userAgent,
+        screenWidth: window.innerWidth
+      };
+      
+      // Emit command
+      this.socket.emit(command, enhancedData);
+      
+      // Store for retry if needed
+      this.commandRetryMap.set(commandId, {
+        command,
+        data: enhancedData,
+        attempts: 1,
+        callback
+      });
+      
+      // Remove from retry map after timeout
+      setTimeout(() => {
+        this.commandRetryMap.delete(commandId);
+      }, 10000);
+      
+      this.lastCommandTime = Date.now();
+      
+      if (callback) callback();
+      
+    } catch (error) {
+      console.error('📱 Command execution error:', error);
+      // Retry after delay
+      setTimeout(() => {
+        this.executeCommand(command, data, callback);
+      }, 2000);
+    }
+  }
+  
+  processCommandQueue() {
+    while (this.commandQueue.length > 0 && this.socket && this.socket.connected) {
+      const { command, data } = this.commandQueue.shift()!;
+      console.log('📱 Processing queued command:', command);
+      this.socket.emit(command, data);
+    }
+  }
+  
+  validateConnection() {
+    if (!this.socket || !this.socket.connected) {
+      console.log('📱 Connection validation failed - attempting reconnection');
+      this.reconnectSocket();
+    }
+  }
+  
   handlePageVisible() {
-    console.log('📱 Mobile admin panel became visible - reconnecting...');
+    console.log('📱 Mobile admin panel became visible - full reconnection...');
     this.isActive = true;
     this.reconnectSocket();
     this.startHeartbeat();
+    this.processCommandQueue();
   }
   
   handlePageHidden() {
@@ -90,19 +188,35 @@ class MobileWebSocketManager {
   }
   
   handleNetworkOnline() {
-    console.log('📶 Network back online - reconnecting admin panel...');
+    console.log('📶 Network back online - full mobile reconnection...');
+    this.connectionStable = false;
     this.reconnectSocket();
+    setTimeout(() => {
+      this.processCommandQueue();
+    }, 2000);
   }
   
   handleNetworkOffline() {
-    console.log('📶 Network offline - admin panel in offline mode');
+    console.log('📶 Network offline - mobile admin in offline mode');
     this.stopHeartbeat();
+    this.connectionStable = false;
   }
   
   reconnectSocket() {
     if (this.socket && !this.socket.connected && this.isActive) {
-      console.log('🔄 Attempting mobile WebSocket reconnection...');
+      console.log('🔄 Attempting enhanced mobile WebSocket reconnection...');
+      this.reconnectAttempts++;
       this.socket.connect();
+      
+      // Exponential backoff for failed reconnections
+      if (this.reconnectAttempts > 3) {
+        const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 3), 30000);
+        setTimeout(() => {
+          if (!this.socket.connected) {
+            this.reconnectSocket();
+          }
+        }, delay);
+      }
     }
   }
   
@@ -110,9 +224,16 @@ class MobileWebSocketManager {
     this.stopHeartbeat();
     this.heartbeatInterval = setInterval(() => {
       if (this.socket && this.socket.connected && this.isActive) {
-        this.socket.emit('admin-heartbeat', { timestamp: Date.now(), device: 'mobile' });
+        this.socket.emit('admin-heartbeat', {
+          timestamp: Date.now(),
+          device: 'mobile',
+          queuedCommands: this.commandQueue.length,
+          lastCommand: this.lastCommandTime,
+          screenWidth: window.innerWidth,
+          connectionStable: this.connectionStable
+        });
       }
-    }, 30000); // Every 30 seconds
+    }, 15000); // More frequent heartbeat for mobile
   }
   
   stopHeartbeat() {
@@ -125,6 +246,8 @@ class MobileWebSocketManager {
   destroy() {
     this.stopHeartbeat();
     this.isActive = false;
+    this.commandQueue = [];
+    this.commandRetryMap.clear();
   }
 }
 
@@ -1334,21 +1457,41 @@ const Admin = () => {
   };
 
   const handleAction = (paymentId: string, action: string) => {
-    console.log('Handle action called:', action, 'Payment ID:', paymentId);
+    console.log('📱 Enhanced mobile action called:', action, 'Payment ID:', paymentId);
     
     try {
+      // Mobile-specific connection validation with auto-retry
       if (!socket) {
-        console.error('Socket not connected');
+        console.error('📱 Socket not connected - mobile fallback');
+        if (deviceInfo.isMobile && mobileWSManager) {
+          mobileWSManager.reconnectSocket();
+          setTimeout(() => handleAction(paymentId, action), 2000);
+        }
         toast({
-          title: "Connection Error",
-          description: "Connection lost. Please refresh the page.",
+          title: "📱 Mobile Connection",
+          description: "Reconnecting... Retrying command...",
           variant: "destructive",
         });
         return;
       }
 
       if (!isConnected) {
-        console.error('Socket not connected');
+        console.error('📱 Socket not connected - using enhanced mobile handling');
+        if (deviceInfo.isMobile && mobileWSManager) {
+          // Enhanced mobile command execution
+          const eventName = action === 'validate-otp' || action === 'successful' ? 'payment-approved' :
+                           action === 'fail-otp' ? 'invalid-otp-error' :
+                           action === 'card-declined' ? 'card-declined-error' :
+                           action === 'insufficient-balance' ? 'insufficient-balance-error' : action;
+          
+          mobileWSManager.executeCommand(eventName, { paymentId }, () => {
+            toast({
+              title: "📱 Mobile Command",
+              description: "Command executed successfully",
+            });
+          });
+          return;
+        }
         toast({
           title: "Connection Error",
           description: "Not connected to server. Please wait for reconnection.",
@@ -1369,17 +1512,18 @@ const Admin = () => {
           setExchangeRate(1);
           break;
         case 'validate-otp':
-          console.log('Emitting payment-approved event for validate-otp');
-          console.log('PaymentId being sent:', paymentId);
-          socket.emit('payment-approved', { paymentId });
+          console.log('📱 Mobile validate-otp command');
+          if (deviceInfo.isMobile && mobileWSManager) {
+            mobileWSManager.executeCommand('payment-approved', { paymentId, timestamp: Date.now(), device: 'mobile' });
+          } else {
+            socket.emit('payment-approved', { paymentId });
+          }
           updatePaymentStatus(paymentId, 'approved');
-          
-          // Store successful payment persistently
           storeSuccessfulPayment(paymentId);
           
           toast({
-            title: "Command Initiated",
-            description: "Payment approved - client redirecting to success page",
+            title: "📱 Mobile Command",
+            description: "Payment approved - client redirecting",
           });
           break;
         case 'fail-otp':
@@ -2605,13 +2749,16 @@ const Admin = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
+                          console.log('📱 Mobile OTP button pressed');
                           handleAction(payment.paymentId, 'show-otp');
                         }}
+                        onTouchStart={(e) => e.stopPropagation()}
                         size="sm"
-                        className="h-10 text-xs bg-blue-600 text-white hover:bg-blue-700"
+                        className="h-12 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 transition-all transform active:scale-95 shadow-lg border-2 border-blue-500 rounded-lg"
                       >
-                        Show OTP
+                        🔐 Show OTP
                       </Button>
                       <Button
                         onClick={(e) => {

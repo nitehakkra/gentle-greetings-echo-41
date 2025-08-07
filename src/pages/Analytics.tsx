@@ -1,57 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js';
-import { Line, Bar, Doughnut, Pie } from 'react-chartjs-2';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
+  ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend 
+} from 'recharts';
+import { 
+  DollarSign, CreditCard, Users, TrendingUp, ArrowLeft, RefreshCw, 
+  Download, Calendar, Filter, Eye, Search, MoreHorizontal 
+} from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  CreditCard, 
-  Globe, 
-  Clock,
-  Download,
-  RefreshCw,
-  Search,
-  Filter,
-  Eye,
-  Calendar,
-  Users,
-  Target,
-  BarChart3,
-  ArrowLeft,
-  FileText
-} from 'lucide-react';
-import { useSocket } from '../context/SocketContext';
-import { useNavigate } from 'react-router-dom';
+import { format, subDays } from 'date-fns';
 
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
-
+// TypeScript Interfaces
 interface PaymentData {
   id: string;
   paymentId: string;
@@ -76,365 +42,146 @@ interface PaymentData {
   amount: number;
   timestamp: string;
   status: 'pending' | 'approved' | 'rejected';
-  cardCountry?: {
-    name: string;
-    code: string;
-    flag: string;
-  };
+  cardCountry?: { name: string; code: string; flag: string; };
   currency?: string;
 }
 
 interface AnalyticsData {
-  overview: {
-    totalPayments: number;
-    totalRevenue: number;
-    avgPaymentValue: number;
-    todayPayments: number;
-    todayRevenue: number;
-    weekPayments: number;
-    weekRevenue: number;
-    monthPayments: number;
-    monthRevenue: number;
-    monthGrowth: number;
-  };
-  breakdown: {
-    currency: { [key: string]: { count: number; revenue: number } };
-    country: { [key: string]: { count: number; revenue: number } };
-  };
-  trends: {
-    hourly: Array<{ hour: number; count: number; revenue: number }>;
-    daily: Array<{ date: string; count: number; revenue: number }>;
-  };
-  insights: {
-    peakHour: number;
-    peakHourRevenue: number;
-    topCountry: string;
-    topCurrency: string;
-  };
+  overview: { totalPayments: number; totalRevenue: number; avgPaymentValue: number; monthGrowth: number; };
+  breakdown: { currency: { [key: string]: { count: number; revenue: number } }; country: { [key: string]: { count: number; revenue: number } }; };
+  trends: { daily: Array<{ date: string; count: number; revenue: number }>; };
+  insights: { peakHour: number; peakHourRevenue: number; topCountry: string; topCurrency: string; };
 }
+
+// Reusable Animated Card Component
+const StatCard = ({ title, value, icon, trend }) => (
+  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+    <Card className="bg-gray-800/50 border-gray-700/50 backdrop-blur-sm hover:bg-gray-800/80 transition-colors duration-300">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium text-gray-400">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-white">{value}</div>
+        <p className="text-xs text-green-400">{trend}</p>
+      </CardContent>
+    </Card>
+  </motion.div>
+);
 
 const AnalyticsPage: React.FC = () => {
   const navigate = useNavigate();
   const { socket } = useSocket();
   
-  // State management
-  const [payments, setPayments] = useState<PaymentData[]>([]);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [payments, setPayments] = useState<PaymentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [dateRange, setDateRange] = useState('30'); // '7', '30', '90', 'all'
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [currencyFilter, setCurrencyFilter] = useState('all');
-  const [countryFilter, setCountryFilter] = useState('all');
-  const [dateRange, setDateRange] = useState('all');
   const [selectedPayment, setSelectedPayment] = useState<PaymentData | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchAnalyticsData();
-    fetchPaymentsData();
-  }, []);
-
-  // Socket listeners for real-time updates
   useEffect(() => {
     if (!socket) return;
 
-    const handleAnalyticsUpdate = (data: AnalyticsData) => {
+    const handleAnalytics = (data) => {
       setAnalyticsData(data);
+      setIsLoading(false);
     };
+    const handlePayments = (data) => setPayments(data);
 
-    const handlePaymentReceived = (payment: PaymentData) => {
-      setPayments(prev => [payment, ...prev]);
-      fetchAnalyticsData(); // Refresh analytics
-    };
+    socket.on('analytics-data', handleAnalytics);
+    socket.on('payments-data', handlePayments);
+    socket.on('analytics-update', (data) => setAnalyticsData(data));
+    socket.on('payment-received', (newPayment) => setPayments(prev => [newPayment, ...prev]));
 
-    socket.on('analytics-update', handleAnalyticsUpdate);
-    socket.on('payment-received', handlePaymentReceived);
-    socket.on('payment-data', handlePaymentReceived);
+    // Initial data fetch
+    socket.emit('get-analytics-data');
+    socket.emit('get-payments-data');
 
     return () => {
-      socket.off('analytics-update', handleAnalyticsUpdate);
-      socket.off('payment-received', handlePaymentReceived);
-      socket.off('payment-data', handlePaymentReceived);
+      socket.off('analytics-data', handleAnalytics);
+      socket.off('payments-data', handlePayments);
+      socket.off('analytics-update');
+      socket.off('payment-received');
     };
   }, [socket]);
 
-  const fetchAnalyticsData = async () => {
-    try {
-      const response = await fetch('/api/analytics');
-      const result = await response.json();
-      if (result.success) {
-        setAnalyticsData(result.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-    }
-  };
-
-  const fetchPaymentsData = async () => {
-    try {
-      // Load from localStorage and server
-      const savedPayments = localStorage.getItem('adminPayments');
-      if (savedPayments) {
-        setPayments(JSON.parse(savedPayments));
-      }
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch payments:', error);
-      setIsLoading(false);
-    }
-  };
-
-  // Filter payments based on search and filters
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = 
-      payment.cardNumber.includes(searchTerm) ||
-      payment.cardName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.billingDetails.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.billingDetails.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.billingDetails.lastName.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    const matchesCurrency = currencyFilter === 'all' || (payment.currency || 'INR') === currencyFilter;
-    const matchesCountry = countryFilter === 'all' || 
-      (payment.cardCountry?.name || 'Unknown') === countryFilter;
-
-    let matchesDate = true;
+  const filteredPayments = useMemo(() => {
+    const now = new Date();
+    let startDate = new Date(0);
     if (dateRange !== 'all') {
-      const paymentDate = new Date(payment.timestamp);
-      const now = new Date();
-      switch (dateRange) {
-        case 'today':
-          matchesDate = paymentDate.toDateString() === now.toDateString();
-          break;
-        case 'week':
-          matchesDate = now.getTime() - paymentDate.getTime() <= 7 * 24 * 60 * 60 * 1000;
-          break;
-        case 'month':
-          matchesDate = now.getTime() - paymentDate.getTime() <= 30 * 24 * 60 * 60 * 1000;
-          break;
-      }
+      startDate = subDays(now, parseInt(dateRange));
     }
+    return payments
+      .filter(p => new Date(p.timestamp) >= startDate)
+      .filter(p => searchTerm ? p.billingDetails.email.toLowerCase().includes(searchTerm.toLowerCase()) || p.cardName.toLowerCase().includes(searchTerm.toLowerCase()) : true);
+  }, [payments, dateRange, searchTerm]);
 
-    return matchesSearch && matchesStatus && matchesCurrency && matchesCountry && matchesDate;
-  });
+  const formatCurrency = (amount: number, currency: string = 'INR') => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 
-  // Format currency
-  const formatCurrency = (amount: number, currency?: string) => {
-    const curr = currency || 'INR';
-    if (curr === 'USD') {
-      return `$${amount.toFixed(2)}`;
-    }
-    return `₹${amount.toFixed(2)}`;
-  };
+  const trendData = useMemo(() => {
+    if (!analyticsData) return [];
+    return analyticsData.trends.daily.map(d => ({ 
+      date: format(new Date(d.date), 'MMM dd'), 
+      Revenue: d.revenue 
+    }));
+  }, [analyticsData]);
 
-  // Export functions
+  const countryData = useMemo(() => {
+    if (!analyticsData) return [];
+    return Object.entries(analyticsData.breakdown.country)
+      .map(([name, { revenue }]) => ({ name, value: revenue }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [analyticsData]);
+
+  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE'];
+
   const exportToCSV = () => {
-    const headers = [
-      'Date', 'Payment ID', 'Customer Name', 'Email', 'Card Number', 
-      'Amount', 'Currency', 'Country', 'Status', 'Plan'
-    ];
-    
-    const csvData = filteredPayments.map(payment => [
-      new Date(payment.timestamp).toLocaleDateString(),
-      payment.paymentId,
-      `${payment.billingDetails.firstName} ${payment.billingDetails.lastName}`,
-      payment.billingDetails.email,
-      payment.cardNumber,
-      payment.amount,
-      payment.currency || 'INR',
-      payment.cardCountry?.name || 'Unknown',
-      payment.status,
-      payment.planName
-    ]);
-
-    const csvContent = [headers, ...csvData]
-      .map(row => row.map(field => `"${field}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
+    const headers = ['ID', 'Date', 'Customer', 'Amount', 'Currency', 'Status'];
+    const rows = filteredPayments.map(p => [
+      p.id,
+      new Date(p.timestamp).toLocaleString(),
+      p.cardName,
+      p.amount,
+      p.currency || 'INR',
+      p.status
+    ].join(','));
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
     const link = document.createElement('a');
-    link.href = url;
-    link.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `payments-${dateRange}days.csv`);
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const viewPaymentDetails = (payment: PaymentData) => {
-    setSelectedPayment(payment);
-    setShowPaymentModal(true);
+    document.body.removeChild(link);
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-20">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Loading analytics...</p>
-          </div>
-        </div>
-      </div>
-    );
+    return <div className="flex items-center justify-center h-screen bg-gray-900 text-white"><RefreshCw className="animate-spin mr-2"/> Loading Analytics...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={() => navigate('/parking55009hvSweJimbs5hhinbd56y')}
-                variant="ghost"
-                size="sm"
-                className="text-gray-400 hover:text-white"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Admin
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">📊 Advanced Analytics</h1>
-                <p className="text-gray-400">Complete transaction history and insights</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={fetchAnalyticsData} variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button onClick={exportToCSV} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-            </div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white p-4 sm:p-6 lg:p-8">
+      <div className="max-w-screen-xl mx-auto">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <div>
+            <button onClick={() => navigate('/admin')} className="flex items-center text-gray-400 hover:text-white mb-2 transition-colors">
+              <ArrowLeft size={16} className="mr-2" /> Back to Admin Panel
+            </button>
+            <h1 className="text-4xl font-bold tracking-tight">Analytics Dashboard</h1>
           </div>
+          <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+            <Button variant="outline" onClick={() => socket?.emit('get-analytics-data')}><RefreshCw size={16} className="mr-2" /> Refresh</Button>
+            <Button onClick={exportToCSV}><Download size={16} className="mr-2" /> Export</Button>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard title="Total Revenue" value={formatCurrency(analyticsData?.overview.totalRevenue || 0)} icon={<DollarSign className="h-4 w-4 text-green-400" />} trend={`+${(analyticsData?.overview.monthGrowth || 0).toFixed(1)}% this month`} />
+          <StatCard title="Total Payments" value={(analyticsData?.overview.totalPayments || 0).toLocaleString()} icon={<CreditCard className="h-4 w-4 text-blue-400" />} trend="All-time" />
+          <StatCard title="Avg. Payment" value={formatCurrency(analyticsData?.overview.avgPaymentValue || 0)} icon={<TrendingUp className="h-4 w-4 text-purple-400" />} trend="All-time average" />
+          <StatCard title="Top Country" value={analyticsData?.insights.topCountry || 'N/A'} icon={<Users className="h-4 w-4 text-yellow-400" />} trend="By revenue" />
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        
-        {/* Quick Stats */}
-        {analyticsData && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Total Revenue
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(analyticsData.overview.totalRevenue)}
-                </div>
-                <p className="text-xs text-gray-400">
-                  {analyticsData.overview.totalPayments} payments
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Today
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(analyticsData.overview.todayRevenue)}
-                </div>
-                <p className="text-xs text-gray-400">
-                  {analyticsData.overview.todayPayments} payments
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Growth
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${
-                  analyticsData.overview.monthGrowth >= 0 ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {analyticsData.overview.monthGrowth >= 0 ? '+' : ''}{analyticsData.overview.monthGrowth.toFixed(1)}%
-                </div>
-                <p className="text-xs text-gray-400">vs last month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Avg Payment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(analyticsData.overview.avgPaymentValue)}
-                </div>
-                <p className="text-xs text-gray-400">per transaction</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center">
-                  <Clock className="h-4 w-4 mr-2" />
-                  Peak Hour
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analyticsData.insights.peakHour}:00
-                </div>
-                <p className="text-xs text-gray-400">
-                  {formatCurrency(analyticsData.insights.peakHourRevenue)}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Charts Section */}
-        {analyticsData && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Daily Revenue Trend */}
-            <Card>
-              <CardHeader>
-                <CardTitle>📈 Daily Revenue Trend (30 days)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <Line 
-                    data={{
-                      labels: analyticsData.trends.daily.map(d => 
-                        new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                      ),
-                      datasets: [{
-                        label: 'Revenue',
-                        data: analyticsData.trends.daily.map(d => d.revenue),
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4,
-                      }],
-                    }}
-                    options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { legend: { position: 'bottom' as const } },
-                    }}
-                  />
-                </div>
-              </CardContent>
             </Card>
 
             {/* Hourly Payments */}
