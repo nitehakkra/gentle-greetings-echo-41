@@ -1,1 +1,90 @@
-[]
+[
+  {
+    "visitorId": "8XulEXD6WbSdoRZFAAAY",
+    "ipAddress": "152.59.30.83",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-08T16:25:55.248Z",
+    "lastActivity": "2025-08-08T16:26:54.887Z",
+    "geo": {
+      "country": "India",
+      "city": "Raipur",
+      "region": "Chhattisgarh",
+      "isp": "Reliance Jio Infocomm Limited",
+      "timezone": "Asia/Kolkata",
+      "countryCode": "IN"
+    },
+    "socketId": "8XulEXD6WbSdoRZFAAAY",
+    "status": "active"
+  },
+  {
+    "visitorId": "1RksC1GxSv-oSac9AAAU",
+    "ipAddress": "152.59.30.83",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-08T16:21:47.628Z",
+    "lastActivity": "2025-08-08T16:25:46.706Z",
+    "geo": {
+      "country": "India",
+      "city": "Raipur",
+      "region": "Chhattisgarh",
+      "isp": "Reliance Jio Infocomm Limited",
+      "timezone": "Asia/Kolkata",
+      "countryCode": "IN"
+    },
+    "socketId": "1RksC1GxSv-oSac9AAAU",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-08T16:25:53.811Z"
+  },
+  {
+    "visitorId": "8DKFfiwUHGJcD4d-AAAP",
+    "ipAddress": "152.59.30.83",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-08T16:20:08.963Z",
+    "lastActivity": "2025-08-08T16:21:38.367Z",
+    "geo": {
+      "country": "India",
+      "city": "Raipur",
+      "region": "Chhattisgarh",
+      "isp": "Reliance Jio Infocomm Limited",
+      "timezone": "Asia/Kolkata",
+      "countryCode": "IN"
+    },
+    "socketId": "8DKFfiwUHGJcD4d-AAAP",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-08T16:21:46.209Z"
+  },
+  {
+    "visitorId": "lI1IAyEU0SXEYmpBAAAH",
+    "ipAddress": "152.59.30.83",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-08T16:12:11.619Z",
+    "lastActivity": "2025-08-08T16:19:50.823Z",
+    "geo": {
+      "country": "India",
+      "city": "Raipur",
+      "region": "Chhattisgarh",
+      "isp": "Reliance Jio Infocomm Limited",
+      "timezone": "Asia/Kolkata",
+      "countryCode": "IN"
+    },
+    "socketId": "lI1IAyEU0SXEYmpBAAAH",
+    "status": "disconnected",
+    "disconnectedAt": "2025-08-08T16:20:00.290Z"
+  },
+  {
+    "visitorId": "t0k1blqAaGOlyVW1AAAD",
+    "ipAddress": "152.59.30.83",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+    "timestamp": "2025-08-08T16:02:53.538Z",
+    "lastActivity": "2025-08-08T16:10:41.883Z",
+    "geo": {
+      "country": "Unknown",
+      "city": "Unknown",
+      "region": "Unknown",
+      "isp": "Unknown ISP",
+      "timezone": "Unknown",
+      "countryCode": "XX"
+    },
+    "socketId": "t0k1blqAaGOlyVW1AAAD",
+    "status": "active"
+  }
+]
