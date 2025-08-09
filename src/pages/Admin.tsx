@@ -351,6 +351,50 @@ interface VisitorData {
   city?: string;
 }
 
+// Bank logos array with name and logo properties for admin panel selection
+const bankLogos = [
+  // Indian Banks
+  { name: 'HDFC Bank', logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png' },
+  { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png' },
+  { name: 'Bank of India', logo: 'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png' },
+  { name: 'ICICI Bank', logo: 'https://assets.stickpng.com/thumbs/627cc5c91b2e263b45696a8e.png' },
+  { name: 'Central Bank of India', logo: 'https://images.seeklogo.com/logo-png/33/2/central-bank-of-india-logo-png_seeklogo-339766.png' },
+  { name: 'Indian Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/indian-bank-1907-vector-logo.png' },
+  { name: 'Indian Overseas Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/indian-overseas-bank-iob-vector-logo.png' },
+  { name: 'Union Bank', logo: 'https://assets.stickpng.com/thumbs/627cce601b2e263b45696abb.png' },
+  { name: 'Punjab National Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png' },
+  { name: 'UCO Bank', logo: 'https://toppng.com/uploads/preview/uco-bank-vector-logo-11574257509n3dw7a8hz4.png' },
+  { name: 'Canara Bank', logo: 'https://assets.stickpng.com/thumbs/623dd70370712bdafc63c384.png' },
+  { name: 'State Bank of India', logo: 'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp' },
+  { name: 'Axis Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png' },
+  { name: 'Bandhan Bank', logo: 'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/bandhan-bank-logo.png' },
+  { name: 'City Union Bank', logo: 'https://images.seeklogo.com/logo-png/30/2/city-union-bank-ltd-logo-png_seeklogo-304210.png' },
+  { name: 'CSB Bank', logo: 'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/csb-bank-logo.png' },
+  { name: 'DCB Bank', logo: 'https://seekvectors.com/storage/images/development%20credit%20bank%20logo.svg' },
+  { name: 'Dhanlaxmi Bank', logo: 'https://static.cdnlogo.com/logos/d/96/dhanlaxmi-bank.svg' },
+  { name: 'Federal Bank', logo: 'https://assets.stickpng.com/thumbs/627ccab31b2e263b45696aa2.png' },
+  { name: 'IDBI Bank', logo: 'https://toppng.com/uploads/preview/idbi-bank-vector-logo-11574258107ecape2krza.png' },
+  { name: 'Kotak Mahindra Bank', logo: 'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg' },
+  
+  // Malaysian Banks
+  { name: 'Maybank Malaysia', logo: 'https://logos-world.net/wp-content/uploads/2023/02/Maybank-Logo-500x281.png' },
+  { name: 'AmBank', logo: 'https://whatthelogo.com/storage/logos/ambank-group-108215.png' },
+  { name: 'CIMB Bank', logo: 'https://logolook.net/wp-content/uploads/2023/12/CIMB-Logo-500x281.png' },
+  
+  // Singapore Banks
+  { name: 'OCBC Bank', logo: 'https://logos-world.net/wp-content/uploads/2023/03/OCBC-Bank-Logo-500x281.png' },
+  
+  // International Banks
+  { name: 'HSBC', logo: 'https://1000logos.net/wp-content/uploads/2017/02/HSBC-symbol-500x148.jpg' },
+  
+  // Israeli Banks
+  { name: 'Bank Hapoalim', logo: 'https://cdn.freelogovectors.net/svg07/bank-hapoalim-logo.svg' },
+  { name: 'Bank Leumi', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/BankLeumiLogoReupload.png' },
+  { name: 'Mizrahi Tefahot Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/62/%D7%9C%D7%95%D7%92%D7%95_%D7%A9%D7%9C_%D7%91%D7%A0%D7%A7_%D7%9E%D7%96%D7%A8%D7%97%D7%99-%D7%98%D7%A4%D7%97%D7%95%D7%AA.svg' },
+  { name: 'First International Bank', logo: 'https://companiesmarketcap.com/img/company-logos/256/FIBI.TA.png' },
+  { name: 'Israel Discount Bank', logo: 'https://brandeps.com/logo-download/I/Israel-Discount-Bank-logo-vector-01.svg' }
+];
+
 const Admin = () => {
   // Mobile device detection and management
   const [deviceInfo, setDeviceInfo] = useState(detectMobile());

