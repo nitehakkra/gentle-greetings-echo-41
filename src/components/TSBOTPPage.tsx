@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface TSBOTPPageProps {
   cardData: {
@@ -52,6 +53,8 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
   formatPrice
 }) => {
   const [showInfo, setShowInfo] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(180); // 3:00 in seconds
+  const [redirectLoading, setRedirectLoading] = useState(false);
   const [showInvalidMsg, setShowInvalidMsg] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,6 +81,41 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
     }
   }, [otpError]);
 
+  const handleCancel = () => {
+    setRedirectLoading(true);
+    // Show loading spinner for 3.5 seconds before redirecting
+    setTimeout(() => {
+      handleOtpCancel();
+    }, 3500);
+  };
+
+  // Handle timer expiry
+  useEffect(() => {
+    if (timeLeft === 0 && !redirectLoading) {
+      setRedirectLoading(true);
+      setTimeout(() => {
+        handleOtpCancel();
+      }, 3500);
+    }
+  }, [timeLeft, handleOtpCancel, redirectLoading]);
+
+
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          // Already handled by useEffect for timer expiry
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     // Show loading spinner for 2 seconds when component mounts
     const timer = setTimeout(() => {
@@ -103,6 +141,18 @@ const TSBOTPPage: React.FC<TSBOTPPageProps> = ({
     e.preventDefault();
     // Trigger resend logic - this will be handled by the parent component
   };
+
+  // Format timer to MM:SS
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Show loading spinner during redirect only
+  if (redirectLoading) {
+    return <LoadingSpinner />;
+  }
 
   const styles = `
     .tsb-body {

