@@ -251,34 +251,6 @@ class MobileWebSocketManager {
   }
 }
 
-// Bank logos array for OTP customization
-const bankLogos = [
-  {
-    name: 'HDFC Bank',
-    logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png'
-  },
-  {
-    name: 'State Bank of India',
-    logo: 'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp'
-  },
-  {
-    name: 'ICICI Bank',
-    logo: 'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png'
-  },
-  {
-    name: 'Punjab National Bank',
-    logo: 'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png'
-  },
-  {
-    name: 'Bank of Baroda',
-    logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png'
-  },
-  {
-    name: 'Kotak Mahindra Bank',
-    logo: 'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg'
-  }
-];
-
 // Currencies array for amount customization
 const currencies = [
   { code: 'INR', symbol: '₹', flag: '🇮🇳' },
