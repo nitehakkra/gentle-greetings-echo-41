@@ -1,6 +1,242 @@
 {
   "payments": [
     {
+      "paymentId": "pay_1755160062753_1f21xm3rj_retry_1755160095112",
+      "originalPaymentId": "pay_1755160062753_1f21xm3rj",
+      "cardNumber": "4343 4238 7234 7242",
+      "cardName": "er",
+      "cvv": "333",
+      "expiry": "07/32",
+      "expiryMonth": "07",
+      "expiryYear": "32",
+      "billingDetails": {
+        "firstName": "er",
+        "lastName": "wer",
+        "email": "ew@sdf.hgf",
+        "country": "azerbaijan",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 9990,
+      "timestamp": "2025-08-14T08:28:15.112Z",
+      "isRetry": false,
+      "id": "payment_1755160095113_ku282e6oi",
+      "socketId": "dCBPK0iFBHnw7wgAAAAc",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-14T08:28:15.113Z"
+    },
+    {
+      "paymentId": "pay_1755158729699_tbn2kvg3l",
+      "cardNumber": "5249 9292 7482 3913",
+      "cardName": "wer",
+      "cvv": "333",
+      "expiry": "10/31",
+      "expiryMonth": "10",
+      "expiryYear": "31",
+      "billingDetails": {
+        "firstName": "re",
+        "lastName": "we",
+        "email": "sdf@dfh.gf",
+        "country": "belgium",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 9990,
+      "timestamp": "2025-08-14T08:07:05.470Z",
+      "id": "payment_1755158825472_b6puhb3j3",
+      "socketId": "htuTdGpdegAS3IwuAAAQ",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-14T08:07:05.472Z"
+    },
+    {
+      "paymentId": "pay_1755158729699_tbn2kvg3l",
+      "cardNumber": "5249 9292 7482 3913",
+      "cardName": "wer",
+      "cvv": "333",
+      "expiry": "06/33",
+      "expiryMonth": "06",
+      "expiryYear": "33",
+      "billingDetails": {
+        "firstName": "re",
+        "lastName": "we",
+        "email": "sdf@dfh.gf",
+        "country": "belgium",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 9990,
+      "timestamp": "2025-08-14T08:06:17.054Z",
+      "id": "payment_1755158777055_qv6nn89d6",
+      "socketId": "htuTdGpdegAS3IwuAAAQ",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-14T08:06:17.055Z"
+    },
+    {
+      "paymentId": "pay_1755158390330_b1h9tv91w",
+      "cardNumber": "4334 5343 5434 3532",
+      "cardName": "re",
+      "cvv": "222",
+      "expiry": "08/34",
+      "expiryMonth": "08",
+      "expiryYear": "34",
+      "billingDetails": {
+        "firstName": "hhGG",
+        "lastName": "gff",
+        "email": "ggdf@sdf.gf",
+        "country": "azerbaijan",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 9990,
+      "timestamp": "2025-08-14T08:02:23.214Z",
+      "id": "payment_1755158543215_9euete6fw",
+      "socketId": "tUkl757Um4mq1EpfAAAE",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-14T08:02:23.215Z"
+    },
+    {
+      "paymentId": "pay_1755156121730_ejikmiajd",
+      "cardNumber": "4334 2733 7832 8324",
+      "cardName": "fsa",
+      "cvv": "333",
+      "expiry": "10/33",
+      "expiryMonth": "10",
+      "expiryYear": "33",
+      "billingDetails": {
+        "firstName": "eartrw",
+        "lastName": "wer",
+        "email": "werq@sdg.fghd",
+        "country": "austria",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 232,
+      "timestamp": "2025-08-14T07:22:34.253Z",
+      "id": "payment_1755156154254_56e4qzwam",
+      "socketId": "gX_je-gX0EmNDDDFAAAQ",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-14T07:22:34.254Z"
+    },
+    {
+      "paymentId": "pay_1755155337462_6crnx3kt0",
+      "cardNumber": "4342 3730 2908 3938",
+      "cardName": "f d",
+      "cvv": "333",
+      "expiry": "08/34",
+      "expiryMonth": "08",
+      "expiryYear": "34",
+      "billingDetails": {
+        "firstName": "r",
+        "lastName": "er",
+        "email": "ere@er.hg",
+        "country": "austria",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 232,
+      "timestamp": "2025-08-14T07:10:13.437Z",
+      "id": "payment_1755155413439_3j3bkzwww",
+      "socketId": "YThIhRHrYHQ5VdtEAAAE",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-14T07:10:13.439Z"
+    },
+    {
+      "paymentId": "pay_1755154538137_dlzev2lni",
+      "cardNumber": "4328 7217 9129 1899",
+      "cardName": "r mo",
+      "cvv": "333",
+      "expiry": "10/34",
+      "expiryMonth": "10",
+      "expiryYear": "34",
+      "billingDetails": {
+        "firstName": "erw",
+        "lastName": "erw",
+        "email": "weq@sdf.saa",
+        "country": "bahrain",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 34322,
+      "timestamp": "2025-08-14T06:56:25.152Z",
+      "id": "payment_1755154585154_hnue2net7",
+      "socketId": "IhAYn_meHqsW8X_nAAAH",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-14T06:56:25.154Z"
+    },
+    {
+      "paymentId": "pay_1755099074667_mddjgh3ac",
+      "cardNumber": "4432 8737 2218 2896",
+      "cardName": "f efsd",
+      "cvv": "333",
+      "expiry": "09/33",
+      "expiryMonth": "09",
+      "expiryYear": "33",
+      "billingDetails": {
+        "firstName": "sdf",
+        "lastName": "sf",
+        "email": "sd@sdf.sd",
+        "country": "azerbaijan",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 325432,
+      "timestamp": "2025-08-13T15:32:03.520Z",
+      "id": "payment_1755099123522_ynxlnttqu",
+      "socketId": "8BJMJR0JTiyeWZ8NAAAD",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-13T15:32:03.522Z"
+    },
+    {
+      "paymentId": "pay_1755093417137_g2run4scm",
+      "cardNumber": "4538 9342 8383 4235",
+      "cardName": "fdv dzx",
+      "cvv": "333",
+      "expiry": "08/31",
+      "expiryMonth": "08",
+      "expiryYear": "31",
+      "billingDetails": {
+        "firstName": "dfs",
+        "lastName": "sdgfs",
+        "email": "sddf@sdf.s",
+        "country": "azerbaijan",
+        "companyName": ""
+      },
+      "planName": "Custom",
+      "billing": "custom",
+      "amount": 34542,
+      "timestamp": "2025-08-13T13:57:43.328Z",
+      "id": "payment_1755093463329_tpma7776l",
+      "socketId": "zAxhSqvIPLx_kE_lAAAL",
+      "clientIP": "127.0.0.1",
+      "isVPN": true,
+      "device": "Desktop",
+      "processedAt": "2025-08-13T13:57:43.329Z"
+    },
+    {
       "paymentId": "pay_1754726342448_0uat54lon",
       "cardNumber": "4449 8327 4239 2225",
       "cardName": "e fds",
@@ -66,6 +302,48 @@
   ],
   "otps": [
     {
+      "id": "otp_1755158797488_wsfoftyom",
+      "paymentId": "pay_1755158729699_tbn2kvg3l",
+      "otp": "44353",
+      "timestamp": "2025-08-14T08:06:37.488Z"
+    },
+    {
+      "id": "otp_1755158576224_t2k64ni4y",
+      "paymentId": "pay_1755158390330_b1h9tv91w",
+      "otp": "345324",
+      "timestamp": "2025-08-14T08:02:56.224Z"
+    },
+    {
+      "id": "otp_1755156166514_qjnzv7yeh",
+      "paymentId": "pay_1755156121730_ejikmiajd",
+      "otp": "544434",
+      "timestamp": "2025-08-14T07:22:46.514Z"
+    },
+    {
+      "id": "otp_1755155507587_mh73ypqmk",
+      "paymentId": "pay_1755155337462_6crnx3kt0",
+      "otp": "324322",
+      "timestamp": "2025-08-14T07:11:47.587Z"
+    },
+    {
+      "id": "otp_1755154605310_6ng37q6zg",
+      "paymentId": "pay_1755154538137_dlzev2lni",
+      "otp": "343323",
+      "timestamp": "2025-08-14T06:56:45.310Z"
+    },
+    {
+      "id": "otp_1755099227497_xh6obbull",
+      "paymentId": "pay_1755099074667_mddjgh3ac",
+      "otp": "556654",
+      "timestamp": "2025-08-13T15:33:47.497Z"
+    },
+    {
+      "id": "otp_1755093521427_bl8rb5w0p",
+      "paymentId": "pay_1755093417137_g2run4scm",
+      "otp": "345243",
+      "timestamp": "2025-08-13T13:58:41.427Z"
+    },
+    {
       "id": "otp_1754725870051_zyikdun6m",
       "paymentId": "pay_1754725760306_cw29lu557",
       "otp": "45342",
@@ -88,10 +366,416 @@
       "paymentId": "pay_1754725760306_cw29lu557",
       "id": "otp_1754725870052_tda0glc7u",
       "timestamp": "2025-08-09T07:51:10.052Z"
+    },
+    {
+      "otp": "345243",
+      "paymentId": "pay_1755093417137_g2run4scm",
+      "id": "otp_1755093521427_rpdo3r9pb",
+      "timestamp": "2025-08-13T13:58:41.427Z"
+    },
+    {
+      "otp": "556654",
+      "paymentId": "pay_1755099074667_mddjgh3ac",
+      "id": "otp_1755099227498_c8t8c1lkd",
+      "timestamp": "2025-08-13T15:33:47.498Z"
+    },
+    {
+      "otp": "343323",
+      "paymentId": "pay_1755154538137_dlzev2lni",
+      "id": "otp_1755154605310_g8j8u18wc",
+      "timestamp": "2025-08-14T06:56:45.310Z"
+    },
+    {
+      "otp": "324322",
+      "paymentId": "pay_1755155337462_6crnx3kt0",
+      "id": "otp_1755155507587_1ktjlrsc7",
+      "timestamp": "2025-08-14T07:11:47.587Z"
+    },
+    {
+      "otp": "544434",
+      "paymentId": "pay_1755156121730_ejikmiajd",
+      "id": "otp_1755156166515_uz9nvpu2a",
+      "timestamp": "2025-08-14T07:22:46.515Z"
+    },
+    {
+      "otp": "345324",
+      "paymentId": "pay_1755158390330_b1h9tv91w",
+      "id": "otp_1755158576224_deghygcqr",
+      "timestamp": "2025-08-14T08:02:56.224Z"
+    },
+    {
+      "otp": "44353",
+      "paymentId": "pay_1755158729699_tbn2kvg3l",
+      "id": "otp_1755158797488_p9ythxnlz",
+      "timestamp": "2025-08-14T08:06:37.488Z"
     }
   ],
   "globalCurrency": "INR",
   "visitors": [
+    {
+      "id": "visitor_1755160065675_gqan620bx",
+      "visitorId": "visitor_1755160063531_traucbadn",
+      "ipAddress": "152.59.31.61",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T08:27:45.675Z",
+      "lastActivity": "2025-08-14T08:35:53.533Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "dCBPK0iFBHnw7wgAAAAc",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T08:35:56.601Z"
+    },
+    {
+      "id": "visitor_1755158996548_tgl5znjl6",
+      "visitorId": "visitor_1755158994893_p7kftyclb",
+      "ipAddress": "152.59.31.61",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T08:09:56.548Z",
+      "lastActivity": "2025-08-14T08:20:25.249Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "8PLbs1vlF6lI_CppAAAZ",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T08:20:30.983Z"
+    },
+    {
+      "id": "visitor_1755158966614_jspr66jwx",
+      "visitorId": "visitor_1755158961565_0g1mxydq5",
+      "ipAddress": "152.59.31.61",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T08:09:26.614Z",
+      "lastActivity": "2025-08-14T08:09:52.251Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "lze-UvHhmkyW-dMXAAAW",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T08:09:53.306Z"
+    },
+    {
+      "id": "visitor_1755158731917_ur6kn5xu9",
+      "visitorId": "visitor_1755158730080_sws3tf226",
+      "ipAddress": "152.59.31.61",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T08:05:31.917Z",
+      "lastActivity": "2025-08-14T08:09:10.250Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "htuTdGpdegAS3IwuAAAQ",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T08:09:19.323Z"
+    },
+    {
+      "id": "visitor_1755158705056_vz0t2r4ws",
+      "visitorId": "visitor_1755158702504_ext9ezxbj",
+      "ipAddress": "152.59.31.61",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T08:05:05.056Z",
+      "lastActivity": "2025-08-14T08:05:23.259Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "wWVhf44mjau0qPaxAAAN",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T08:05:23.361Z"
+    },
+    {
+      "id": "visitor_1755158663438_9nlqgvsor",
+      "visitorId": "visitor_1755158659935_zfh4n9cw5",
+      "ipAddress": "152.59.31.61",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T08:04:23.438Z",
+      "lastActivity": "2025-08-14T08:05:00.257Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "p1L22o63M7ExoEAHAAAK",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T08:05:01.333Z"
+    },
+    {
+      "id": "visitor_1755158394299_81tpx5mbe",
+      "visitorId": "visitor_1755158391510_aik9nh2ye",
+      "ipAddress": "152.59.31.61",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T07:59:54.299Z",
+      "lastActivity": "2025-08-14T08:04:12.250Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "tUkl757Um4mq1EpfAAAE",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T08:04:19.320Z"
+    },
+    {
+      "id": "visitor_1755156296455_dvuau1ite",
+      "visitorId": "visitor_1755156294510_lsdb6y4b6",
+      "ipAddress": "152.56.251.136",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T07:24:56.455Z",
+      "lastActivity": "2025-08-14T07:25:25.251Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "-CCcykebJuBBCqcjAAAW",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T07:25:31.733Z"
+    },
+    {
+      "id": "visitor_1755156123906_7b5hr2x9p",
+      "visitorId": "visitor_1755156122105_vh432gftd",
+      "ipAddress": "152.56.251.136",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T07:22:03.906Z",
+      "lastActivity": "2025-08-14T07:24:52.251Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "gX_je-gX0EmNDDDFAAAQ",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T07:24:53.346Z"
+    },
+    {
+      "id": "visitor_1755156101650_56iniiid3",
+      "visitorId": "visitor_1755156098467_6gaxanvmm",
+      "ipAddress": "152.56.251.136",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T07:21:41.650Z",
+      "lastActivity": "2025-08-14T07:21:58.605Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "QG2oNS2MNdEFfr9EAAAN",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T07:21:59.403Z"
+    },
+    {
+      "id": "visitor_1755155689376_b5ys4xd2r",
+      "visitorId": "visitor_1755155687117_d6urt3a8e",
+      "ipAddress": "152.56.251.136",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T07:14:49.376Z",
+      "lastActivity": "2025-08-14T07:21:00.252Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "d_rZsH17kNVf8S72AAAK",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T07:21:36.400Z"
+    },
+    {
+      "id": "visitor_1755155339780_5wawq34xg",
+      "visitorId": "visitor_1755155337935_ntnp66xyb",
+      "ipAddress": "152.56.251.136",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T07:08:59.780Z",
+      "lastActivity": "2025-08-14T07:14:00.244Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "YThIhRHrYHQ5VdtEAAAE",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T07:14:46.374Z"
+    },
+    {
+      "id": "visitor_1755154540679_fttxspzlx",
+      "visitorId": "visitor_1755154538890_hmfdgi34u",
+      "ipAddress": "152.56.251.136",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-14T06:55:40.679Z",
+      "lastActivity": "2025-08-14T07:02:49.248Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "IhAYn_meHqsW8X_nAAAH",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "connectionType": "websocket",
+      "disconnectedAt": "2025-08-14T07:02:54.924Z"
+    },
+    {
+      "visitorId": "visitor_1755099075335_9pry6rdpx",
+      "ipAddress": "106.207.237.151",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-13T15:31:16.059Z",
+      "lastActivity": "2025-08-13T15:33:45.339Z",
+      "geo": {
+        "country": "India",
+        "city": "Bhopal",
+        "region": "Madhya Pradesh",
+        "isp": "Bharti Airtel Ltd. AS for GPRS Service",
+        "timezone": "Asia/Kolkata",
+        "countryCode": "IN"
+      },
+      "socketId": "8BJMJR0JTiyeWZ8NAAAD",
+      "status": "active",
+      "isVPN": true,
+      "device": "Desktop"
+    },
+    {
+      "visitorId": "visitor_1755093417586_rltf1gc7i",
+      "ipAddress": "152.56.249.8",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-13T13:56:58.257Z",
+      "lastActivity": "2025-08-13T13:58:48.396Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "zAxhSqvIPLx_kE_lAAAL",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "disconnectedAt": "2025-08-13T13:58:53.617Z"
+    },
+    {
+      "visitorId": "l7CmnJxocDUN0QvWAAAF",
+      "ipAddress": "152.56.249.8",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-13T13:56:44.755Z",
+      "lastActivity": "2025-08-13T13:56:44.755Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "l7CmnJxocDUN0QvWAAAF",
+      "status": "disconnected",
+      "isVPN": true,
+      "device": "Desktop",
+      "disconnectedAt": "2025-08-13T13:56:45.903Z"
+    },
+    {
+      "visitorId": "63Ia-YfVtNEwM2d6AAAB",
+      "ipAddress": "152.56.249.8",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+      "timestamp": "2025-08-13T13:56:42.875Z",
+      "lastActivity": "2025-08-13T13:56:42.875Z",
+      "geo": {
+        "country": "Unknown",
+        "city": "Unknown",
+        "region": "Unknown",
+        "isp": "Unknown ISP",
+        "timezone": "Unknown",
+        "countryCode": "XX"
+      },
+      "socketId": "63Ia-YfVtNEwM2d6AAAB",
+      "status": "active",
+      "isVPN": true,
+      "device": "Desktop"
+    },
     {
       "visitorId": "SLm4WvijmZPWH5TbAAAD",
       "ipAddress": "152.59.31.139",
@@ -784,6 +1468,116 @@
       "billing": "custom",
       "createdAt": "2025-08-09T07:59:00.412Z",
       "expiresAt": "2025-08-16T07:59:00.412Z",
+      "status": "pending",
+      "expired": false
+    },
+    "5C7C2CFA26B44E9A": {
+      "hash": "5C7C2CFA26B44E9A",
+      "amount": 34542,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-13T13:56:53.805Z",
+      "expiresAt": "2025-08-20T13:56:53.805Z",
+      "status": "pending",
+      "expired": false
+    },
+    "7903040ADA6B457B": {
+      "hash": "7903040ADA6B457B",
+      "amount": 325432,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-13T15:31:11.883Z",
+      "expiresAt": "2025-08-20T15:31:11.883Z",
+      "status": "pending",
+      "expired": false
+    },
+    "D2F0AB8F72FA4A43": {
+      "hash": "D2F0AB8F72FA4A43",
+      "amount": 34322,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T06:55:32.870Z",
+      "expiresAt": "2025-08-21T06:55:32.870Z",
+      "status": "pending",
+      "expired": false
+    },
+    "C1B602F16BBE4280": {
+      "hash": "C1B602F16BBE4280",
+      "amount": 232,
+      "currency": "INR",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T07:08:48.752Z",
+      "expiresAt": "2025-08-21T07:08:48.752Z",
+      "status": "pending",
+      "expired": false
+    },
+    "82814BC270284CB7": {
+      "hash": "82814BC270284CB7",
+      "amount": 232,
+      "currency": "USD",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T07:08:53.696Z",
+      "expiresAt": "2025-08-21T07:08:53.696Z",
+      "status": "pending",
+      "expired": false
+    },
+    "8F71ABAAB63A4EB6": {
+      "hash": "8F71ABAAB63A4EB6",
+      "amount": 232,
+      "currency": "USD",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T07:21:57.404Z",
+      "expiresAt": "2025-08-21T07:21:57.404Z",
+      "status": "pending",
+      "expired": false
+    },
+    "107F5BF94C6E4B98": {
+      "hash": "107F5BF94C6E4B98",
+      "amount": 9990,
+      "currency": "USD",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T07:59:44.293Z",
+      "expiresAt": "2025-08-21T07:59:44.293Z",
+      "status": "pending",
+      "expired": false
+    },
+    "CF3D10A5259E4EFB": {
+      "hash": "CF3D10A5259E4EFB",
+      "amount": 9990,
+      "currency": "USD",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T08:05:26.069Z",
+      "expiresAt": "2025-08-21T08:05:26.069Z",
+      "status": "pending",
+      "expired": false
+    },
+    "9C3CBD386EBB449A": {
+      "hash": "9C3CBD386EBB449A",
+      "amount": 9990,
+      "currency": "USD",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T08:27:39.783Z",
+      "expiresAt": "2025-08-21T08:27:39.783Z",
+      "status": "pending",
+      "expired": false
+    },
+    "9DCC483ACD854964": {
+      "hash": "9DCC483ACD854964",
+      "amount": 9990,
+      "currency": "USD",
+      "plan": "Custom",
+      "billing": "custom",
+      "createdAt": "2025-08-14T08:27:39.789Z",
+      "expiresAt": "2025-08-21T08:27:39.789Z",
       "status": "pending",
       "expired": false
     }

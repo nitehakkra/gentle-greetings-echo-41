@@ -34,6 +34,27 @@ const Payment = () => {
 
   // Bank logos data structure - MUST match Admin panel exactly
   const bankLogos = [
+    // Oman Banks (Priority Display)
+    { name: 'Oman National Bank', logo: 'https://www.nbo.om/Style%20Library/NBO3/images/Logo.png' },
+    { name: 'Bank Muscat', logo: 'https://iconlogovector.com/uploads/images/2025/02/sm-67a9465deaa56-Bank-Muscat.webp' },
+    { name: 'Dhofar Bank', logo: 'https://companieslogo.com/img/orig/BKDB.OM_BIG-ef97d413.png?t=1720244491' },
+    { name: 'Sohar International Bank', logo: 'https://companieslogo.com/img/orig/BKSB.OM_BIG.D-b4e46aac.png?t=1720244491' },
+    { name: 'Oman Arab Bank', logo: 'http://www.creativeaction.co.uk/wp-content/uploads/2016/09/oab-cards-logo.png' },
+    { name: 'Ahli Bank Oman', logo: 'https://companieslogo.com/img/orig/AUB.BH_BIG-326de283.png?t=1720244490' },
+    { name: 'Nizwa Bank', logo: 'https://mgmt.manhom.com/images/77730/1730189732/%D8%A8%D9%86%D9%83-%D9%86%D8%B2%D9%88%D9%89.webp' },
+    { name: 'Alizz Islamic Bank', logo: 'https://storage.promosteer.com/static/images/providers/img_3bc15c16-41d9-5118-530b-9caac76b5614.webp' },
+    
+    // UAE Banks (Priority Display)
+    { name: 'Abu Dhabi Commercial Bank (ADCB)', logo: 'https://uaelogos.ae/storage/886/conversions/Abu-Dhabi-Commercial-Bank-(ADCB)@4x-thumb.png' },
+    { name: 'Abu Dhabi Islamic Bank (ADIB)', logo: 'https://uaelogos.ae/storage/1403/conversions/Abu-Dhabi-Islamic-Bank-(ADIB)-thumb.png' },
+    { name: 'Ajman Bank', logo: 'https://uaelogos.ae/storage/2704/conversions/Ajman-Bank-thumb.png' },
+    { name: 'Al Hilal Bank', logo: 'https://svgmix.com/uploads/b6d94e-al-hilal-bank.svg' },
+    { name: 'Al Maryah Community Bank', logo: 'https://masarif.ae/storage/bank-logos/image_al-maryah-community-20220125151738.png' },
+    { name: 'Bank of Sharjah', logo: 'https://masarif.ae/storage/bank-logos/image_bos20210115232009.png' },
+    { name: 'Emirates Islamic Bank', logo: 'https://vectorseek.com/wp-content/uploads/2023/10/Emirates-Islamic-Bank-Logo-Vector.svg-.png' },
+    { name: 'Emirates NBD Bank', logo: 'https://logowik.com/content/uploads/images/720_emirates_nbd_bank_logo.jpg' },
+    
+    // Indian Banks
     { name: 'HDFC Bank', logo: 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png' },
     { name: 'State Bank of India', logo: 'https://logotyp.us/file/sbi.svg' },
     { name: 'ICICI Bank', logo: 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png' },

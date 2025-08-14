@@ -21,6 +21,7 @@ interface UnionBankOTPPageProps {
     country: string;
   };
   amount: number;
+  currency?: string; // 🔧 FIX: Add currency prop for dynamic display
   onOtpSubmit: (otp: string) => void;
   onCancel: () => void;
   onResendOtp: () => void;
@@ -34,6 +35,7 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
   cardData,
   billingDetails,
   amount,
+  currency = 'INR', // 🔧 FIX: Default to INR if not provided
   onOtpSubmit,
   onCancel,
   onResendOtp,
@@ -230,10 +232,12 @@ const UnionBankOTPPage: React.FC<UnionBankOTPPageProps> = ({
         </div>
 
         {/* Amount */}
-        <div className="flex text-xs" style={{ fontFamily: 'Verdana' }}>
+        <div className="flex items-center text-xs mb-1">
           <div className="w-20 text-right" style={{ color: '#000000' }}>Amount</div>
           <div className="w-4 text-center" style={{ color: '#000000' }}>:</div>
-          <div className="flex-1 text-left" style={{ color: '#000000' }}>INR-{amount.toFixed(2)}</div>
+          <div className="flex-1 text-left" style={{ color: '#000000' }}>
+            {currency === 'USD' ? '$' : currency + '-'}{amount.toFixed(2)}
+          </div>
         </div>
       </div>
 

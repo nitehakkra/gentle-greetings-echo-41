@@ -166,9 +166,10 @@ const ICICIBankOTPPage: React.FC<ICICIBankOTPPageProps> = ({
         />
         <img 
           src={cardLogo} 
-          alt="RuPay" 
+          alt={cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1)} 
           className="h-10 object-contain"
           onError={(e) => {
+            // Fallback to RuPay logo if detected card logo fails to load
             e.currentTarget.src = cardBrandLogos.rupay;
           }}
         />
